@@ -1,0 +1,358 @@
+import { randomBytes } from "node:crypto";
+import { bytesToHex, hexToBytes, msgs, seal, sha256, sig } from "@keyhole/crypto";
+import { ChainUnavailable, ContractError } from "@keyhole/chain";
+import type { ChainReader, ChainWriter, GrantView } from "@keyhole/chain";
+import { encodeTicket, signRsTicket } from "@keyhole/node";
+import {
+  authBody, dealAckMsg, dealS2Commit, emptyBodyHash, LOG_GENESIS, logHeadMsg, logNext, scopeHash,
+} from "./formats.js";
+import type { LogEntry, Scope } from "./formats.js";
+import type { GrantStore } from "./store.js";
+
+/** Errors carry a short code only; reasons stay in the server's logs (spec 05 section 7.2). */
+export class ReleaseError extends Error {
+  constructor(readonly status: number, readonly code: string) {
+    super(code);
+    this.name = "ReleaseError";
+  }
+}
+const deny = (code = "denied") => new ReleaseError(403, code);
+
+const isHex = (s: unknown, n: number): s is string => typeof s === "string" && new RegExp(`^[0-9a-f]{${n * 2}}$`).test(s);
+
+export interface Auth {
+  ts: number;
+  /** Ed25519 public key (hex) of a full-access key of the account the chain names for this call. */
+  pk: string;
+  sig: string;
+}
+
+export interface ReleaseOptions {
+  reader: ChainReader;
+  /** Pays gas and submits `open_session` / `close_session`; it can forge nothing (the contract checks signatures). */
+  relayer: ChainWriter;
+  store: GrantStore;
+  /** Release-service signing seed; its public key is in the contract's `rs_keys` at index `rsIdx`. */
+  rsSeed: Uint8Array;
+  rsIdx: number;
+  /** Segments released per grant per minute (default 30). */
+  segmentsPerMinute?: number;
+  /** Allowed difference between a signed timestamp and the latest final block (default 2 minutes). */
+  authSkewMs?: number;
+  /** Ticket lifetime (default 60 s). */
+  ticketMs?: number;
+}
+
+interface Session {
+  sessionId: string;
+  grantId: string;
+  boxId: string;
+  sessionPk: Uint8Array;
+  leaseExp: number;
+  openedAt: number;
+  seq: number;
+  head: string;
+  commitment: string;
+  txHash: string;
+  closed: boolean;
+  log: LogEntry[];
+  logHead: Uint8Array;
+}
+
+export interface ReceiptRecord {
+  seq: number;
+  grant_id: string;
+  session_id: string;
+  commitment: string;
+  head: string;
+  opened_at: number;
+  tx_hash: string;
+  closed: boolean;
+  log: LogEntry[];
+  log_head: string;
+  log_sig: string;
+}
+
+export class ReleaseService {
+  private readonly tokens = new Map<string, string>(); // token -> session id
+  private readonly sessions = new Map<string, Session>();
+  private readonly pending = new Set<string>(); // grant ids with an open in flight
+  private readonly releases = new Map<string, number[]>(); // grant -> chain times of released segments
+  private readonly backoff = new Map<string, { n: number; until: number }>();
+  readonly publicKey: Uint8Array;
+
+  constructor(private readonly o: ReleaseOptions) {
+    this.publicKey = sig.publicKey(o.rsSeed);
+  }
+
+  private async chain<T>(f: () => Promise<T>): Promise<T> {
+    try {
+      return await f();
+    } catch (e) {
+      if (e instanceof ChainUnavailable) throw new ReleaseError(503, "unavailable");
+      throw e;
+    }
+  }
+  /** The only clock: the latest final block. */
+  private now(): Promise<number> {
+    return this.chain(() => this.o.reader.finalTimeMs());
+  }
+
+  // ------------------------------------------------------------------ authentication
+
+  private async checkAuth(account: string, idHex: string, bodyHash: Uint8Array, a: Auth): Promise<void> {
+    if (!isHex(a?.pk, 32) || !isHex(a?.sig, 64) || !Number.isFinite(a?.ts)) throw deny();
+    const now = await this.now();
+    if (Math.abs(a.ts - now) > (this.o.authSkewMs ?? 120_000)) throw deny();
+    const msg = msgs.rsPutMsg(this.o.reader.chainId, hexToBytes(idHex), bodyHash, a.ts);
+    if (!sig.verify(hexToBytes(a.pk), msg, hexToBytes(a.sig))) throw deny();
+    if (!(await this.chain(() => this.o.reader.hasFullAccessKey(account, a.pk)))) throw deny();
+  }
+
+  // ------------------------------------------------------------------ grant material (owner)
+
+  /** `PUT /v1/grants/{id}/scope`: stores the scope and S2 vector once the on-chain grant exists with the same scope hash. */
+  async putScope(grantId: string, body: Uint8Array, auth: Auth): Promise<void> {
+    if (!isHex(grantId, 16)) throw new ReleaseError(400, "bad_request");
+    const scope = parseScope(body);
+    const grant = await this.chain(() => this.o.reader.grant(grantId));
+    const box = grant ? await this.chain(() => this.o.reader.box(grant.box_id)) : null;
+    if (!grant || !box) throw deny();
+    await this.checkAuth(box.owner, grantId, sha256(body), auth);
+    if (scopeHash(scope) !== grant.scope_hash) throw deny("scope_hash");
+    this.o.store.put({ grantId, boxId: grant.box_id, scope });
+  }
+
+  /** `DELETE /v1/grants/{id}`: fast revoke path; deletes the S2 vector and ends live sessions here. */
+  async deleteGrant(grantId: string, auth: Auth): Promise<void> {
+    if (!isHex(grantId, 16)) throw new ReleaseError(400, "bad_request");
+    const m = this.o.store.get(grantId);
+    const grant = await this.chain(() => this.o.reader.grant(grantId));
+    const box = grant ? await this.chain(() => this.o.reader.box(grant.box_id)) : null;
+    if (!m || !box) throw deny();
+    await this.checkAuth(box.owner, grantId, emptyBodyHash(), auth);
+    this.o.store.delete(grantId);
+    for (const s of this.sessions.values()) if (s.grantId === grantId) s.leaseExp = 0;
+  }
+
+  // ------------------------------------------------------------------ sessions (recipient), receipt first
+
+  /**
+   * Opens a session. Nothing is minted until `open_session` is FINAL on chain, its event has been seen and
+   * the session is readable at final ("no receipt, no key", spec 05 section 4).
+   */
+  async openSession(r: { grantId: string; sessionId: string; sessionPk: string; ts: number; sig: string }): Promise<{
+    token: string; lease_exp: number; head: string; seq: number; tx_hash: string;
+  }> {
+    if (!isHex(r.grantId, 16) || !isHex(r.sessionId, 16) || !isHex(r.sessionPk, 32) || !isHex(r.sig, 64) || !Number.isFinite(r.ts)) {
+      throw new ReleaseError(400, "bad_request");
+    }
+    const t0 = await this.now();
+    const bo = this.backoff.get(r.grantId);
+    if (bo && t0 < bo.until) throw new ReleaseError(429, "backoff");
+    if (!this.o.store.get(r.grantId)) throw deny();
+    const grant = await this.chain(() => this.o.reader.grant(r.grantId));
+    if (!grant) throw deny();
+    const valid = await this.chain(() => this.o.reader.grantValid(r.grantId));
+    if (!valid.valid) throw deny();
+    if (!grant.requester.startsWith("bearer:")) throw new ReleaseError(400, "unsupported_requester");
+    // Pre-check the recipient's signature so bad requests never cost relayer gas.
+    const msg = msgs.openMsg(this.o.reader.chainId, this.o.reader.contractId, hexToBytes(r.grantId), hexToBytes(r.sessionId), hexToBytes(r.sessionPk), r.ts);
+    if (!sig.verify(hexToBytes(grant.requester.slice("bearer:".length)), msg, hexToBytes(r.sig))) {
+      const n = (bo?.n ?? 0) + 1;
+      this.backoff.set(r.grantId, { n, until: t0 + Math.min(2 ** n * 1000, 300_000) });
+      throw deny();
+    }
+    // One active session per link.
+    for (const s of this.sessions.values()) {
+      if (s.grantId === r.grantId && !s.closed && s.leaseExp > t0) throw deny("active_session");
+    }
+    if (this.pending.has(r.grantId) || this.sessions.has(r.sessionId)) throw deny("active_session");
+    this.pending.add(r.grantId);
+    try {
+      let tx;
+      try {
+        tx = await this.o.relayer.openSession({ grantId: r.grantId, sessionId: r.sessionId, sessionPk: r.sessionPk, tsMs: r.ts, reqSig: r.sig });
+      } catch (e) {
+        if (e instanceof ChainUnavailable) throw new ReleaseError(503, "unavailable");
+        if (e instanceof ContractError) throw deny("rejected");
+        throw e;
+      }
+      const ev = tx.events.find((x) => x.event === "session_opened" && x.data.session_id === r.sessionId && x.data.grant_id === r.grantId);
+      if (!ev) throw deny("no_receipt");
+      // The receipt must be readable at final before any key can ever be released.
+      const onChain = await this.chain(() => this.o.reader.session(r.sessionId));
+      if (!onChain || onChain.grant_id !== r.grantId) throw deny("no_receipt");
+      const now = await this.now();
+      const maxLease = (await this.chain(() => this.o.reader.config())).max_lease_ms;
+      const token = randomBytes(32).toString("hex");
+      const s: Session = {
+        sessionId: r.sessionId, grantId: r.grantId, boxId: grant.box_id, sessionPk: hexToBytes(r.sessionPk),
+        leaseExp: Math.min(now + maxLease, grant.not_after_ms), openedAt: onChain.opened_at,
+        seq: Number(ev.data.seq), head: String(ev.data.head), commitment: String(ev.data.commitment), txHash: tx.txHash,
+        closed: false, log: [], logHead: LOG_GENESIS,
+      };
+      this.sessions.set(s.sessionId, s);
+      this.tokens.set(token, s.sessionId);
+      this.append(s, { t: now, session_id: s.sessionId, item_uid: "", seg: -1, action: "open" });
+      this.backoff.delete(r.grantId);
+      return { token, lease_exp: s.leaseExp, head: s.head, seq: s.seq, tx_hash: s.txHash };
+    } finally {
+      this.pending.delete(r.grantId);
+    }
+  }
+
+  private append(s: Session, e: LogEntry): void {
+    s.log.push(e);
+    s.logHead = logNext(s.logHead, e);
+  }
+
+  private async session(token: string, requireLease = true): Promise<{ s: Session; now: number }> {
+    const sid = typeof token === "string" ? this.tokens.get(token) : undefined;
+    const s = sid ? this.sessions.get(sid) : undefined;
+    if (!s || s.closed) throw deny();
+    const now = await this.now();
+    if (requireLease && now > s.leaseExp) throw deny("lease");
+    return { s, now };
+  }
+
+  /** Re-checks everything at final: receipt exists, grant live, epoch current, material still held. */
+  private async live(s: Session, now: number): Promise<{ grant: GrantView; scope: Scope }> {
+    const [grant, onChain] = await this.chain(() => Promise.all([this.o.reader.grant(s.grantId), this.o.reader.session(s.sessionId)]));
+    const box = grant ? await this.chain(() => this.o.reader.box(grant.box_id)) : null;
+    const m = this.o.store.get(s.grantId);
+    if (!grant || !onChain || !box || !m) throw deny();
+    if (grant.revoked_at !== null || now > grant.not_after_ms || grant.epoch !== box.key_epoch) throw deny();
+    return { grant, scope: m.scope };
+  }
+
+  /** `GET /v1/sessions/{sid}/keys`: S2 shares for the named segments, sealed to the session key. */
+  async release(token: string, item: string, segs: number[]): Promise<{ seg: number; sealed: string }[]> {
+    if (!isHex(item, 16) || !Array.isArray(segs) || segs.length === 0 || segs.length > 64 || !segs.every((x) => Number.isInteger(x) && x >= 0)) {
+      throw new ReleaseError(400, "bad_request");
+    }
+    const { s, now } = await this.session(token);
+    const { scope } = await this.live(s, now);
+    const it = scope.items.find((i) => i.item_uid === item);
+    const shares = segs.map((seg) => it?.segments.find((x) => x.s === seg));
+    if (shares.some((x) => !x)) throw deny();
+    const win = (this.releases.get(s.grantId) ?? []).filter((t) => now - t < 60_000);
+    if (win.length + segs.length > (this.o.segmentsPerMinute ?? 30)) throw new ReleaseError(429, "rate_limited");
+    this.releases.set(s.grantId, [...win, ...segs.map(() => now)]);
+    return segs.map((seg, i) => {
+      this.append(s, { t: now, session_id: s.sessionId, item_uid: item, seg, action: "release" });
+      return { seg, sealed: bytesToHex(seal.sealTo(s.sessionPk, hexToBytes((shares[i] as { s2: string }).s2))) };
+    });
+  }
+
+  /** `POST /v1/sessions/{sid}/renew`. */
+  async renew(token: string): Promise<{ lease_exp: number }> {
+    const { s, now } = await this.session(token);
+    const { grant } = await this.live(s, now);
+    const maxLease = (await this.chain(() => this.o.reader.config())).max_lease_ms;
+    s.leaseExp = Math.min(now + maxLease, grant.not_after_ms);
+    return { lease_exp: s.leaseExp };
+  }
+
+  /** `POST /v1/tickets`: a short-lived node read ticket for a blob inside the session's scope. */
+  async ticket(token: string, blobId: string): Promise<{ ticket: string; exp: number }> {
+    if (!isHex(blobId, 32)) throw new ReleaseError(400, "bad_request");
+    const { s, now } = await this.session(token);
+    const { scope } = await this.live(s, now);
+    if (!scope.items.some((i) => i.blob_id === blobId)) throw deny();
+    const blob = await this.chain(() => this.o.reader.blob(blobId));
+    if (!blob || blob.state !== "Active" || blob.box_id !== s.boxId) throw deny();
+    const exp = Math.min(s.leaseExp, now + (this.o.ticketMs ?? 60_000));
+    return { ticket: encodeTicket(signRsTicket(this.o.rsSeed, this.o.rsIdx, blobId, s.sessionId, exp)), exp };
+  }
+
+  /** `POST /v1/sessions/{sid}/close`: commits the signed page-level log root to the receipt chain. */
+  async close(token: string): Promise<{ log_root: string; tx_hash: string }> {
+    const { s, now } = await this.session(token, false);
+    const root = bytesToHex(s.logHead);
+    const closeSig = bytesToHex(sig.sign(this.o.rsSeed, msgs.closeMsg(this.o.reader.chainId, this.o.reader.contractId, hexToBytes(s.sessionId), s.logHead, now)));
+    s.closed = true;
+    try {
+      const tx = await this.o.relayer.closeSession({ sessionId: s.sessionId, logRoot: root, closedAtMs: now, rsIdx: this.o.rsIdx, rsSig: closeSig });
+      return { log_root: root, tx_hash: tx.txHash };
+    } catch (e) {
+      if (e instanceof ChainUnavailable) throw new ReleaseError(503, "unavailable");
+      throw new ReleaseError(502, "close_failed");
+    }
+  }
+
+  // ------------------------------------------------------------------ owner feed
+
+  /** `GET /v1/boxes/{id}/events`: receipt details and signed log summaries for the owner's own record. */
+  async boxEvents(boxId: string, auth: Auth): Promise<ReceiptRecord[]> {
+    if (!isHex(boxId, 16)) throw new ReleaseError(400, "bad_request");
+    const box = await this.chain(() => this.o.reader.box(boxId));
+    if (!box) throw deny();
+    await this.checkAuth(box.owner, boxId, authBody("box-events", hexToBytes(boxId)), auth);
+    return [...this.sessions.values()]
+      .filter((s) => s.boxId === boxId)
+      .sort((a, b) => a.seq - b.seq)
+      .map((s) => ({
+        seq: s.seq, grant_id: s.grantId, session_id: s.sessionId, commitment: s.commitment, head: s.head, opened_at: s.openedAt,
+        tx_hash: s.txHash, closed: s.closed, log: s.log, log_head: bytesToHex(s.logHead),
+        log_sig: bytesToHex(sig.sign(this.o.rsSeed, logHeadMsg(s.sessionId, s.logHead, s.log.length))),
+      }));
+  }
+
+  // ------------------------------------------------------------------ deals (spec 06 section 5)
+
+  /** `PUT /v1/deals/{id}/s2`: the seller leaves B2; RS returns a signed acknowledgement the buyer can verify. */
+  async putDealS2(dealId: string, b2Hex: string, auth: Auth): Promise<{ ack: string; s2_commit: string }> {
+    if (!isHex(dealId, 16) || !isHex(b2Hex, 32)) throw new ReleaseError(400, "bad_request");
+    const deal = await this.chain(() => this.o.reader.deal(dealId));
+    if (!deal) throw deny();
+    await this.checkAuth(deal.seller, dealId, authBody("deal-put", hexToBytes(b2Hex)), auth);
+    const commit = dealS2Commit(dealId, hexToBytes(b2Hex));
+    if (commit !== deal.s2_commit) throw deny("s2_commit");
+    this.o.store.putSecret(`deal-${dealId}`, hexToBytes(b2Hex));
+    return { ack: bytesToHex(sig.sign(this.o.rsSeed, dealAckMsg(dealId, commit))), s2_commit: commit };
+  }
+
+  /** `GET /v1/deals/{id}/key`: only after the deal is COMPLETED at final and only to the buyer. */
+  async getDealKey(dealId: string, buyerX25519Pk: string, auth: Auth): Promise<{ sealed: string }> {
+    if (!isHex(dealId, 16) || !isHex(buyerX25519Pk, 32)) throw new ReleaseError(400, "bad_request");
+    const deal = await this.chain(() => this.o.reader.deal(dealId));
+    if (!deal || deal.state !== "Completed") throw deny();
+    await this.checkAuth(deal.buyer, dealId, authBody("deal-key", hexToBytes(buyerX25519Pk)), auth);
+    const b2 = this.o.store.getSecret(`deal-${dealId}`);
+    if (!b2 || dealS2Commit(dealId, b2) !== deal.s2_commit) throw deny();
+    return { sealed: bytesToHex(seal.sealTo(hexToBytes(buyerX25519Pk), b2)) };
+  }
+
+  /** `GET /v1/pubkeys`. */
+  pubkeys(): { rs: string; rs_idx: number; relayer: string } {
+    return { rs: bytesToHex(this.publicKey), rs_idx: this.o.rsIdx, relayer: this.o.relayer.account };
+  }
+}
+
+function parseScope(body: Uint8Array): Scope {
+  let j: unknown;
+  try {
+    j = JSON.parse(new TextDecoder().decode(body));
+  } catch {
+    throw new ReleaseError(400, "bad_request");
+  }
+  const items = (j as { scope?: { items?: unknown } })?.scope?.items;
+  if (!Array.isArray(items) || items.length === 0 || items.length > 64) throw new ReleaseError(400, "bad_request");
+  let total = 0;
+  const out: Scope = { items: [] };
+  for (const it of items as Record<string, unknown>[]) {
+    const segs = it?.segments;
+    if (!isHex(it?.item_uid, 16) || !isHex(it?.blob_id, 32) || !Array.isArray(segs) || segs.length === 0) throw new ReleaseError(400, "bad_request");
+    total += segs.length;
+    if (total > 4096) throw new ReleaseError(400, "bad_request");
+    const seen = new Set<number>();
+    const segments = (segs as Record<string, unknown>[]).map((x) => {
+      if (!Number.isInteger(x?.s) || (x.s as number) < 0 || !isHex(x?.s2, 32) || seen.has(x.s as number)) throw new ReleaseError(400, "bad_request");
+      seen.add(x.s as number);
+      return { s: x.s as number, s2: x.s2 as string };
+    });
+    out.items.push({ item_uid: it.item_uid as string, blob_id: it.blob_id as string, segments });
+  }
+  return out;
+}
