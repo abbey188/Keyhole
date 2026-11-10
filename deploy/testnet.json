@@ -10,7 +10,9 @@
     "file": "target/keyhole_opt.wasm",
     "bytes": 359358,
     "sha256": "59d0402a8e787b5df44fb15d25f9adfa10b69d669492779fb16b4deb7ec5b6e2",
-    "near_code_hash_base58": "73bTrdrc22BP4xrDwWoT3h92ZKKsHULn758Y12xCGPzy"
+    "near_code_hash_base58": "73bTrdrc22BP4xrDwWoT3h92ZKKsHULn758Y12xCGPzy",
+    "sourceCommit": "277ae3474fba14da3956b4cc35d8788cdc4146d2",
+    "reproduce": "git checkout 277ae3474fba14da3956b4cc35d8788cdc4146d2 && pnpm install && ./scripts/build-wasm.sh  (prints the same opt sha256)"
   },
   "config": {
     "chain_id": "testnet",

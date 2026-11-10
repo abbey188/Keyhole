@@ -21,6 +21,7 @@ Everything below ran against a real deployment; raw records are in `deploy/` (`t
 |---|---|
 | Contract account | [`keyhole-8ee967.testnet`](https://explorer.testnet.near.org/accounts/keyhole-8ee967.testnet) |
 | Wasm (wasm-opt output, 359,358 bytes) sha256 | `59d0402a8e787b5df44fb15d25f9adfa10b69d669492779fb16b4deb7ec5b6e2` |
+| Source commit and reproduction | `277ae3474fba14da3956b4cc35d8788cdc4146d2`; building that commit with `./scripts/build-wasm.sh` reproduces this sha256 exactly (checked 2026-11-10 in a clean worktree). A later checkout gives a different hash because the protocol crate gained unused code. |
 | NEAR code hash (base58, read from chain) | `73bTrdrc22BP4xrDwWoT3h92ZKKsHULn758Y12xCGPzy` (matches the sha256 above) |
 | Deploy + `new(config)` in ONE transaction | [3PhHVXaGkR…](https://explorer.testnet.near.org/transactions/3PhHVXaGkR9Zbrsjda7w5bxcRqcSX3wZ1qyz5gCRBavZ) (28.1 Tgas, 3958 ms) |
 | Launch: delete every access key | [R67wmr4SCz…](https://explorer.testnet.near.org/transactions/R67wmr4SCzw1iU84wPv2kXF5nqhyruLPiJT8439duQ7) (1 key deleted) |
