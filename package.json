@@ -1,0 +1,12 @@
+{
+  "name": "keyhole",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Keyhole: private deal boxes on NEAR",
+  "license": "MIT OR Apache-2.0",
+  "scripts": {
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "packageManager": "pnpm@9"
+}
