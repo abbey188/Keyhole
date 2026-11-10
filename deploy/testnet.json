@@ -1,6 +1,6 @@
 {
   "network": "testnet",
-  "contract": "keyhole-964348.testnet",
+  "contract": "keyhole-8ee967.testnet",
   "accounts": {
     "relayer": "kh-relayer-964348.testnet",
     "owner": "kh-owner-964348.testnet",
@@ -8,9 +8,9 @@
   },
   "wasm": {
     "file": "target/keyhole_opt.wasm",
-    "bytes": 372062,
-    "sha256": "a4b6dfa253d748aa6a9b2e8f7f70ab75db61a5b8b12e399c3d7bfa843f586e9c",
-    "near_code_hash_base58": "C5ybcTGUq5udzKZdUwc2J374gYBucNPWun7T49DRJUWP"
+    "bytes": 359358,
+    "sha256": "59d0402a8e787b5df44fb15d25f9adfa10b69d669492779fb16b4deb7ec5b6e2",
+    "near_code_hash_base58": "73bTrdrc22BP4xrDwWoT3h92ZKKsHULn758Y12xCGPzy"
   },
   "config": {
     "chain_id": "testnet",
@@ -38,17 +38,17 @@
     ]
   },
   "deploy": {
-    "txHash": "AL4Nb6qrg3WCEXyVibx4DUNTbMUhjHTGZd9pBGF4GGuf",
-    "link": "https://explorer.testnet.near.org/transactions/AL4Nb6qrg3WCEXyVibx4DUNTbMUhjHTGZd9pBGF4GGuf",
-    "gasBurnt": 29048108986722,
-    "submitToFinalMs": 3637
+    "txHash": "3PhHVXaGkR9Zbrsjda7w5bxcRqcSX3wZ1qyz5gCRBavZ",
+    "link": "https://explorer.testnet.near.org/transactions/3PhHVXaGkR9Zbrsjda7w5bxcRqcSX3wZ1qyz5gCRBavZ",
+    "gasBurnt": 28129663563170,
+    "submitToFinalMs": 3958
   },
-  "storageUsageBytes": 372578,
+  "storageUsageBytes": 359874,
   "launch": {
-    "txHash": "62eR2VkVgfxk6Vra5BoqaDZ4YFnM7o2Fsdz4Dma8AtaX",
-    "link": "https://explorer.testnet.near.org/transactions/62eR2VkVgfxk6Vra5BoqaDZ4YFnM7o2Fsdz4Dma8AtaX",
+    "txHash": "R67wmr4SCzw1iU84wPv2kXF5nqhyruLPiJT8439duQ7",
+    "link": "https://explorer.testnet.near.org/transactions/R67wmr4SCzw1iU84wPv2kXF5nqhyruLPiJT8439duQ7",
     "keysDeleted": 1,
     "gasBurnt": 629194812500,
-    "submitToFinalMs": 3336
+    "submitToFinalMs": 3164
   }
 }

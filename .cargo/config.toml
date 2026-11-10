@@ -1,0 +1,4 @@
+# near-sdk-env only compiles its real host calls (panic_utf8, ...) when `--cfg near` is set on wasm32.
+# Without it every panic in the contract becomes a bare `unreachable` trap with no message.
+[target.wasm32-unknown-unknown]
+rustflags = ["--cfg", "near"]

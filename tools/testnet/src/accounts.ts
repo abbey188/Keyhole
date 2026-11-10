@@ -1,7 +1,9 @@
 // Step 2a: creates the testnet accounts through the public helper (testnet faucet) and writes their keys to .env.
 import { KeyPair } from "near-api-js";
 import { randomBytes } from "node:crypto";
-import { account, accountLink, fmtNear, provider, readEnv, writeEnv } from "./lib.js";
+import { readdirSync, renameSync } from "node:fs";
+import { join } from "node:path";
+import { DEPLOY_DIR, account, accountLink, fmtNear, provider, readEnv, readRecord, writeEnv } from "./lib.js";
 
 const HELPER = process.env.KEYHOLE_HELPER ?? "https://helper.testnet.near.org";
 
@@ -15,6 +17,18 @@ async function create(id: string, pub: string): Promise<void> {
 }
 
 const env = readEnv();
+if (process.argv.includes("--new-contract")) {
+  // A launched contract has no keys, so a new build needs a new account. The old record is archived.
+  const old = readRecord();
+  const n = Object.keys(old).length ? (readdirSync(DEPLOY_DIR).filter((f) => f.startsWith("testnet-v")).length + 1) : 0;
+  if (n) renameSync(join(DEPLOY_DIR, "testnet.json"), join(DEPLOY_DIR, `testnet-v${n}-superseded.json`));
+  const id = `keyhole-${randomBytes(3).toString("hex")}.testnet`;
+  const kp = KeyPair.fromRandom("ed25519");
+  await create(id, kp.getPublicKey().toString());
+  writeEnv({ KEYHOLE_CONTRACT: id, DEPLOYER_PRIVATE_KEY: kp.toString() });
+  console.log(`created contract account ${id}  ${accountLink(id)}${n ? `  (previous record archived as testnet-v${n}-superseded.json)` : ""}`);
+  process.exit(0);
+}
 if (env.KEYHOLE_CONTRACT) {
   console.log("accounts already exist in .env; nothing to do");
 } else {

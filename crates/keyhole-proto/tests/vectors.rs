@@ -146,7 +146,10 @@ fn vectors_match_committed_file() {
         return;
     }
     let committed = std::fs::read_to_string(path()).expect("vectors file missing: run with KEYHOLE_WRITE_VECTORS=1");
-    assert_eq!(committed, text, "protocol bytes changed: regenerate vectors only if the change is intended");
+    // Compare parsed values, not text: with `cargo test --workspace` another crate turns on serde_json's
+    // `preserve_order`, which changes key order in the serialized text but not the content.
+    let committed_v: serde_json::Value = serde_json::from_str(&committed).expect("committed vectors are valid JSON");
+    assert_eq!(committed_v, v, "protocol bytes changed: regenerate vectors only if the change is intended");
 }
 
 #[test]
