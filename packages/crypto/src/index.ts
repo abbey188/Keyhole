@@ -10,3 +10,4 @@ export * as seal from "./seal.js";
 export * as sig from "./sig.js";
 export * as msgs from "./msgs.js";
 export * as receipt from "./receipt.js";
+export * as rs from "./rs.js";

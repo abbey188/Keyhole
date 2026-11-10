@@ -11,6 +11,7 @@ pub mod domain;
 pub mod merkle;
 pub mod msgs;
 pub mod receipt;
+pub mod release;
 
 #[cfg(feature = "crypto")]
 pub mod aead;

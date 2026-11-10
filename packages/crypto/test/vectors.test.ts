@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { aead, bytesToHex as hx, hexToBytes as unhex, kdf, merkle, msgs, padme, receipt, seal, sha256, sig, split, utf8 } from "../src/index.js";
+import { aead, bytesToHex as hx, hexToBytes as unhex, kdf, merkle, msgs, padme, receipt, rs, seal, sha256, sig, split, utf8 } from "../src/index.js";
 
 const V = JSON.parse(readFileSync(new URL("../../../vectors/keyhole-v1.json", import.meta.url), "utf8"));
 const h = (s: string) => unhex(s);
@@ -198,6 +198,36 @@ describe("properties", () => {
     expect(receipt.recomputeChain(edited)).not.toEqual(head);
     expect(receipt.recomputeChain(cs.filter((_, i) => i !== 3))).not.toEqual(head);
     expect(receipt.recomputeChain([cs[1] as Uint8Array, cs[0] as Uint8Array, ...cs.slice(2)])).not.toEqual(head);
+  });
+
+  it("release-service formats: scope hash, deal commitment and ack, auth bodies, log chain", () => {
+    const R = V.release;
+    const items: rs.Scope = {
+      items: [
+        { item_uid: hx(new Uint8Array(16).fill(0x22)), blob_id: hx(new Uint8Array(32).fill(0x32)), segments: [4, 1, 2].map((s) => ({ s, s2: "00".repeat(32) })) },
+        { item_uid: hx(new Uint8Array(16).fill(0x21)), blob_id: hx(new Uint8Array(32).fill(0x31)), segments: [{ s: 0, s2: "00".repeat(32) }] },
+      ],
+    };
+    expect(new TextDecoder().decode(rs.canonicalScope(items))).toBe(R.scope_canonical);
+    expect(rs.scopeHash(items)).toBe(R.scope_hash);
+    const b2 = h(R.deal_b2);
+    const commit = rs.dealS2Commit(R.deal_id, b2);
+    expect(commit).toBe(R.deal_s2_commit);
+    expect(hx(rs.dealAckMsg(R.deal_id, commit))).toBe(R.deal_ack_msg);
+    expect(hx(rs.authBody("deal-put", b2))).toBe(R.auth_body_deal_put);
+    expect(hx(rs.authBody("deal-key", new Uint8Array(32).map((_, i) => (0x43 + i) & 0xff)))).toBe(R.auth_body_deal_key);
+    expect(hx(rs.authBody("box-events", new Uint8Array(16).fill(0xb0)))).toBe(R.auth_body_box_events);
+    expect(hx(rs.emptyBodyHash())).toBe(R.empty_body_hash);
+    const sid = hx(new Uint8Array(16).fill(0x51));
+    const e1 = { t: 1_700_000_000_000, session_id: sid, item_uid: "", seg: -1, action: "open" };
+    const e2 = { t: 1_700_000_001_000, session_id: sid, item_uid: hx(new Uint8Array(16).fill(0x21)), seg: 0, action: "release" };
+    expect(rs.logEntryBytes(e1)).toBe(R.log_entry_1);
+    expect(rs.logEntryBytes(e2)).toBe(R.log_entry_2);
+    const head1 = rs.logNext(rs.LOG_GENESIS, e1);
+    const head2 = rs.logNext(head1, e2);
+    expect(hx(head1)).toBe(R.log_head_1);
+    expect(hx(head2)).toBe(R.log_head_2);
+    expect(hx(rs.logHeadMsg(sid, head2, 2))).toBe(R.log_head_msg);
   });
 
   it("ed25519 RFC 8032 test vector 1", () => {
