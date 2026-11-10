@@ -117,6 +117,10 @@ describe("cross-language vectors (Rust is the reference)", () => {
   });
 });
 
+const flip = (a: Uint8Array, i: number, bit = 0) => {
+  a[i] = (a[i] as number) ^ (1 << bit);
+};
+
 describe("properties", () => {
   const rnd = (n: number) => crypto.getRandomValues(new Uint8Array(n));
 
@@ -128,7 +132,7 @@ describe("properties", () => {
       const u = aead.seal(key, pt, aad);
       expect(aead.open(key, u, aad)).toEqual(pt);
       const t = u.slice();
-      t[Math.floor(Math.random() * t.length)] ^= 1 << Math.floor(Math.random() * 8);
+      flip(t, Math.floor(Math.random() * t.length), Math.floor(Math.random() * 8));
       expect(() => aead.open(key, t, aad)).toThrow("invalid");
     }
   });
@@ -165,7 +169,7 @@ describe("properties", () => {
         expect(merkle.verifyInclusion(leaves[i] as Uint8Array, i, n, p, r)).toBe(true);
         if (p.length > 0) {
           const bad = p.map((x) => x.slice());
-          (bad[0] as Uint8Array)[0] ^= 1;
+          flip(bad[0] as Uint8Array, 0);
           expect(merkle.verifyInclusion(leaves[i] as Uint8Array, i, n, bad, r)).toBe(false);
         }
         expect(merkle.verifyInclusion(leaves[(i + 1) % n] as Uint8Array, i, n, p, r)).toBe(n === 1);
@@ -181,7 +185,7 @@ describe("properties", () => {
     expect(() => seal.openSealed(rnd(32), s)).toThrow();
     expect(() => seal.openSealed(sk, s, utf8("other"))).toThrow();
     const t = s.slice();
-    t[t.length - 1] ^= 1;
+    flip(t, t.length - 1);
     expect(() => seal.openSealed(sk, t)).toThrow();
     expect(() => seal.sealTo(new Uint8Array(32), utf8("x"))).toThrow();
   });
@@ -190,7 +194,7 @@ describe("properties", () => {
     const cs = Array.from({ length: 5 }, (_, i) => new Uint8Array(32).fill(i));
     const head = receipt.recomputeChain(cs);
     const edited = cs.map((c) => c.slice());
-    (edited[2] as Uint8Array)[0] ^= 1;
+    flip(edited[2] as Uint8Array, 0);
     expect(receipt.recomputeChain(edited)).not.toEqual(head);
     expect(receipt.recomputeChain(cs.filter((_, i) => i !== 3))).not.toEqual(head);
     expect(receipt.recomputeChain([cs[1] as Uint8Array, cs[0] as Uint8Array, ...cs.slice(2)])).not.toEqual(head);
