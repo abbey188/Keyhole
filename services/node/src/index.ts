@@ -3,5 +3,8 @@ export type { StorageNodeOptions, LeafPiece } from "./node.js";
 export { MemoryStore, FsStore } from "./store.js";
 export type { LeafStore, BlobMeta } from "./store.js";
 export { createNodeServer } from "./http.js";
+export { startNode } from "./app.js";
+export type { RunningNode } from "./app.js";
+export * from "./config.js";
 export { signRsTicket, signOwnerTicket, encodeTicket, decodeTicket, OWNER_SESSION } from "./ticket.js";
 export type { Ticket } from "./ticket.js";

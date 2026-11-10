@@ -79,5 +79,6 @@ export interface DealApi {
   fundDeal(dealId: string, priceYocto: string): Promise<TxResult>;
   cancelDeal(dealId: string): Promise<TxResult>;
   completeDeal(dealId: string): Promise<TxResult>;
+  expireDeal(dealId: string): Promise<TxResult>;
   claim(): Promise<TxResult>;
 }

@@ -148,6 +148,7 @@ export class NearWriter implements ChainWriter, DealApi {
   fundDeal = (dealId: string, priceYocto: string) => this.call("fund_deal", { deal_id: dealId }, BigInt(priceYocto));
   cancelDeal = (dealId: string) => this.call("cancel_deal", { deal_id: dealId });
   completeDeal = (dealId: string) => this.call("complete_deal", { deal_id: dealId });
+  expireDeal = (dealId: string) => this.call("expire_deal", { deal_id: dealId });
   claim = () => this.call("claim", {});
   retireBlob = (blobId: string) => this.call("retire_blob", { blob_id: blobId });
   commitManifest = (a: { boxId: string; manifestBlob: string; seq: number }) =>

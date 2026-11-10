@@ -5,7 +5,7 @@
 // It adds what a unit test needs and a real chain cannot offer: held finality, outages, a controllable clock.
 import { bytesToHex, hexToBytes, merkle, msgs, receipt, sig } from "@keyhole/crypto";
 import { ChainUnavailable, ContractError } from "./chain.js";
-import type { ChainReader, ChainWriter } from "./chain.js";
+import type { ChainReader, ChainWriter, DealApi, DealArgs } from "./chain.js";
 import type {
   BlobView, BoxView, ConfigView, DealView, GrantArgs, GrantView, KeyholeEvent, SessionView, TxResult, ValidView,
 } from "./types.js";
@@ -200,7 +200,7 @@ export class FakeChain implements ChainReader {
   // ------------------------------------------------------------------ writers
 
   /** A writer that acts as `account` (the contract's predecessor). */
-  writer(account: string): ChainWriter {
+  writer(account: string): ChainWriter & DealApi {
     return new FakeWriter(this, account);
   }
 
@@ -230,7 +230,7 @@ export class FakeChain implements ChainReader {
   }
 }
 
-class FakeWriter implements ChainWriter {
+class FakeWriter implements ChainWriter, DealApi {
   constructor(private readonly c: FakeChain, readonly account: string) {}
 
   private owned(w: World, boxId: string): BoxRec {
@@ -452,6 +452,102 @@ class FakeWriter implements ChainWriter {
       requireC(b.manifest_blob !== blobId, "Replace the manifest before retiring its blob");
       r.state = "Retired";
       ev.push({ event: "blob_retired", data: { box_id: r.box_id, blob_id: blobId, reg_id: r.reg_id } });
+    });
+  }
+
+  // ------------------------------------------------------------------ deals (spec 06; NEAR escrow only)
+  // Money is not modelled (no balances); the deal state machine and its guards are.
+
+  private endCancelled(w: World, id: string, ev: KeyholeEvent[]): void {
+    const d = w.deals.get(id)!;
+    requireC(d.state === "Ready" || d.state === "Funded", "Deal can no longer be cancelled");
+    d.state = "Cancelled";
+    d.funded = "0";
+    const b = w.boxes.get(d.box_id);
+    if (b && b.in_deal === id) b.in_deal = null;
+    ev.push({ event: "deal_cancelled", data: { deal_id: id, by: this.account } });
+  }
+
+  createDeal(a: DealArgs) {
+    return this.c._exec(this.account, "create_deal", (w, ev) => {
+      requireC(!w.deals.has(a.dealId), "Deal id already used");
+      requireC(a.offerExpiresAtMs > w.timeMs, "Offer must expire in the future");
+      const cfg = this.c._cfg();
+      requireC(a.waitingMs >= cfg.min_wait_ms && a.waitingMs <= cfg.max_wait_ms, "Waiting period out of range");
+      requireC(a.buyer !== this.account, "Buyer and seller must differ");
+      const env = w.blobs.get(a.envelopeBlob);
+      requireC(env, "Unknown envelope blob");
+      requireC(env.box_id === a.boxId, "Envelope blob belongs to another box");
+      requireC(env.state === "Complete" || env.state === "Active", "Envelope blob must be certified");
+      const b = this.owned(w, a.boxId);
+      requireC(b.kind === "Handover", "About me boxes cannot be handed over");
+      requireC(b.in_deal === null, "Box is already in a deal");
+      requireC(b.manifest_blob !== null, "Box has no manifest yet");
+      b.in_deal = a.dealId;
+      w.deals.set(a.dealId, {
+        deal_id: a.dealId, box_id: a.boxId, seller: this.account, buyer: a.buyer, price: a.priceYocto, state: "Ready",
+        created_at: w.timeMs, offer_expires_at: a.offerExpiresAtMs, waiting_ms: a.waitingMs, waiting_until: null,
+        manifest_blob: b.manifest_blob, manifest_seq: b.manifest_seq, bmk_commit: a.bmkCommit, envelope_blob: a.envelopeBlob,
+        s2_commit: a.s2Commit, funded: "0",
+      });
+      ev.push({ event: "deal_created", data: { deal_id: a.dealId, box_id: a.boxId, seller: this.account, buyer: a.buyer, price: a.priceYocto } });
+    });
+  }
+
+  fundDeal(dealId: string, priceYocto: string) {
+    return this.c._exec(this.account, "fund_deal", (w, ev) => {
+      const d = w.deals.get(dealId);
+      requireC(d, "Unknown deal");
+      requireC(this.account === d.buyer, "Only the buyer can fund this deal");
+      requireC(d.state === "Ready", "Deal is not awaiting funding");
+      requireC(w.timeMs <= d.offer_expires_at, "Offer has expired");
+      requireC(priceYocto === d.price, "Attach exactly the price");
+      d.state = "Funded";
+      d.funded = d.price;
+      d.waiting_until = w.timeMs + d.waiting_ms;
+      ev.push({ event: "deal_funded", data: { deal_id: dealId, waiting_until: d.waiting_until } });
+    });
+  }
+
+  cancelDeal(dealId: string) {
+    return this.c._exec(this.account, "cancel_deal", (w, ev) => {
+      const d = w.deals.get(dealId);
+      requireC(d, "Unknown deal");
+      requireC(this.account === d.seller || this.account === d.buyer, "Only the seller or the buyer can cancel");
+      this.endCancelled(w, dealId, ev);
+    });
+  }
+
+  expireDeal(dealId: string) {
+    return this.c._exec(this.account, "expire_deal", (w, ev) => {
+      const d = w.deals.get(dealId);
+      requireC(d, "Unknown deal");
+      const expired = d.state === "Ready" ? w.timeMs > d.offer_expires_at : d.state === "Funded" ? w.timeMs > (d.waiting_until ?? 0) + 7 * DAY_MS : false;
+      requireC(expired, "Deal has not expired");
+      this.endCancelled(w, dealId, ev);
+    });
+  }
+
+  completeDeal(dealId: string) {
+    return this.c._exec(this.account, "complete_deal", (w, ev) => {
+      const d = w.deals.get(dealId);
+      requireC(d, "Unknown deal");
+      requireC(d.state === "Funded", "Deal is not funded");
+      requireC(w.timeMs >= (d.waiting_until ?? Number.MAX_SAFE_INTEGER), "Waiting period has not passed");
+      d.state = "Completed";
+      d.funded = "0";
+      const b = w.boxes.get(d.box_id)!;
+      b.owner = d.buyer;
+      b.key_epoch += 1;
+      b.in_deal = null;
+      b.wrapped_bmk = "";
+      ev.push({ event: "deal_completed", data: { deal_id: dealId, box_id: d.box_id, new_epoch: b.key_epoch } });
+    });
+  }
+
+  claim() {
+    return this.c._exec(this.account, "claim", () => {
+      requireC(false, "Nothing to claim"); // payouts never fail in the mock, so nothing is ever claimable
     });
   }
 }

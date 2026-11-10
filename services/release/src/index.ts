@@ -1,6 +1,10 @@
 export { ReleaseService, ReleaseError } from "./service.js";
 export type { ReleaseOptions, Auth, ReceiptRecord } from "./service.js";
 export { createReleaseServer } from "./http.js";
+export { startRelease } from "./app.js";
+export type { RunningRelease } from "./app.js";
+export { loadReleaseConfig, ConfigError } from "./config.js";
+export type { ReleaseConfig } from "./config.js";
 export { MemoryGrantStore, FsGrantStore } from "./store.js";
 export type { GrantStore, GrantMaterial } from "./store.js";
 export * from "./formats.js";

@@ -5,4 +5,6 @@ export type { RpcReaderOptions, FetchLike } from "./rpc.js";
 export { NearWriter, parseEvents, failureMessage, gasBurnt } from "./near.js";
 export type { TxMeasure, NearWriterOptions } from "./near.js";
 export { FakeChain } from "./fake.js";
+export { runScenario } from "./conformance.js";
+export type { ConformanceEnv, TraceEntry } from "./conformance.js";
 export type { FakeChainOptions } from "./fake.js";
