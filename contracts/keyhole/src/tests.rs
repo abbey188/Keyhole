@@ -44,7 +44,7 @@ pub(crate) fn cfg() -> ConfigArgs {
         reg_window_ms: HOUR,
         retention_ms: 7 * 24 * HOUR,
         withdraw_delay_ms: 60_000,
-        per_session_stake: near_sdk::json_types::U128(NEAR / 1000),
+        per_session_stake: near_sdk::json_types::U128(NEAR / 500),
         rate_yocto_per_mib_day: near_sdk::json_types::U128(1_000_000_000_000_000_000),
         max_blob_bytes: 256 * 1024 * 1024,
         node_accounts: vec![acct("node1.testnet")],
@@ -643,4 +643,85 @@ fn close_unknown_session_rejected() {
     let (s, r, at, idx, sg) = close_args(1, 0x33, T0 + 5000, &RS_SEED);
     set("relayer.testnet", 0, T0 + 5000);
     c.close_session(s, r, at, idx, sg);
+}
+
+// ---------------------------------------------------------------- storage paid by its user (review S1, S4)
+
+fn transfers() -> Vec<u128> {
+    get_created_receipts()
+        .into_iter()
+        .flat_map(|r| r.actions.into_iter())
+        .filter_map(|a| match a {
+            near_sdk::mock::MockAction::Transfer { deposit, .. } => Some(deposit.as_yoctonear()),
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn deleting_a_grant_keeps_the_stake_of_every_opened_session() {
+    let mut c = with_grant(); // 3 sessions prepaid
+    let stake = NEAR / 500;
+    let deposit = c.grants.get(&[1u8; 16]).unwrap().deposit;
+    assert!(open_at(&mut c, 1, 0x51, &REQ_SEED, T0 + 1000, T0 + 1000));
+    assert!(open_at(&mut c, 1, 0x52, &REQ_SEED, T0 + 2000, T0 + 2000));
+    set("anyone.testnet", 0, T0 + 2 * HOUR + 7 * 24 * HOUR + 1);
+    let _ = c.delete_grant(hex16(1));
+    // two sessions were opened: their stakes stay; the unused one and the record's storage come back
+    assert_eq!(transfers(), vec![deposit - 2 * stake]);
+    // the session records are still there (they are the receipts)
+    assert!(c.get_session(hex16(0x51)).is_some());
+}
+
+#[test]
+fn an_unused_grant_is_refunded_in_full() {
+    let mut c = with_grant();
+    let deposit = c.grants.get(&[1u8; 16]).unwrap().deposit;
+    set("anyone.testnet", 0, T0 + 2 * HOUR + 7 * 24 * HOUR + 1);
+    let _ = c.delete_grant(hex16(1));
+    assert_eq!(transfers(), vec![deposit]);
+}
+
+#[test]
+fn the_session_stake_covers_the_bytes_a_session_and_its_close_use() {
+    let mut c = with_grant();
+    c.grants.flush();
+    c.boxes.flush();
+    set("relayer.testnet", 0, T0 + 1000);
+    let before = env::storage_usage();
+    assert!(open_at(&mut c, 1, 0x51, &REQ_SEED, T0 + 1000, T0 + 1000));
+    c.sessions.flush();
+    c.grants.flush();
+    c.boxes.flush();
+    let used = (env::storage_usage() - before) as u128;
+    // a close adds an Option payload of 8 + 32 bytes
+    assert!(used + 41 <= SESSION_STORAGE_BYTES, "session uses {used} bytes");
+    assert!(c.config.per_session_stake >= env::storage_byte_cost().as_yoctonear() * SESSION_STORAGE_BYTES);
+}
+
+#[test]
+#[should_panic(expected = "per_session_stake does not cover")]
+fn a_stake_too_small_for_a_session_record_is_refused_at_init() {
+    set("deployer.testnet", 0, T0);
+    let mut cfg = cfg();
+    cfg.per_session_stake = near_sdk::json_types::U128(NEAR / 1000);
+    Keyhole::new(cfg);
+}
+
+#[test]
+#[should_panic(expected = "Attach at least")]
+fn growing_the_wrapped_key_needs_a_deposit() {
+    let mut c = with_box(); // 3 bytes
+    set("alice.testnet", 0, T0 + 1);
+    c.set_wrapped_bmk(hex16(1), vec![7u8; 100].into());
+}
+
+#[test]
+fn growing_the_wrapped_key_with_a_deposit_adds_to_the_box_deposit() {
+    let mut c = with_box();
+    let d0 = c.boxes.get(&[1u8; 16]).unwrap().deposit;
+    set("alice.testnet", NEAR / 100, T0 + 1);
+    c.set_wrapped_bmk(hex16(1), vec![7u8; 100].into());
+    let d1 = c.boxes.get(&[1u8; 16]).unwrap().deposit;
+    assert_eq!(d1 - d0, 97 * env::storage_byte_cost().as_yoctonear());
 }

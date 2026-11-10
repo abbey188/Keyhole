@@ -26,6 +26,10 @@ pub struct DealArgs {
     /// Blob holding the key envelope sealed to the buyer (registered and certified beforehand).
     pub envelope_blob: String,
     pub s2_commit: String,
+    /// Index of the release-service key that signed `rs_ack`.
+    pub rs_idx: u8,
+    /// Release service's signature over `deal_ack_msg(deal_id, s2_commit)`: it holds the second key half.
+    pub rs_ack: String,
 }
 
 impl Keyhole {
@@ -98,6 +102,11 @@ impl Keyhole {
         );
         let seller = env::predecessor_account_id();
         require!(deal.buyer != seller, "Buyer and seller must differ");
+        // The release service must already hold the key half this offer commits to; otherwise a seller could be
+        // paid for a box whose key nobody can release.
+        let rs_pk = *self.config.rs_keys.get(deal.rs_idx as usize).unwrap_or_else(|| env::panic_str("Unknown release service key"));
+        let ack = keyhole_proto::release::deal_ack_msg(&did, &hash32(&deal.s2_commit));
+        require!(env::ed25519_verify(&hash64(&deal.rs_ack), &ack, &rs_pk), "Release service acknowledgement is not valid");
         let env_id = hash32(&deal.envelope_blob);
         let envelope = self.blobs.get(&env_id).unwrap_or_else(|| env::panic_str("Unknown envelope blob"));
         require!(envelope.box_id == bid, "Envelope blob belongs to another box");

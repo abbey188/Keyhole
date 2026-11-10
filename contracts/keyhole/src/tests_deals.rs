@@ -32,6 +32,10 @@ fn ready() -> Keyhole {
     setup(Kind::Handover, true)
 }
 
+fn ack_for(deal: u8, commit: u8) -> String {
+    hex::encode(keyhole_proto::sig::sign(&RS_SEED, &keyhole_proto::release::deal_ack_msg(&[deal; 16], &[commit; 32])))
+}
+
 fn args(deal: u8, buyer: &str, price: u128, waiting: u64, expires: u64) -> DealArgs {
     DealArgs {
         deal_id: hex16(deal),
@@ -43,6 +47,8 @@ fn args(deal: u8, buyer: &str, price: u128, waiting: u64, expires: u64) -> DealA
         bmk_commit: hex32(0xc1),
         envelope_blob: hex32(8),
         s2_commit: hex32(0xc2),
+        rs_idx: 0,
+        rs_ack: ack_for(deal, 0xc2),
     }
 }
 const T1: u64 = T0 + 1000;
@@ -379,7 +385,7 @@ fn free_handover_pays_nothing() {
 fn new_owner_controls_the_box_and_old_owner_does_not() {
     let mut c = funded(PRICE);
     complete_at(&mut c, T1 + 100 + WAIT);
-    set("bob.testnet", 0, T1 + 200_000);
+    set("bob.testnet", NEAR / 100, T1 + 200_000);
     c.set_wrapped_bmk(hex16(1), vec![4, 5].into());
     assert_eq!(c.get_box(hex16(1)).unwrap().wrapped_bmk.0, vec![4, 5]);
 }
@@ -597,4 +603,46 @@ fn active_deal_cannot_be_deleted() {
     let mut c = funded(PRICE);
     set("anyone.testnet", 0, T1 + 10_000_000_000);
     c.delete_deal(hex16(1));
+}
+
+// ---------------------------------------------------------------- release-service acknowledgement (review S2)
+
+#[test]
+#[should_panic(expected = "Release service acknowledgement is not valid")]
+fn offer_without_a_valid_acknowledgement_is_rejected() {
+    let mut c = setup(Kind::Handover, true);
+    set("alice.testnet", NEAR / 10, T1);
+    let mut a = args(1, "bob.testnet", PRICE, WAIT, T1 + HOUR);
+    a.rs_ack = hex::encode([0u8; 64]);
+    c.create_deal(a);
+}
+
+#[test]
+#[should_panic(expected = "Release service acknowledgement is not valid")]
+fn acknowledgement_for_another_deal_or_commitment_is_rejected() {
+    let mut c = setup(Kind::Handover, true);
+    set("alice.testnet", NEAR / 10, T1);
+    let mut a = args(1, "bob.testnet", PRICE, WAIT, T1 + HOUR);
+    a.rs_ack = ack_for(2, 0xc2); // signed for deal 2
+    c.create_deal(a);
+}
+
+#[test]
+#[should_panic(expected = "Release service acknowledgement is not valid")]
+fn acknowledgement_signed_by_someone_else_is_rejected() {
+    let mut c = setup(Kind::Handover, true);
+    set("alice.testnet", NEAR / 10, T1);
+    let mut a = args(1, "bob.testnet", PRICE, WAIT, T1 + HOUR);
+    a.rs_ack = hex::encode(keyhole_proto::sig::sign(&[9u8; 32], &keyhole_proto::release::deal_ack_msg(&[1u8; 16], &[0xc2; 32])));
+    c.create_deal(a);
+}
+
+#[test]
+#[should_panic(expected = "Unknown release service key")]
+fn acknowledgement_with_an_unknown_key_index_is_rejected() {
+    let mut c = setup(Kind::Handover, true);
+    set("alice.testnet", NEAR / 10, T1);
+    let mut a = args(1, "bob.testnet", PRICE, WAIT, T1 + HOUR);
+    a.rs_idx = 4;
+    c.create_deal(a);
 }

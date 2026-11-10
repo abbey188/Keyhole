@@ -127,13 +127,21 @@ impl Keyhole {
         emit::box_created(&box_id, &format!("{kind:?}"));
     }
 
-    /// Replaces the wrapped box master key (used after a deal). Owner only, box open.
+    /// Replaces the wrapped box master key (used after a deal). Owner only, box open. If the record grows,
+    /// the attached deposit must cover the added storage (kept with the box); any excess is refunded.
+    #[payable]
     pub fn set_wrapped_bmk(&mut self, box_id: String, wrapped_bmk: Base64VecU8) {
         require!(wrapped_bmk.0.len() <= 128, "wrapped_bmk too large");
         let id = id16(&box_id);
-        let b = self.box_mut_owner(&id);
-        require!(b.state == BoxState::Open, "Box is in a deal");
-        b.wrapped_bmk = wrapped_bmk.0;
+        let before = env::storage_usage();
+        {
+            let b = self.box_mut_owner(&id);
+            require!(b.state == BoxState::Open, "Box is in a deal");
+            b.wrapped_bmk = wrapped_bmk.0;
+        }
+        self.boxes.flush();
+        let cost = settle_storage(before, NearToken::from_yoctonear(0));
+        self.boxes.get_mut(&id).unwrap().deposit += cost.as_yoctonear();
     }
 
     /// Deletes an empty box and refunds its storage deposit. Owner only.
@@ -231,7 +239,7 @@ impl Keyhole {
     }
 
     /// Deletes an expired or revoked grant after the retention period and refunds its deposit to the
-    /// box owner. Anyone may call.
+    /// box owner, minus the stake of each session that was opened. Anyone may call.
     pub fn delete_grant(&mut self, grant_id: String) -> Promise {
         let gid = id16(&grant_id);
         let g = self.grants.get(&gid).unwrap_or_else(|| env::panic_str("Unknown grant")).clone();
@@ -243,7 +251,10 @@ impl Keyhole {
         let b = self.boxes.get_mut(&g.box_id).unwrap();
         b.live_grants = b.live_grants.saturating_sub(1);
         emit::grant_deleted(&hex::encode(g.box_id), &grant_id);
-        Promise::new(owner).transfer(NearToken::from_yoctonear(g.deposit))
+        // Session records are permanent receipts and stay in storage, so the stake of every session that was
+        // opened stays with the contract; only the unused stakes and the grant record's own storage are refunded.
+        let kept = self.config.per_session_stake.saturating_mul(g.sessions_used as u128);
+        Promise::new(owner).transfer(NearToken::from_yoctonear(g.deposit.saturating_sub(kept)))
     }
 
     // ------------------------------------------------------------- sessions

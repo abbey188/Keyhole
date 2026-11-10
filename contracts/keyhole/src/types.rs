@@ -35,6 +35,9 @@ pub enum Requester {
     Account(AccountId),
 }
 
+/// Upper bound on the storage one session uses: record (measured 82 bytes) plus the close data (41 bytes), with margin.
+pub const SESSION_STORAGE_BYTES: u128 = 160;
+
 // ----------------------------------------------------------------- config
 
 #[near(serializers = [borsh])]
@@ -91,6 +94,11 @@ impl ConfigArgs {
         );
         near_sdk::require!(self.node_accounts.len() == self.node_keys.len(), "one account per node key");
         near_sdk::require!(self.min_wait_ms <= self.max_wait_ms, "min_wait_ms must not exceed max_wait_ms");
+        // Every opened session leaves a permanent record (and a close adds to it); its stake must pay for that storage.
+        near_sdk::require!(
+            self.per_session_stake.0 >= near_sdk::env::storage_byte_cost().as_yoctonear() * SESSION_STORAGE_BYTES,
+            "per_session_stake does not cover a session record's storage"
+        );
         Config {
             chain_id: self.chain_id,
             node_keys: self.node_keys.iter().map(|k| hash32(k)).collect(),
