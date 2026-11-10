@@ -2,11 +2,11 @@
 
 Boxes for sensitive files on NEAR. You keep a box, give someone access for a set time, see every opening, take the access back, and, if you want, sell the box: the payment and the ownership move together.
 
-> **Status: in development, not yet runnable end to end.** What exists and passes today: the protocol crate, a TypeScript crypto package that matches it byte for byte, and the NEAR contract (boxes, access, receipts, blobs, sales with escrow) with unit tests. What does not exist yet: the storage node, the release service, the web app, claims and the money module. See `docs/EVIDENCE.md` and `CLAIMS.md` for exactly what is proven.
+> **Status: in development, not yet runnable end to end.** What exists and passes today: the protocol crate, a TypeScript crypto package that matches it byte for byte, the NEAR contract (boxes, access, receipts, blobs, sales with escrow) with unit tests, and the storage node, client store and release service, tested together end to end against a labelled MOCK chain (not yet deployed or run on testnet). What does not exist yet: the testnet deployment, the web app, claims and the money module. See `docs/EVIDENCE.md` and `CLAIMS.md` for exactly what is proven.
 
 ## Try it (needs Rust with wasm32 target, Node 22, pnpm)
 1. `./scripts/verify.sh`
-2. You should see passing test summaries for the protocol crate, the contract, and the TypeScript crypto package, then the contract Wasm hash.
+2. You should see passing test summaries for the protocol crate, the contract, the TypeScript crypto package, and the chain client, storage node, client store and release service, then the contract Wasm hash.
 
 ## What it is for
 Ask for proof, not files. A landlord, lender or buyer sees an answer or a time-limited view, and every use leaves a record nobody, including us, can edit.

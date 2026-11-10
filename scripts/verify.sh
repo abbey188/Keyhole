@@ -13,6 +13,11 @@ cargo test -p keyhole-contract --quiet 2>&1 | grep -E "test result" || true
 echo "== 3. TypeScript crypto package reproduces the Rust vectors byte for byte"
 (cd packages/crypto && npx vitest run 2>&1 | grep -E "Tests |Test Files" || true)
 
+echo "== 3b. Chain client, storage node, client store and release service (all on the labelled MOCK chain)"
+for d in packages/chain services/node packages/store services/release; do
+  printf '%-18s ' "$d"; (cd "$d" && npx vitest run 2>&1 | grep -E "Tests " || echo "FAILED")
+done
+
 echo "== 4. Build artifacts and hashes"
 cargo build --target wasm32-unknown-unknown --release -p keyhole-contract --quiet 2>/dev/null || true
 if [ -f target/wasm32-unknown-unknown/release/keyhole_contract.wasm ]; then

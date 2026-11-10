@@ -18,8 +18,19 @@ A claim is listed only with a test that fails if the claim is false. "Planned" m
 | Completion cannot happen before the waiting period; anyone can complete; a stolen-key offer can be cancelled in the window | `complete_before_waiting_period_fails`, `anyone_can_complete_so_neither_party_can_stall`, `offer_from_a_stolen_key_can_be_cancelled_in_the_window` | Tested (mocked runtime) |
 | A blob needs a node certificate before it can be used; acknowledgements cannot be replayed across registrations | `tests_blobs.rs` (`certify_*`, `old_acknowledgement_cannot_certify_a_reregistration`) | Tested (mocked runtime) |
 | The deployed contract has no access keys | RPC key list is empty | Planned |
-| No key is released before the receipt is final on-chain | Release service test with delayed finality | Planned |
-| Revoked, expired or wrong-epoch grants get no further key from the release service | Release service tests | Planned |
-| Erased data is unreadable after re-key | Storage and re-key tests | Planned |
+| No key is released before the receipt is final on-chain (A1) | `services/release/test/release.test.ts` "A1" (finality held; a relayer that lies or returns no event) | Tested (MOCK chain) |
+| Revoked, expired, wrong-epoch or exhausted grants get no further key; revoke mid-session stops the next release (A2) | `release.test.ts` "A2", `e2e.test.ts` "A2 end to end" (including node reads with an earlier ticket) | Tested (MOCK chain) |
+| Neither key share alone reveals the key (A3) | `release.test.ts` "A3" (chi-squared on shares) and `crates/keyhole-proto` `split::tests` | Tested |
+| Forged opens, replays, over-budget opens and a second concurrent session are refused; bad signatures never reach the relayer and back off (A4, A5) | `release.test.ts` "A4/A5" | Tested (MOCK chain) |
+| Keys are released only for segments in the grant's scope (A6) | `release.test.ts` "A6" | Tested |
+| Open and close extend the on-chain receipt chain; the owner's feed and signed log match it (A7) | `release.test.ts` "A7" | Tested (MOCK chain; real contract chain is tested in Rust) |
+| Key releases are rate limited per grant (A8) | `release.test.ts` "A8" | Tested. Per-IP limit exists but is not covered by a test |
+| The release service fails closed on RPC loss and never reads its own clock (A9) | `release.test.ts` "A9" (outage; system clock shifted by hours) | Tested |
+| A deal's second key half is released only to the buyer after the deal is Completed, and only if it matches the on-chain commitment | `release.test.ts` "deal key release" | Tested (MOCK chain) |
+| A storage node accepts leaves only for registered blobs with a valid proof; acks are bound to the registration (S5, S7) | `services/node/test/node.test.ts` | Tested (MOCK chain) |
+| A node stops serving a blob the moment the chain says Retired, then erases and attests | `node.test.ts` "retire and erase" | Tested (MOCK chain). Attestation is a signed claim, not proof of physical erasure |
+| A node returning modified, misplaced or truncated data is detected and bypassed; reads never return unverified bytes (S8) | `packages/store/test/store.test.ts` "S8" (including a seeded random-fault property test) | Tested |
+| With one node down writes and reads continue; with two of three down writes fail closed (S9) | `store.test.ts` "S9" | Tested (in-process nodes). FastFS fallback not built |
+| After revoke and re-secure, cached keys open only what was already in hand; old ciphertext is erased and the new one needs new keys (R1, S6) | `services/release/test/e2e.test.ts` "R1/S6" | Tested (MOCK chain) |
 
-Limits of the current evidence: contract tests run in a mocked runtime, not on a network; gas and timing are unmeasured; no service or web app exists yet.
+Limits of the current evidence: contract tests run in a mocked runtime, not on a network; service tests run against `FakeChain`, a labelled MOCK that re-implements the contract's rules (it is not yet checked against the real contract in a sandbox); in-process nodes stand in for network nodes; gas and timing are unmeasured; the web app does not exist yet. The scope hash, deal S2 commitment and log formats in `services/release/src/formats.ts` are TypeScript-only and not yet in the Rust crate or vectors.

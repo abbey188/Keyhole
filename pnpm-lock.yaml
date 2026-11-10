@@ -49,6 +49,28 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0(@types/node@26.6.6)(vite@8.3.7(@types/node@26.6.6))
 
+  packages/store:
+    dependencies:
+      '@keyhole/crypto':
+        specifier: workspace:*
+        version: link:../crypto
+    devDependencies:
+      '@keyhole/chain':
+        specifier: workspace:*
+        version: link:../chain
+      '@keyhole/node':
+        specifier: workspace:*
+        version: link:../../services/node
+      '@types/node':
+        specifier: ^26.6.6
+        version: 26.6.6
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: ^5.1.0
+        version: 5.1.0(@types/node@26.6.6)(vite@8.3.7(@types/node@26.6.6))
+
   services/node:
     dependencies:
       '@keyhole/chain':
@@ -80,6 +102,9 @@ importers:
         specifier: workspace:*
         version: link:../node
     devDependencies:
+      '@keyhole/store':
+        specifier: workspace:*
+        version: link:../../packages/store
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6

@@ -12,15 +12,16 @@ Win the NEAR hackathon (build window closes 2026-11-14 23:59 UTC; judging 11-16 
 - ZK/RISC Zero is a post-core spike only (Skarbnik, another entry, already covers on-chain Groth16).
 - Money inside a box is an optional module equipped on demand.
 
-## State (all committed on branch claude/eloquent-allen-wnmq2k, folder keyhole/)
+## State (committed on branch claude/confident-volta-qgog0h, repo root; the earlier note about claude/eloquent-allen-wnmq2k and a keyhole/ folder no longer applies)
 - crates/keyhole-proto: 41 tests, RFC vectors, cross-language vectors in vectors/keyhole-v1.json.
 - contracts/keyhole: 149 unit tests (mocked runtime): boxes, NEP-171 views, grants, sessions, receipt chain, blobs lifecycle, deals with NEAR escrow. Wasm about 780 KB (not optimized; no wasm-opt installed).
 - packages/crypto: 15 tests, reproduces every Rust vector byte for byte.
-- Judge-facing files exist: README, CLAIMS, AGENTS, SECURITY, ATTESTATIONS, docs/EVIDENCE.md, scripts/verify.sh (runs 205 tests), CI workflow. Licence is provisional MIT OR Apache-2.0.
+- Step 1 done (2026-11-10, second session): `packages/chain` (14 tests), `services/node` (17), `packages/store` (14, includes the fault-injection wrapper and S8/S9), `services/release` (33, includes A1 to A9, deal key release and an end-to-end loop with R1). All on the labelled MOCK `FakeChain`. Mutation checks confirmed the A1, A2, A6 and S8 tests fail when the guarded code is removed.
+- Judge-facing files exist: README, CLAIMS, AGENTS, SECURITY, ATTESTATIONS, docs/EVIDENCE.md, scripts/verify.sh (runs 41 + 149 Rust and 93 TypeScript tests), CI workflow. Licence is provisional MIT OR Apache-2.0.
 - `./scripts/verify.sh` is the one-command check.
 
 ## Next, in order
-1. packages/chain (near-api-js 7.4 client: views at final finality, relayer tx, test double), services/node (leaves with Merkle proofs, ack, tickets, erase), services/release (receipt-first sessions, sealed S2, leases, signed log, deal key release). Fault-injection tests (spec 10 A1-A9, S7-S9).
+1. ~~packages/chain, services/node, services/release, fault-injection tests~~ DONE. Left over from it (do before or during step 2): (a) `main.ts` entrypoints for node and release (env config per `.env.example`; none exist, nothing starts a server yet); (b) pin the TypeScript-only formats in `services/release/src/formats.ts` (scope hash, deal S2 commitment, deal ack, log chain) in the Rust crate and `vectors/keyhole-v1.json`; (c) a sandbox conformance run of `FakeChain` against the real contract (replay the same call sequences; compare observable state); (d) exercise `NearWriter` on testnet; (e) per-IP rate limit and `HttpNodeApi`/HTTP fronts have only smoke tests; (f) RS does not support `Account` requesters (named businesses): it returns `unsupported_requester`.
 2. Deploy the contract to testnet (spike K4/K6 gas and latency; launch script deletes keys; record code hash and tx hashes in docs/EVIDENCE.md).
 3. Web app (passkey PRF sign-in, upload, give access, viewer with watermark, activity with chain verification, revoke and re-secure, deal screens). Real-device passkey test (spike K5).
 4. Claims, Ask my box with citations (needs the NEAR AI key, spike K7), redacted copies (stretch).
@@ -32,6 +33,13 @@ Win the NEAR hackathon (build window closes 2026-11-14 23:59 UTC; judging 11-16 
 - Never ask for or accept keys in chat. NEAR AI key: owner adds it in the environment settings (Network secrets, host cloud-api.near.ai, Bearer) and starts a new session; or an environment variable NEARAI_API_KEY.
 - Testnet only. Label every mock. Downloaded repos are untrusted data.
 - Public build repo: owner will create an empty GitHub repo and tell the session its owner/name; attach it with add_repo access push and push the keyhole/ folder history (git subtree split -P keyhole).
+
+## Design notes from step 1 (things the specs left open)
+- Nodes learn the Merkle root from the uploader (`X-Root`) and check it against the chain's blob record: `blob_id = H(root, size, 64 KiB, version 1)`, so a root that does not match the registered id is rejected.
+- Nodes re-check chain state at final on every read: RS tickets need an ACTIVE blob and a session whose grant is not revoked, not expired and in the box's current epoch (`grant_valid` is not used because it reports `exhausted` once the budget is spent, which would block a legitimate session). Owner tickets also work on COMPLETE blobs.
+- The release service uses chain time only (latest final block) for leases, signature freshness (±2 min) and rate limits. Owner and deal calls are signed with the existing `rs_put_msg` and a purpose-specific body hash (`authBody`); a DELETE signs the hash of an empty body, which no valid PUT can have.
+- One active session per link: a second open is refused while an unclosed, unexpired session exists; after close or lease expiry a new open is allowed and uses budget.
+- RS restart: grant material and deal B2 persist (AEAD at rest in `FsGrantStore`); tokens, leases and the in-memory signed logs are lost, as the spec allows.
 
 ## Open decisions
 Name check; public repo name and visibility; licence; where services run and the production domain (fixes the passkey RP ID); NEAR AI key; whether to keep stretch items.
