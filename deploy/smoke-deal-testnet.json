@@ -1,0 +1,326 @@
+{
+  "contract": "keyhole-8ee967.testnet",
+  "deal": "063b8e479a9f1a0620cedb31ebbcba55",
+  "checks": [
+    {
+      "name": "box is frozen in the deal",
+      "ok": true
+    },
+    {
+      "name": "a grant to a stranger is refused while the box is in a deal",
+      "ok": true,
+      "detail": "Box is in a deal"
+    },
+    {
+      "name": "release service acknowledged the seller's key half; ack verifies against the contract's rs_keys",
+      "ok": true
+    },
+    {
+      "name": "deal is Funded and the escrow is held by the contract",
+      "ok": true
+    },
+    {
+      "name": "complete before the waiting period is refused",
+      "ok": true,
+      "detail": "Waiting period has not passed"
+    },
+    {
+      "name": "release service refuses the buyer's key half before Completed",
+      "ok": true,
+      "detail": "denied"
+    },
+    {
+      "name": "deal Completed; the buyer owns the box; the epoch moved",
+      "ok": true
+    },
+    {
+      "name": "the seller was paid the price from escrow (net of the seller's own gas)",
+      "ok": true,
+      "detail": "+0.1 NEAR"
+    },
+    {
+      "name": "the contract holds no leftover escrow",
+      "ok": true,
+      "detail": "delta 0 NEAR"
+    },
+    {
+      "name": "a grant created before the sale no longer opens",
+      "ok": true,
+      "detail": "Grant belongs to an earlier epoch"
+    },
+    {
+      "name": "the previous owner can no longer act on the box",
+      "ok": true,
+      "detail": "Only the box owner can do this"
+    },
+    {
+      "name": "buyer received the second key half only after Completed",
+      "ok": true
+    },
+    {
+      "name": "buyer rebuilt the box key and it matches the on-chain commitment (bmk_commit)",
+      "ok": true
+    },
+    {
+      "name": "the sold box's wrapped key was cleared for the buyer to re-wrap (re-secure step is the app's job)",
+      "ok": true
+    },
+    {
+      "name": "a cancelled funded deal is Cancelled, the box is unfrozen, and the buyer is refunded",
+      "ok": true,
+      "detail": "buyer net -0.0002 NEAR (gas only)"
+    }
+  ],
+  "transactions": [
+    {
+      "label": "create_box (Handover)",
+      "method": "create_box",
+      "ok": true,
+      "txHash": "BDpvuNBAqnyyazP1ZWqKvn5Hcu9R82N3aJvUZftwT8D6",
+      "link": "https://explorer.testnet.near.org/transactions/BDpvuNBAqnyyazP1ZWqKvn5Hcu9R82N3aJvUZftwT8D6",
+      "gasTgas": 3.6,
+      "submitToFinalMs": 4780,
+      "error": null
+    },
+    {
+      "label": "manifest blob: register",
+      "method": "register_blob",
+      "ok": true,
+      "txHash": "EXVngVvj26CVt4DLGa7FsKej81ZEkB36F3PJe13m7vjZ",
+      "link": "https://explorer.testnet.near.org/transactions/EXVngVvj26CVt4DLGa7FsKej81ZEkB36F3PJe13m7vjZ",
+      "gasTgas": 3.56,
+      "submitToFinalMs": 4283,
+      "error": null
+    },
+    {
+      "label": "manifest blob: certify",
+      "method": "certify_blob",
+      "ok": true,
+      "txHash": "EE2qnSnXETi5DkNoWWACirxgc8X7o43xhvswdFu4e3uG",
+      "link": "https://explorer.testnet.near.org/transactions/EE2qnSnXETi5DkNoWWACirxgc8X7o43xhvswdFu4e3uG",
+      "gasTgas": 2.77,
+      "submitToFinalMs": 3656,
+      "error": null
+    },
+    {
+      "label": "manifest blob: activate",
+      "method": "activate_blob",
+      "ok": true,
+      "txHash": "J1QSYhCnxP6j1UpMTa46iEdi8gXNTz58mnc7yqy51W8R",
+      "link": "https://explorer.testnet.near.org/transactions/J1QSYhCnxP6j1UpMTa46iEdi8gXNTz58mnc7yqy51W8R",
+      "gasTgas": 2.61,
+      "submitToFinalMs": 3593,
+      "error": null
+    },
+    {
+      "label": "commit_manifest",
+      "method": "commit_manifest",
+      "ok": true,
+      "txHash": "62uW4XpwFfn8ZwhkREQQevbSDW5yxikQ8SazWohTD11v",
+      "link": "https://explorer.testnet.near.org/transactions/62uW4XpwFfn8ZwhkREQQevbSDW5yxikQ8SazWohTD11v",
+      "gasTgas": 2.64,
+      "submitToFinalMs": 3453,
+      "error": null
+    },
+    {
+      "label": "create_grant",
+      "method": "create_grant",
+      "ok": true,
+      "txHash": "Eui2tqHsZdFpDsaKVkKF3jbyBNB6TF5wqUNs6MMa1RL4",
+      "link": "https://explorer.testnet.near.org/transactions/Eui2tqHsZdFpDsaKVkKF3jbyBNB6TF5wqUNs6MMa1RL4",
+      "gasTgas": 3.58,
+      "submitToFinalMs": 3715,
+      "error": null
+    },
+    {
+      "label": "envelope blob: register",
+      "method": "register_blob",
+      "ok": true,
+      "txHash": "DF7tKiD5RxtadXnSUYAL4tWuJXNDgwRpVSBJnyALHEDY",
+      "link": "https://explorer.testnet.near.org/transactions/DF7tKiD5RxtadXnSUYAL4tWuJXNDgwRpVSBJnyALHEDY",
+      "gasTgas": 3.56,
+      "submitToFinalMs": 3472,
+      "error": null
+    },
+    {
+      "label": "envelope blob: certify",
+      "method": "certify_blob",
+      "ok": true,
+      "txHash": "7JxLRU75nsErbSLZpNms4A8y3FpuSV4oiJqhth99f1Fx",
+      "link": "https://explorer.testnet.near.org/transactions/7JxLRU75nsErbSLZpNms4A8y3FpuSV4oiJqhth99f1Fx",
+      "gasTgas": 2.77,
+      "submitToFinalMs": 3386,
+      "error": null
+    },
+    {
+      "label": "create_deal",
+      "method": "create_deal",
+      "ok": true,
+      "txHash": "Gf3puv7EuCDHGSpDUxHsxD5Le98oZJnu8kpMNPMyTUwp",
+      "link": "https://explorer.testnet.near.org/transactions/Gf3puv7EuCDHGSpDUxHsxD5Le98oZJnu8kpMNPMyTUwp",
+      "gasTgas": 3.79,
+      "submitToFinalMs": 4121,
+      "error": null
+    },
+    {
+      "label": "create_deal",
+      "method": "create_grant",
+      "ok": false,
+      "txHash": "Gm9Kbuv5pjjhUR6VfDGBMa1rpwbTbhs5oQBmKyZutBFP",
+      "link": "https://explorer.testnet.near.org/transactions/Gm9Kbuv5pjjhUR6VfDGBMa1rpwbTbhs5oQBmKyZutBFP",
+      "gasTgas": 2.56,
+      "submitToFinalMs": 3412,
+      "error": "Box is in a deal"
+    },
+    {
+      "label": "fund_deal",
+      "method": "fund_deal",
+      "ok": true,
+      "txHash": "J56CiBhTmqdWSKCnnxUqQiqgG1mZW6Gx9QZjMSfQwLbz",
+      "link": "https://explorer.testnet.near.org/transactions/J56CiBhTmqdWSKCnnxUqQiqgG1mZW6Gx9QZjMSfQwLbz",
+      "gasTgas": 2.51,
+      "submitToFinalMs": 3362,
+      "error": null
+    },
+    {
+      "label": "fund_deal",
+      "method": "complete_deal",
+      "ok": false,
+      "txHash": "2ZFBf3skN1zKvF3bQiTYbZRaok45QiHzsE4ar9B6hEqD",
+      "link": "https://explorer.testnet.near.org/transactions/2ZFBf3skN1zKvF3bQiTYbZRaok45QiHzsE4ar9B6hEqD",
+      "gasTgas": 2.1,
+      "submitToFinalMs": 3388,
+      "error": "Waiting period has not passed"
+    },
+    {
+      "label": "complete_deal",
+      "method": "complete_deal",
+      "ok": true,
+      "txHash": "292tzBw8WMfuVF5FUTGLvBwskp2hZ3R4kJXoQcKGM26C",
+      "link": "https://explorer.testnet.near.org/transactions/292tzBw8WMfuVF5FUTGLvBwskp2hZ3R4kJXoQcKGM26C",
+      "gasTgas": 6.31,
+      "submitToFinalMs": 5332,
+      "error": null
+    },
+    {
+      "label": "open_session (FAILED: earlier epoch)",
+      "method": "open_session",
+      "ok": false,
+      "txHash": "GJgym9XvKku83j64yGfdorTdDXdtfSTeUyKXKTyXGuiK",
+      "link": "https://explorer.testnet.near.org/transactions/GJgym9XvKku83j64yGfdorTdDXdtfSTeUyKXKTyXGuiK",
+      "gasTgas": 2.29,
+      "submitToFinalMs": 3554,
+      "error": "Grant belongs to an earlier epoch"
+    },
+    {
+      "label": "open_session (FAILED: earlier epoch)",
+      "method": "create_grant",
+      "ok": false,
+      "txHash": "7GyeBAvsNtDLCTpLjXtghc6sSujUi8GBdJyeETvrn3Sh",
+      "link": "https://explorer.testnet.near.org/transactions/7GyeBAvsNtDLCTpLjXtghc6sSujUi8GBdJyeETvrn3Sh",
+      "gasTgas": 2.45,
+      "submitToFinalMs": 3794,
+      "error": "Only the box owner can do this"
+    },
+    {
+      "label": "create_box (Handover)",
+      "method": "create_box",
+      "ok": true,
+      "txHash": "vfw6MXvKTTs78xshefebJ8rDxe4PFVFncEmzgprum76",
+      "link": "https://explorer.testnet.near.org/transactions/vfw6MXvKTTs78xshefebJ8rDxe4PFVFncEmzgprum76",
+      "gasTgas": 3.6,
+      "submitToFinalMs": 3710,
+      "error": null
+    },
+    {
+      "label": "manifest blob: register",
+      "method": "register_blob",
+      "ok": true,
+      "txHash": "6LDegC2cB5L6n3tNVcQxYwTopoKJrMWmB4vocxK6yuJR",
+      "link": "https://explorer.testnet.near.org/transactions/6LDegC2cB5L6n3tNVcQxYwTopoKJrMWmB4vocxK6yuJR",
+      "gasTgas": 3.56,
+      "submitToFinalMs": 4142,
+      "error": null
+    },
+    {
+      "label": "manifest blob: certify",
+      "method": "certify_blob",
+      "ok": true,
+      "txHash": "2SUFjpGkxHrdTzgohT8e91GvD6cc7McGYMgEgYwfiNyH",
+      "link": "https://explorer.testnet.near.org/transactions/2SUFjpGkxHrdTzgohT8e91GvD6cc7McGYMgEgYwfiNyH",
+      "gasTgas": 2.77,
+      "submitToFinalMs": 3775,
+      "error": null
+    },
+    {
+      "label": "manifest blob: activate",
+      "method": "activate_blob",
+      "ok": true,
+      "txHash": "GbG4wFpHB4ckBq1J6TaLrFVjQuAPpCYAfLpHZLYEv92k",
+      "link": "https://explorer.testnet.near.org/transactions/GbG4wFpHB4ckBq1J6TaLrFVjQuAPpCYAfLpHZLYEv92k",
+      "gasTgas": 2.61,
+      "submitToFinalMs": 3730,
+      "error": null
+    },
+    {
+      "label": "commit_manifest",
+      "method": "commit_manifest",
+      "ok": true,
+      "txHash": "AqMKMtnnn3ajfYooCTREahW1dZVqaycBKCXsmik94ShR",
+      "link": "https://explorer.testnet.near.org/transactions/AqMKMtnnn3ajfYooCTREahW1dZVqaycBKCXsmik94ShR",
+      "gasTgas": 2.64,
+      "submitToFinalMs": 4240,
+      "error": null
+    },
+    {
+      "label": "envelope blob: register",
+      "method": "register_blob",
+      "ok": true,
+      "txHash": "AN7tNamd1BDXZwEQFKfyuQaLBrWor9PTF7pbVCE3irQD",
+      "link": "https://explorer.testnet.near.org/transactions/AN7tNamd1BDXZwEQFKfyuQaLBrWor9PTF7pbVCE3irQD",
+      "gasTgas": 3.57,
+      "submitToFinalMs": 4812,
+      "error": null
+    },
+    {
+      "label": "envelope blob: certify",
+      "method": "certify_blob",
+      "ok": true,
+      "txHash": "DTZHBWmoEsfCUrUEk7KgG5qCTLRLh6fnpa87FMkCf3Fs",
+      "link": "https://explorer.testnet.near.org/transactions/DTZHBWmoEsfCUrUEk7KgG5qCTLRLh6fnpa87FMkCf3Fs",
+      "gasTgas": 2.78,
+      "submitToFinalMs": 3580,
+      "error": null
+    },
+    {
+      "label": "create_deal",
+      "method": "create_deal",
+      "ok": true,
+      "txHash": "GgSExndcG4jxRvSF1YqKdYRRRS9Yws8ykxYheZgGV7j2",
+      "link": "https://explorer.testnet.near.org/transactions/GgSExndcG4jxRvSF1YqKdYRRRS9Yws8ykxYheZgGV7j2",
+      "gasTgas": 3.79,
+      "submitToFinalMs": 3765,
+      "error": null
+    },
+    {
+      "label": "fund_deal",
+      "method": "fund_deal",
+      "ok": true,
+      "txHash": "5miNmG6zUtv5UjFJH7pQ4n8Mbq3uPuE8P5JPecTXDSoT",
+      "link": "https://explorer.testnet.near.org/transactions/5miNmG6zUtv5UjFJH7pQ4n8Mbq3uPuE8P5JPecTXDSoT",
+      "gasTgas": 2.51,
+      "submitToFinalMs": 4206,
+      "error": null
+    },
+    {
+      "label": "cancel_deal (by seller, funded)",
+      "method": "cancel_deal",
+      "ok": true,
+      "txHash": "8LhWbpS9PRPSr4jHtmmDire6DQfFUybrFFNA6nudSWWv",
+      "link": "https://explorer.testnet.near.org/transactions/8LhWbpS9PRPSr4jHtmmDire6DQfFUybrFFNA6nudSWWv",
+      "gasTgas": 5.73,
+      "submitToFinalMs": 4962,
+      "error": null
+    }
+  ]
+}

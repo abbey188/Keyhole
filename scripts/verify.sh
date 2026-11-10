@@ -25,5 +25,9 @@ if [ -f target/wasm32-unknown-unknown/release/keyhole_contract.wasm ]; then
 fi
 echo "vectors sha256:       $(sha256sum vectors/keyhole-v1.json | cut -d' ' -f1)"
 
-echo "== 5. Chain checks (optional, needs network): see docs/EVIDENCE.md for deployed contract and transactions"
+echo "== 5. Chain checks (needs network): C1, no access keys on the deployed contract"
+if [ -f deploy/testnet.json ]; then
+  (cd tools/testnet && npx tsx src/launch.ts --check 2>&1 | tail -1) || echo "C1 check could not run (network?)"
+fi
+echo "   full record of transactions: docs/EVIDENCE.md and deploy/*.json"
 echo "done"

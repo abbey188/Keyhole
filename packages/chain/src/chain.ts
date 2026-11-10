@@ -59,3 +59,25 @@ export interface ChainWriter {
   commitManifest(a: { boxId: string; manifestBlob: string; seq: number }): Promise<TxResult>;
   retireBlob(blobId: string): Promise<TxResult>;
 }
+
+export interface DealArgs {
+  dealId: string;
+  boxId: string;
+  buyer: string;
+  priceYocto: string;
+  waitingMs: number;
+  offerExpiresAtMs: number;
+  bmkCommit: string;
+  envelopeBlob: string;
+  s2Commit: string;
+}
+
+/** Deal methods (spec 06). Implemented by the real writer; FakeChain only has `setDeal` for now. */
+export interface DealApi {
+  readonly account: string;
+  createDeal(a: DealArgs): Promise<TxResult>;
+  fundDeal(dealId: string, priceYocto: string): Promise<TxResult>;
+  cancelDeal(dealId: string): Promise<TxResult>;
+  completeDeal(dealId: string): Promise<TxResult>;
+  claim(): Promise<TxResult>;
+}

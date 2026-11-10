@@ -3,7 +3,7 @@
 import { Account } from "near-api-js";
 import { bytesToHex } from "@keyhole/crypto";
 import { ContractError } from "./chain.js";
-import type { ChainReader, ChainWriter } from "./chain.js";
+import type { ChainReader, ChainWriter, DealApi, DealArgs } from "./chain.js";
 import type { GrantArgs, KeyholeEvent, TxResult } from "./types.js";
 
 const TGAS = 10n ** 12n;
@@ -62,7 +62,7 @@ export function parseEvents(logs: string[]): KeyholeEvent[] {
   return out;
 }
 
-export class NearWriter implements ChainWriter {
+export class NearWriter implements ChainWriter, DealApi {
   readonly account: string;
   private readonly acct: Account;
   private readonly o: NearWriterOptions;
@@ -87,8 +87,13 @@ export class NearWriter implements ChainWriter {
         waitUntil: "FINAL",
       })) as Res;
     } catch (e) {
-      const msg = String((e as Error)?.message ?? e);
-      this.o.onTx?.({ method: methodName, txHash: "", ok: false, gasBurnt: 0, submitToFinalMs: Math.round(performance.now() - t0), error: msg });
+      // near-api-js throws on a failed outcome but attaches it, so gas and hash of failed calls are still known.
+      const tr = (e as { transactionResult?: Res }).transactionResult;
+      const msg = (tr && failureMessage(tr)) || String((e as Error)?.message ?? e);
+      this.o.onTx?.({
+        method: methodName, txHash: tr?.transaction?.hash ?? tr?.transaction_outcome?.id ?? "", ok: false,
+        gasBurnt: tr ? gasBurnt(tr) : 0, submitToFinalMs: Math.round(performance.now() - t0), error: msg,
+      });
       throw new ContractError(msg);
     }
     const ms = Math.round(performance.now() - t0);
@@ -132,6 +137,18 @@ export class NearWriter implements ChainWriter {
     return this.call("register_blob", { blob_id: a.blobId, box_id: a.boxId, size: a.size, mode: 0, days: a.days }, fee + NEAR / 50n);
   }
   activateBlob = (blobId: string) => this.call("activate_blob", { blob_id: blobId });
+  // ---- deals (DealApi)
+  createDeal = (a: DealArgs) =>
+    this.call("create_deal", {
+      deal: {
+        deal_id: a.dealId, box_id: a.boxId, buyer: a.buyer, price: a.priceYocto, waiting_ms: a.waitingMs,
+        offer_expires_at_ms: a.offerExpiresAtMs, bmk_commit: a.bmkCommit, envelope_blob: a.envelopeBlob, s2_commit: a.s2Commit,
+      },
+    }, NEAR / 50n);
+  fundDeal = (dealId: string, priceYocto: string) => this.call("fund_deal", { deal_id: dealId }, BigInt(priceYocto));
+  cancelDeal = (dealId: string) => this.call("cancel_deal", { deal_id: dealId });
+  completeDeal = (dealId: string) => this.call("complete_deal", { deal_id: dealId });
+  claim = () => this.call("claim", {});
   retireBlob = (blobId: string) => this.call("retire_blob", { blob_id: blobId });
   commitManifest = (a: { boxId: string; manifestBlob: string; seq: number }) =>
     this.call("commit_manifest", { box_id: a.boxId, manifest_blob: a.manifestBlob, seq: a.seq });
