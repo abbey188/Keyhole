@@ -9,8 +9,10 @@ license.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-near-sdk = { version = "5.29", default-features = false, features = ["unit-testing"] }
-keyhole-proto = { path = "../../crates/keyhole-proto" }
+near-sdk = { version = "5.29", default-features = false }
+keyhole-proto = { path = "../../crates/keyhole-proto", default-features = false }
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
 near-sdk = { version = "5.29", features = ["unit-testing"] }
+keyhole-proto = { path = "../../crates/keyhole-proto", features = ["crypto"] }

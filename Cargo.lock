@@ -1210,6 +1210,7 @@ dependencies = [
 name = "keyhole-contract"
 version = "0.1.0"
 dependencies = [
+ "hex",
  "keyhole-proto",
  "near-sdk",
 ]
