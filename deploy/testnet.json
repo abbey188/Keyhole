@@ -1,0 +1,54 @@
+{
+  "network": "testnet",
+  "contract": "keyhole-964348.testnet",
+  "accounts": {
+    "relayer": "kh-relayer-964348.testnet",
+    "owner": "kh-owner-964348.testnet",
+    "node": "kh-node-964348.testnet"
+  },
+  "wasm": {
+    "file": "target/keyhole_opt.wasm",
+    "bytes": 372062,
+    "sha256": "a4b6dfa253d748aa6a9b2e8f7f70ab75db61a5b8b12e399c3d7bfa843f586e9c",
+    "near_code_hash_base58": "C5ybcTGUq5udzKZdUwc2J374gYBucNPWun7T49DRJUWP"
+  },
+  "config": {
+    "chain_id": "testnet",
+    "node_keys": [
+      "7a10ae0f24a4316bd41dafa292b1c788b989673f8f4b2449c7a351e4f89bd360"
+    ],
+    "threshold": 1,
+    "rs_keys": [
+      "bd9a8fcd220dba6e10ba288d308d069f8643ea80b9df0ebb3ac31cd33a3b00e9"
+    ],
+    "allowed_tokens": [],
+    "min_grant_ms": 60000,
+    "max_lease_ms": 300000,
+    "min_wait_ms": 15000,
+    "max_wait_ms": 604800000,
+    "grace_ms": 3600000,
+    "reg_window_ms": 3600000,
+    "retention_ms": 3600000,
+    "withdraw_delay_ms": 60000,
+    "per_session_stake": "1000000000000000000000",
+    "rate_yocto_per_mib_day": "1000000000000000000",
+    "max_blob_bytes": 268435456,
+    "node_accounts": [
+      "kh-node-964348.testnet"
+    ]
+  },
+  "deploy": {
+    "txHash": "AL4Nb6qrg3WCEXyVibx4DUNTbMUhjHTGZd9pBGF4GGuf",
+    "link": "https://explorer.testnet.near.org/transactions/AL4Nb6qrg3WCEXyVibx4DUNTbMUhjHTGZd9pBGF4GGuf",
+    "gasBurnt": 29048108986722,
+    "submitToFinalMs": 3637
+  },
+  "storageUsageBytes": 372578,
+  "launch": {
+    "txHash": "62eR2VkVgfxk6Vra5BoqaDZ4YFnM7o2Fsdz4Dma8AtaX",
+    "link": "https://explorer.testnet.near.org/transactions/62eR2VkVgfxk6Vra5BoqaDZ4YFnM7o2Fsdz4Dma8AtaX",
+    "keysDeleted": 1,
+    "gasBurnt": 629194812500,
+    "submitToFinalMs": 3336
+  }
+}

@@ -49,3 +49,40 @@ export function need(env: Record<string, string>, k: string): string {
 
 export const NEAR = 10n ** 24n;
 export const fmtNear = (y: bigint | string) => `${Number((BigInt(y) * 10000n) / NEAR) / 10000} NEAR`;
+
+/** Raw JSON-RPC call (final finality is set by callers). */
+export async function rpc<T = any>(method: string, params: unknown): Promise<T> {
+  const res = await fetch(RPC_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+  });
+  const j = (await res.json()) as { result?: T; error?: unknown };
+  if (j.error) throw new Error(`rpc ${method}: ${JSON.stringify(j.error).slice(0, 300)}`);
+  return j.result as T;
+}
+
+export const accessKeys = async (accountId: string) =>
+  (await rpc<{ keys: { public_key: string; access_key: { permission: unknown } }[] }>("query", { request_type: "view_access_key_list", finality: "final", account_id: accountId })).keys;
+
+/** Total gas burnt by a transaction and all its receipts, from the final outcome. */
+export function gasOf(res: any): number {
+  const tx = Number(res?.transaction_outcome?.outcome?.gas_burnt ?? 0);
+  const rc = ((res?.receipts_outcome ?? []) as any[]).reduce((n, r) => n + Number(r?.outcome?.gas_burnt ?? 0), 0);
+  return tx + rc;
+}
+export const txHashOf = (res: any): string => String(res?.transaction?.hash ?? res?.transaction_outcome?.id ?? "");
+export const logsOf = (res: any): string[] => ((res?.receipts_outcome ?? []) as any[]).flatMap((r) => r?.outcome?.logs ?? []);
+export const failureOf = (res: any): string | null => (res?.status && typeof res.status === "object" && "Failure" in res.status ? JSON.stringify(res.status.Failure).slice(0, 300) : null);
+
+import { mkdirSync } from "node:fs";
+export const DEPLOY_DIR = join(ROOT, "deploy");
+export function readRecord(): Record<string, any> {
+  const f = join(DEPLOY_DIR, "testnet.json");
+  return existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : {};
+}
+/** Public deployment record (ids, hashes, links). Never contains secrets. */
+export function writeRecord(patch: Record<string, any>): void {
+  mkdirSync(DEPLOY_DIR, { recursive: true });
+  writeFileSync(join(DEPLOY_DIR, "testnet.json"), JSON.stringify({ ...readRecord(), ...patch }, null, 2) + "\n");
+}
