@@ -1,0 +1,21 @@
+{
+  "name": "@keyhole/testnet-tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "MIT OR Apache-2.0",
+  "dependencies": {
+    "@keyhole/chain": "workspace:*",
+    "@keyhole/crypto": "workspace:*",
+    "near-api-js": "^7.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.20.0",
+    "typescript": "^7.0.2",
+    "binaryen": "^132.0.0"
+  }
+}
