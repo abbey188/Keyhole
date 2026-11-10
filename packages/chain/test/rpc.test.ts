@@ -87,3 +87,18 @@ describe("outcome helpers", () => {
     expect(gasBurnt({ transaction_outcome: { outcome: { gas_burnt: 10 } }, receipts_outcome: [{ outcome: { gas_burnt: 5 } }, { outcome: { gas_burnt: "7" } }] })).toBe(22);
   });
 });
+
+describe("txEvents", () => {
+  it("returns the keyhole events of a FINAL transaction, null for unknown or non-final, and fails closed otherwise", async () => {
+    const log = 'EVENT_JSON:{"standard":"keyhole","version":"1.0.0","event":"session_opened","data":{"session_id":"aa"}}';
+    const final = { final_execution_status: "FINAL", receipts_outcome: [{ outcome: { logs: [log, "x"] } }, { outcome: { logs: [] } }] };
+    let seen: any;
+    const r = (res: any) => reader(async (_u, init) => { seen = JSON.parse(init.body); return res; });
+    expect(await r(ok(final)).txEvents("H", "a.testnet")).toEqual([{ event: "session_opened", data: { session_id: "aa" } }]);
+    expect(seen.method).toBe("EXPERIMENTAL_tx_status");
+    expect(seen.params).toEqual({ tx_hash: "H", sender_account_id: "a.testnet", wait_until: "FINAL" });
+    expect(await r(ok({ ...final, final_execution_status: "INCLUDED" })).txEvents("H", "a")).toBeNull();
+    expect(await r(err("UNKNOWN_TRANSACTION")).txEvents("H", "a")).toBeNull();
+    await expect(r(err("TIMEOUT_ERROR")).txEvents("H", "a")).rejects.toThrow(ChainUnavailable);
+  });
+});

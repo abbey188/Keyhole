@@ -24,6 +24,7 @@ A claim is listed only with a test that fails if the claim is false. "Planned" m
 | Forged opens, replays, over-budget opens and a second concurrent session are refused; bad signatures never reach the relayer and back off (A4, A5) | `release.test.ts` "A4/A5" | Tested (MOCK chain) |
 | Keys are released only for segments in the grant's scope (A6) | `release.test.ts` "A6" | Tested |
 | Open and close extend the on-chain receipt chain; the owner's feed and signed log match it (A7) | `release.test.ts` "A7" | Tested (MOCK chain; real contract chain is tested in Rust) |
+| Named-account requesters: the account opens on chain itself, then attaches; a token needs the account's key, a final receipt, and a session key that matches the on-chain commitment | `services/release/test/named.test.ts` | Tested (MOCK chain) |
 | Key releases are rate limited per grant (A8) | `release.test.ts` "A8" | Tested. Per-IP limit exists but is not covered by a test |
 | The release service fails closed on RPC loss and never reads its own clock (A9) | `release.test.ts` "A9" (outage; system clock shifted by hours) | Tested |
 | A deal's second key half is released only to the buyer after the deal is Completed, and only if it matches the on-chain commitment | `release.test.ts` "deal key release" | Tested (MOCK chain) |

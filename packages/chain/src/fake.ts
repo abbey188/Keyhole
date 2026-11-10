@@ -56,6 +56,7 @@ export class FakeChain implements ChainReader {
   private down = false;
   private waiters: (() => void)[] = [];
   private txCount = 0;
+  private readonly txLog = new Map<string, { signer: string; events: KeyholeEvent[] }>(); // finalized transactions by hash
   /** Every call made against the fake, in order (for assertions). */
   readonly calls: { by: string; method: string }[] = [];
 
@@ -192,6 +193,11 @@ export class FakeChain implements ChainReader {
       : "";
     return { valid: reason === "", reason };
   }
+  async txEvents(txHash: string, signerId: string): Promise<KeyholeEvent[] | null> {
+    this.ensureUp();
+    const t = this.txLog.get(txHash);
+    return t && t.signer === signerId ? structuredClone(t.events) : null; // like the RPC: a hash is looked up under its signer
+  }
   async hasFullAccessKey(account: string, pkHex: string): Promise<boolean> {
     this.ensureUp();
     return this.fin.keys.get(account)?.has(pkHex) ?? false;
@@ -221,6 +227,7 @@ export class FakeChain implements ChainReader {
     if (!this.held) this.finalize();
     else await new Promise<void>((r) => this.waiters.push(r));
     this.ensureUp();
+    this.txLog.set(txHash, { signer: by, events });
     return { txHash, events };
   }
 

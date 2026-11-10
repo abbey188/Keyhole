@@ -4,7 +4,8 @@ import { Account } from "near-api-js";
 import { bytesToHex } from "@keyhole/crypto";
 import { ContractError } from "./chain.js";
 import type { ChainReader, ChainWriter, DealApi, DealArgs } from "./chain.js";
-import type { GrantArgs, KeyholeEvent, TxResult } from "./types.js";
+import { parseEvents } from "./events.js";
+import type { GrantArgs, TxResult } from "./types.js";
 
 const TGAS = 10n ** 12n;
 const NEAR = 10n ** 24n;
@@ -46,20 +47,6 @@ export function failureMessage(res: { status?: unknown; receipts_outcome?: { out
 
 export function gasBurnt(res: { transaction_outcome?: { outcome?: { gas_burnt?: number | string } }; receipts_outcome?: { outcome: { gas_burnt?: number | string } }[] }): number {
   return Number(res.transaction_outcome?.outcome?.gas_burnt ?? 0) + (res.receipts_outcome ?? []).reduce((n, r) => n + Number(r.outcome.gas_burnt ?? 0), 0);
-}
-
-export function parseEvents(logs: string[]): KeyholeEvent[] {
-  const out: KeyholeEvent[] = [];
-  for (const l of logs) {
-    if (!l.startsWith("EVENT_JSON:")) continue;
-    try {
-      const j = JSON.parse(l.slice("EVENT_JSON:".length)) as { standard?: string; event?: string; data?: Record<string, unknown> };
-      if (j.standard === "keyhole" && j.event) out.push({ event: j.event, data: j.data ?? {} });
-    } catch {
-      /* ignore non-JSON logs */
-    }
-  }
-  return out;
 }
 
 export class NearWriter implements ChainWriter, DealApi {

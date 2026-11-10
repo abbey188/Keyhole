@@ -72,6 +72,10 @@ export function createReleaseServer(svc: ReleaseService, o: HttpOptions = {}): S
         const b = await json<{ grant_id: string; session_id: string; session_pk: string; ts: number; sig: string }>(req);
         return send(res, 200, await svc.openSession({ grantId: b.grant_id, sessionId: b.session_id, sessionPk: b.session_pk, ts: b.ts, sig: b.sig }));
       }
+      if (m === "POST" && p === "/v1/sessions/attach") {
+        const b = await json<{ tx_hash: string; grant_id: string; session_id: string; session_pk: string }>(req);
+        return send(res, 200, await svc.attachSession({ txHash: b.tx_hash, grantId: b.grant_id, sessionId: b.session_id, sessionPk: b.session_pk }, auth(req)));
+      }
       if (m === "GET" && (x = p.match(/^\/v1\/sessions\/([0-9a-f]{32})\/keys$/))) {
         const segs = (url.searchParams.get("seg") ?? "").split(",").filter(Boolean).map(Number);
         return send(res, 200, { keys: await svc.release(bearer(req), url.searchParams.get("item") ?? "", segs) });

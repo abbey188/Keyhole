@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { bytesToHex, hexToBytes, msgs, seal, sha256, sig } from "@keyhole/crypto";
+import { bytesToHex, hexToBytes, msgs, receipt, seal, sha256, sig } from "@keyhole/crypto";
 import { ChainUnavailable, ContractError } from "@keyhole/chain";
 import type { ChainReader, ChainWriter, GrantView } from "@keyhole/chain";
 import { encodeTicket, signRsTicket } from "@keyhole/node";
@@ -180,23 +180,66 @@ export class ReleaseService {
       }
       const ev = tx.events.find((x) => x.event === "session_opened" && x.data.session_id === r.sessionId && x.data.grant_id === r.grantId);
       if (!ev) throw deny("no_receipt");
-      // The receipt must be readable at final before any key can ever be released.
-      const onChain = await this.chain(() => this.o.reader.session(r.sessionId));
-      if (!onChain || onChain.grant_id !== r.grantId) throw deny("no_receipt");
-      const now = await this.now();
-      const maxLease = (await this.chain(() => this.o.reader.config())).max_lease_ms;
-      const token = randomBytes(32).toString("hex");
-      const s: Session = {
-        sessionId: r.sessionId, grantId: r.grantId, boxId: grant.box_id, sessionPk: hexToBytes(r.sessionPk),
-        leaseExp: Math.min(now + maxLease, grant.not_after_ms), openedAt: onChain.opened_at,
-        seq: Number(ev.data.seq), head: String(ev.data.head), commitment: String(ev.data.commitment), txHash: tx.txHash,
-        closed: false, log: [], logHead: LOG_GENESIS,
-      };
-      this.sessions.set(s.sessionId, s);
-      this.tokens.set(token, s.sessionId);
-      this.append(s, { t: now, session_id: s.sessionId, item_uid: "", seg: -1, action: "open" });
-      this.backoff.delete(r.grantId);
-      return { token, lease_exp: s.leaseExp, head: s.head, seq: s.seq, tx_hash: s.txHash };
+      return await this.mint(grant, r.sessionId, r.sessionPk, tx.txHash, ev);
+    } finally {
+      this.pending.delete(r.grantId);
+    }
+  }
+
+  /** After the receipt is final: reads the session at final, mints the token and starts the lease. */
+  private async mint(
+    grant: GrantView, sessionId: string, sessionPkHex: string, txHash: string, ev: { data: Record<string, unknown> },
+  ): Promise<{ token: string; lease_exp: number; head: string; seq: number; tx_hash: string }> {
+    // The receipt must be readable at final before any key can ever be released.
+    const onChain = await this.chain(() => this.o.reader.session(sessionId));
+    if (!onChain || onChain.grant_id !== grant.grant_id) throw deny("no_receipt");
+    const now = await this.now();
+    const maxLease = (await this.chain(() => this.o.reader.config())).max_lease_ms;
+    const token = randomBytes(32).toString("hex");
+    const s: Session = {
+      sessionId, grantId: grant.grant_id, boxId: grant.box_id, sessionPk: hexToBytes(sessionPkHex),
+      leaseExp: Math.min(now + maxLease, grant.not_after_ms), openedAt: onChain.opened_at,
+      seq: Number(ev.data.seq), head: String(ev.data.head), commitment: String(ev.data.commitment), txHash,
+      closed: false, log: [], logHead: LOG_GENESIS,
+    };
+    this.sessions.set(s.sessionId, s);
+    this.tokens.set(token, s.sessionId);
+    this.append(s, { t: now, session_id: s.sessionId, item_uid: "", seg: -1, action: "open" });
+    this.backoff.delete(grant.grant_id);
+    return { token, lease_exp: s.leaseExp, head: s.head, seq: s.seq, tx_hash: s.txHash };
+  }
+
+  /**
+   * Named-account requesters (spec 05): the account itself sends `open_session` (the contract requires the caller to be
+   * that account), then proves to the release service that it controls the account's key and which session key it used.
+   * The release service reads the receipt event from the final transaction and recomputes the commitment, which binds
+   * the session key; only then does it mint a token. Same rules as bearer opens afterwards.
+   */
+  async attachSession(r: { txHash: string; grantId: string; sessionId: string; sessionPk: string }, auth: Auth): Promise<{
+    token: string; lease_exp: number; head: string; seq: number; tx_hash: string;
+  }> {
+    if (!isHex(r.grantId, 16) || !isHex(r.sessionId, 16) || !isHex(r.sessionPk, 32) || typeof r.txHash !== "string" || r.txHash.length < 8 || r.txHash.length > 64) {
+      throw new ReleaseError(400, "bad_request");
+    }
+    if (!this.o.store.get(r.grantId)) throw deny();
+    const grant = await this.chain(() => this.o.reader.grant(r.grantId));
+    if (!grant || !grant.requester.startsWith("account:")) throw deny();
+    const account = grant.requester.slice("account:".length);
+    await this.checkAuth(account, r.sessionId, authBody("session-attach", hexToBytes(r.sessionPk)), auth);
+    const box = await this.chain(() => this.o.reader.box(grant.box_id));
+    const now = await this.now();
+    if (!box || grant.revoked_at !== null || now > grant.not_after_ms || grant.epoch !== box.key_epoch) throw deny();
+    if (this.sessions.has(r.sessionId) || this.pending.has(r.grantId)) throw deny("active_session");
+    for (const s of this.sessions.values()) if (s.grantId === r.grantId && !s.closed && s.leaseExp > now) throw deny("active_session");
+    this.pending.add(r.grantId);
+    try {
+      const events = await this.chain(() => this.o.reader.txEvents(r.txHash, account));
+      const ev = events?.find((x) => x.event === "session_opened" && x.data.session_id === r.sessionId && x.data.grant_id === r.grantId);
+      const onChain = ev ? await this.chain(() => this.o.reader.session(r.sessionId)) : null;
+      if (!ev || !onChain || onChain.grant_id !== r.grantId) throw deny("no_receipt");
+      const expected = receipt.commitment(hexToBytes(r.grantId), hexToBytes(r.sessionId), hexToBytes(r.sessionPk), receipt.requesterDigestAccount(account), onChain.opened_at);
+      if (bytesToHex(expected) !== ev.data.commitment) throw deny("no_receipt"); // wrong session key, or not this account's open
+      return await this.mint(grant, r.sessionId, r.sessionPk, r.txHash, ev);
     } finally {
       this.pending.delete(r.grantId);
     }

@@ -1,5 +1,5 @@
 import type {
-  BlobView, BoxView, ConfigView, DealView, GrantArgs, GrantView, SessionView, TxResult, ValidView,
+  BlobView, BoxView, ConfigView, DealView, GrantArgs, GrantView, KeyholeEvent, SessionView, TxResult, ValidView,
 } from "./types.js";
 
 /** The chain (RPC) cannot be reached or is not final. Services fail closed on this (spec 05 section 7.5). */
@@ -35,6 +35,8 @@ export interface ChainReader {
   session(sessionId: string): Promise<SessionView | null>;
   blob(blobId: string): Promise<BlobView | null>;
   deal(dealId: string): Promise<DealView | null>;
+  /** Keyhole events emitted by a transaction, once it is final; null if the transaction is unknown or not final. */
+  txEvents(txHash: string, signerId: string): Promise<KeyholeEvent[] | null>;
   /** True if `pkHex` (Ed25519 public key, hex) is a full-access key of `account` at final. */
   hasFullAccessKey(account: string, pkHex: string): Promise<boolean>;
 }

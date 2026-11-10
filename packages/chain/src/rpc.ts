@@ -1,7 +1,8 @@
 import { hexToBytes } from "@keyhole/crypto";
 import { ChainUnavailable } from "./chain.js";
 import type { ChainReader } from "./chain.js";
-import type { BlobView, BoxView, ConfigView, DealView, GrantView, SessionView, ValidView } from "./types.js";
+import { parseEvents } from "./events.js";
+import type { BlobView, BoxView, ConfigView, DealView, GrantView, KeyholeEvent, SessionView, ValidView } from "./types.js";
 
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
@@ -116,6 +117,18 @@ export class RpcReader implements ChainReader {
   session = (session_id: string) => this.view<SessionView | null>("get_session", { session_id });
   blob = (blob_id: string) => this.view<BlobView | null>("get_blob", { blob_id });
   deal = (deal_id: string) => this.view<DealView | null>("get_deal", { deal_id });
+
+  async txEvents(txHash: string, signerId: string): Promise<KeyholeEvent[] | null> {
+    const env = await this.rpc("EXPERIMENTAL_tx_status", { tx_hash: txHash, sender_account_id: signerId, wait_until: "FINAL" });
+    if (env.error) {
+      const name = env.error.cause?.name;
+      if (name === "UNKNOWN_TRANSACTION") return null;
+      throw new ChainUnavailable(`tx status failed: ${name ?? env.error.name ?? "error"}`);
+    }
+    const r = env.result as { final_execution_status?: string; receipts_outcome?: { outcome: { logs?: string[] } }[] } | undefined;
+    if (!r || r.final_execution_status !== "FINAL" || !Array.isArray(r.receipts_outcome)) return null;
+    return parseEvents(r.receipts_outcome.flatMap((x) => x.outcome.logs ?? []));
+  }
 
   async hasFullAccessKey(account: string, pkHex: string): Promise<boolean> {
     const env = await this.rpc("query", {
