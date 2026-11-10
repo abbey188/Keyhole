@@ -123,6 +123,15 @@ importers:
       '@keyhole/crypto':
         specifier: workspace:*
         version: link:../../packages/crypto
+      '@keyhole/node':
+        specifier: workspace:*
+        version: link:../../services/node
+      '@keyhole/release':
+        specifier: workspace:*
+        version: link:../../services/release
+      '@keyhole/store':
+        specifier: workspace:*
+        version: link:../../packages/store
       near-api-js:
         specifier: ^7.4.0
         version: 7.4.0

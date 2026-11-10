@@ -18,6 +18,34 @@ export interface NearWriterOptions {
   contractId: string;
   reader: ChainReader;
   gas?: bigint;
+  /** Called after every transaction (success or contract failure) with its measurements. */
+  onTx?: (m: TxMeasure) => void;
+}
+
+export interface TxMeasure {
+  method: string;
+  txHash: string;
+  ok: boolean;
+  /** Gas burnt by the transaction and all its receipts. */
+  gasBurnt: number;
+  /** Milliseconds from submit until the transaction was FINAL. */
+  submitToFinalMs: number;
+  error?: string;
+}
+
+/** The contract's panic message (or the raw failure) from a failed outcome, or null if it succeeded. */
+export function failureMessage(res: { status?: unknown; receipts_outcome?: { outcome: { status?: unknown } }[] }): string | null {
+  const bad = [res.status, ...(res.receipts_outcome ?? []).map((r) => r.outcome.status)].find((x) => typeof x === "object" && x !== null && "Failure" in x) as
+    | { Failure: unknown }
+    | undefined;
+  if (!bad) return null;
+  const txt = JSON.stringify(bad.Failure);
+  const m = txt.match(/"ExecutionError":"(?:Smart contract panicked: )?([^"]*)"/);
+  return m ? (m[1] as string) : txt.slice(0, 300);
+}
+
+export function gasBurnt(res: { transaction_outcome?: { outcome?: { gas_burnt?: number | string } }; receipts_outcome?: { outcome: { gas_burnt?: number | string } }[] }): number {
+  return Number(res.transaction_outcome?.outcome?.gas_burnt ?? 0) + (res.receipts_outcome ?? []).reduce((n, r) => n + Number(r.outcome.gas_burnt ?? 0), 0);
 }
 
 export function parseEvents(logs: string[]): KeyholeEvent[] {
@@ -46,7 +74,9 @@ export class NearWriter implements ChainWriter {
   }
 
   private async call(methodName: string, args: Record<string, unknown>, deposit: bigint = 0n): Promise<TxResult> {
-    let res: { transaction?: { hash?: string }; transaction_outcome?: { id?: string }; receipts_outcome?: { outcome: { logs: string[] } }[] };
+    type Res = Parameters<typeof failureMessage>[0] & Parameters<typeof gasBurnt>[0] & { transaction?: { hash?: string }; transaction_outcome?: { id?: string; outcome?: { gas_burnt?: number | string } } };
+    const t0 = performance.now();
+    let res: Res;
     try {
       res = (await this.acct.callFunctionRaw({
         contractId: this.o.contractId,
@@ -55,12 +85,19 @@ export class NearWriter implements ChainWriter {
         deposit,
         gas: this.o.gas ?? 100n * TGAS,
         waitUntil: "FINAL",
-      })) as typeof res;
+      })) as Res;
     } catch (e) {
-      throw new ContractError(String((e as Error)?.message ?? e));
+      const msg = String((e as Error)?.message ?? e);
+      this.o.onTx?.({ method: methodName, txHash: "", ok: false, gasBurnt: 0, submitToFinalMs: Math.round(performance.now() - t0), error: msg });
+      throw new ContractError(msg);
     }
-    const logs = (res.receipts_outcome ?? []).flatMap((r) => r.outcome.logs);
-    return { txHash: res.transaction?.hash ?? res.transaction_outcome?.id ?? "", events: parseEvents(logs) };
+    const ms = Math.round(performance.now() - t0);
+    const txHash = res.transaction?.hash ?? res.transaction_outcome?.id ?? "";
+    const fail = failureMessage(res);
+    this.o.onTx?.({ method: methodName, txHash, ok: fail === null, gasBurnt: gasBurnt(res), submitToFinalMs: ms, ...(fail ? { error: fail } : {}) });
+    if (fail) throw new ContractError(fail);
+    const logs = (res.receipts_outcome ?? []).flatMap((r) => (r.outcome as { logs?: string[] }).logs ?? []);
+    return { txHash, events: parseEvents(logs) };
   }
 
   openSession = (a: { grantId: string; sessionId: string; sessionPk: string; tsMs: number; reqSig?: string }) =>

@@ -73,3 +73,17 @@ describe("RpcReader", () => {
     expect(parseEvents(logs)).toEqual([{ event: "grant_revoked", data: { grant_id: "g" } }]);
   });
 });
+
+import { failureMessage, gasBurnt } from "../src/index.js";
+describe("outcome helpers", () => {
+  it("extracts the contract's panic message and ignores successes", () => {
+    const failed = { status: { Failure: { ActionError: { index: 0, kind: { FunctionCallError: { ExecutionError: "Smart contract panicked: Bad signature" } } } } } };
+    expect(failureMessage(failed)).toBe("Bad signature");
+    expect(failureMessage({ status: { SuccessValue: "" }, receipts_outcome: [{ outcome: { status: { SuccessValue: "" } } }] })).toBeNull();
+    // a failure inside a receipt (not the top-level status) is also caught
+    expect(failureMessage({ status: { SuccessValue: "" }, receipts_outcome: [{ outcome: { status: failed.status } }] })).toBe("Bad signature");
+  });
+  it("sums gas over the transaction and its receipts", () => {
+    expect(gasBurnt({ transaction_outcome: { outcome: { gas_burnt: 10 } }, receipts_outcome: [{ outcome: { gas_burnt: 5 } }, { outcome: { gas_burnt: "7" } }] })).toBe(22);
+  });
+});

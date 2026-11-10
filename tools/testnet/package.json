@@ -10,7 +10,10 @@
   "dependencies": {
     "@keyhole/chain": "workspace:*",
     "@keyhole/crypto": "workspace:*",
-    "near-api-js": "^7.4.0"
+    "near-api-js": "^7.4.0",
+    "@keyhole/node": "workspace:*",
+    "@keyhole/store": "workspace:*",
+    "@keyhole/release": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
