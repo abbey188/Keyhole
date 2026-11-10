@@ -1,0 +1,25 @@
+[package]
+name = "keyhole-proto"
+description = "Keyhole protocol: key hierarchy, segment AEAD, Merkle tree, split keys, receipts. Shared by contract, services and test vectors."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = ["crypto"]
+# The contract builds with default-features = false and uses only the pure byte-format modules
+# (msgs, receipt, merkle) with the runtime's own SHA-256 host function.
+crypto = ["dep:sha2", "dep:hkdf", "dep:chacha20poly1305", "dep:x25519-dalek", "dep:ed25519-dalek", "dep:rand_core"]
+
+[dependencies]
+sha2 = { version = "0.10", optional = true }
+hkdf = { version = "0.12", optional = true }
+chacha20poly1305 = { version = "0.10", optional = true }
+x25519-dalek = { version = "2", features = ["static_secrets"], optional = true }
+ed25519-dalek = { version = "2", optional = true }
+rand_core = { version = "0.6", features = ["getrandom"], optional = true }
+
+[dev-dependencies]
+proptest = "1"
+serde_json = "1"
+hex = "0.4"
