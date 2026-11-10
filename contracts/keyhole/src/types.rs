@@ -56,6 +56,7 @@ pub struct Config {
     pub per_session_stake: u128,
     pub rate_yocto_per_mib_day: u128,
     pub max_blob_bytes: u64,
+    pub node_accounts: Vec<AccountId>,
 }
 
 /// Initialization arguments (keys are hex).
@@ -77,6 +78,8 @@ pub struct ConfigArgs {
     pub per_session_stake: U128,
     pub rate_yocto_per_mib_day: U128,
     pub max_blob_bytes: u64,
+    /// Account that receives each node's storage fees (same order as `node_keys`).
+    pub node_accounts: Vec<AccountId>,
 }
 
 impl ConfigArgs {
@@ -86,6 +89,7 @@ impl ConfigArgs {
             self.threshold >= 1 && (self.threshold as usize) <= self.node_keys.len(),
             "threshold must be between 1 and the number of node keys"
         );
+        near_sdk::require!(self.node_accounts.len() == self.node_keys.len(), "one account per node key");
         near_sdk::require!(self.min_wait_ms <= self.max_wait_ms, "min_wait_ms must not exceed max_wait_ms");
         Config {
             chain_id: self.chain_id,
@@ -104,6 +108,7 @@ impl ConfigArgs {
             per_session_stake: self.per_session_stake.0,
             rate_yocto_per_mib_day: self.rate_yocto_per_mib_day.0,
             max_blob_bytes: self.max_blob_bytes,
+            node_accounts: self.node_accounts,
         }
     }
 }
@@ -126,6 +131,7 @@ pub struct ConfigView {
     pub per_session_stake: U128,
     pub rate_yocto_per_mib_day: U128,
     pub max_blob_bytes: u64,
+    pub node_accounts: Vec<AccountId>,
 }
 
 impl Config {
@@ -147,6 +153,7 @@ impl Config {
             per_session_stake: U128(self.per_session_stake),
             rate_yocto_per_mib_day: U128(self.rate_yocto_per_mib_day),
             max_blob_bytes: self.max_blob_bytes,
+            node_accounts: self.node_accounts.clone(),
         }
     }
 }
@@ -339,14 +346,154 @@ impl SessionRec {
     }
 }
 
+// ------------------------------------------------------------------ blobs
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum BlobState {
+    Registered,
+    Complete,
+    Active,
+    Retired,
+}
+
+#[near(serializers = [borsh])]
+#[derive(Clone)]
+pub struct BlobRec {
+    pub reg_id: u64,
+    pub box_id: [u8; 16],
+    pub size: u64,
+    pub leaves: u32,
+    pub mode: u8,
+    pub state: BlobState,
+    pub registered_at: u64,
+    pub certified_at: Option<u64>,
+    pub retired_at: Option<u64>,
+    pub paid_until: u64,
+    pub fee_escrow: u128,
+    pub claimed: Vec<u128>,
+    pub ack_bitmap: u16,
+    pub erase_bitmap: u16,
+    pub deposit: u128,
+}
+
+#[near(serializers = [json])]
+pub struct BlobView {
+    pub blob_id: String,
+    pub reg_id: u64,
+    pub box_id: String,
+    pub size: u64,
+    pub leaves: u32,
+    pub mode: u8,
+    pub state: BlobState,
+    pub registered_at: u64,
+    pub certified_at: Option<u64>,
+    pub paid_until: u64,
+    pub ack_bitmap: u16,
+    pub erase_bitmap: u16,
+}
+
+impl BlobRec {
+    pub fn view(&self, blob_id: &str) -> BlobView {
+        BlobView {
+            blob_id: blob_id.to_string(),
+            reg_id: self.reg_id,
+            box_id: hex::encode(self.box_id),
+            size: self.size,
+            leaves: self.leaves,
+            mode: self.mode,
+            state: self.state,
+            registered_at: self.registered_at,
+            certified_at: self.certified_at,
+            paid_until: self.paid_until,
+            ack_bitmap: self.ack_bitmap,
+            erase_bitmap: self.erase_bitmap,
+        }
+    }
+}
+
+#[near(serializers = [json])]
+pub struct AckArg {
+    pub idx: u8,
+    pub sig: String,
+}
+
 // ------------------------------------------------------------------ deals
 
-/// Deal record (extended in the deals milestone; only what grants need is used so far).
+#[near(serializers = [borsh, json])]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum DealState {
+    /// Terms pinned, key envelope delivered; waiting for the buyer's funding.
+    Ready,
+    /// Escrow funded; waiting period running.
+    Funded,
+    Completed,
+    Cancelled,
+}
+
 #[near(serializers = [borsh])]
 #[derive(Clone)]
 pub struct DealRec {
+    pub box_id: [u8; 16],
     pub seller: AccountId,
     pub buyer: AccountId,
+    pub price: u128,
+    pub state: DealState,
+    pub created_at: u64,
+    pub offer_expires_at: u64,
+    pub waiting_ms: u64,
+    pub waiting_until: Option<u64>,
+    pub manifest_blob: [u8; 32],
+    pub manifest_seq: u64,
+    pub bmk_commit: [u8; 32],
+    pub envelope_blob: [u8; 32],
+    pub s2_commit: [u8; 32],
+    pub funded: u128,
+    pub ended_at: Option<u64>,
+    pub deposit: u128,
+}
+
+#[near(serializers = [json])]
+pub struct DealView {
+    pub deal_id: String,
+    pub box_id: String,
+    pub seller: AccountId,
+    pub buyer: AccountId,
+    pub price: U128,
+    pub state: DealState,
+    pub created_at: u64,
+    pub offer_expires_at: u64,
+    pub waiting_ms: u64,
+    pub waiting_until: Option<u64>,
+    pub manifest_blob: String,
+    pub manifest_seq: u64,
+    pub bmk_commit: String,
+    pub envelope_blob: String,
+    pub s2_commit: String,
+    pub funded: U128,
+}
+
+impl DealRec {
+    pub fn view(&self, deal_id: &str) -> DealView {
+        DealView {
+            deal_id: deal_id.to_string(),
+            box_id: hex::encode(self.box_id),
+            seller: self.seller.clone(),
+            buyer: self.buyer.clone(),
+            price: U128(self.price),
+            state: self.state,
+            created_at: self.created_at,
+            offer_expires_at: self.offer_expires_at,
+            waiting_ms: self.waiting_ms,
+            waiting_until: self.waiting_until,
+            manifest_blob: hex::encode(self.manifest_blob),
+            manifest_seq: self.manifest_seq,
+            bmk_commit: hex::encode(self.bmk_commit),
+            envelope_blob: hex::encode(self.envelope_blob),
+            s2_commit: hex::encode(self.s2_commit),
+            funded: U128(self.funded),
+        }
+    }
 }
 
 // -------------------------------------------------------------------- NFT

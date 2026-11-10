@@ -8,6 +8,8 @@
 //! Spec: context/spec/04_CONTRACT.md. Invariants: C1-C12 (tests in this file and tests/).
 #![forbid(unsafe_code)]
 
+mod blobs;
+mod deals;
 mod events;
 mod types;
 mod util;
@@ -15,7 +17,7 @@ mod util;
 use events::emit;
 use keyhole_proto::{msgs, receipt};
 use near_sdk::json_types::Base64VecU8;
-use near_sdk::store::LookupMap;
+use near_sdk::store::{IterableSet, LookupMap};
 use near_sdk::{
     env, near, require, AccountId, BorshStorageKey, NearToken, PanicOnDefault, Promise,
 };
@@ -30,6 +32,9 @@ enum Sk {
     Grants,
     Sessions,
     Deals,
+    Blobs,
+    PendingErasure,
+    Claimable,
 }
 
 /// Upper bound on boxes listed per owner (keeps the index small).
@@ -45,8 +50,11 @@ pub struct Keyhole {
     owner_boxes: LookupMap<AccountId, Vec<[u8; 16]>>,
     grants: LookupMap<[u8; 16], GrantRec>,
     sessions: LookupMap<[u8; 16], SessionRec>,
-    #[allow(dead_code)]
     deals: LookupMap<[u8; 16], DealRec>,
+    blobs: LookupMap<[u8; 32], BlobRec>,
+    pending_erasure: IterableSet<[u8; 32]>,
+    claimable: LookupMap<AccountId, u128>,
+    next_reg_id: u64,
     total_boxes: u64,
 }
 
@@ -62,6 +70,10 @@ impl Keyhole {
             grants: LookupMap::new(Sk::Grants),
             sessions: LookupMap::new(Sk::Sessions),
             deals: LookupMap::new(Sk::Deals),
+            blobs: LookupMap::new(Sk::Blobs),
+            pending_erasure: IterableSet::new(Sk::PendingErasure),
+            claimable: LookupMap::new(Sk::Claimable),
+            next_reg_id: 1,
             total_boxes: 0,
         }
     }
@@ -432,3 +444,7 @@ impl Keyhole {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_blobs;
+#[cfg(test)]
+mod tests_deals;

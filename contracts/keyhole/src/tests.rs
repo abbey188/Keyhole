@@ -5,15 +5,15 @@ use keyhole_proto::{hashing::sha256, msgs, receipt, sig};
 use near_sdk::test_utils::{get_created_receipts, get_logs, VMContextBuilder};
 use near_sdk::testing_env;
 
-const NEAR: u128 = 1_000_000_000_000_000_000_000_000;
-const T0: u64 = 1_700_000_000_000;
-const HOUR: u64 = 3_600_000;
-const CONTRACT: &str = "keyhole.testnet";
+pub(crate) const NEAR: u128 = 1_000_000_000_000_000_000_000_000;
+pub(crate) const T0: u64 = 1_700_000_000_000;
+pub(crate) const HOUR: u64 = 3_600_000;
+pub(crate) const CONTRACT: &str = "keyhole.testnet";
 
-fn acct(s: &str) -> AccountId {
+pub(crate) fn acct(s: &str) -> AccountId {
     s.parse().unwrap()
 }
-fn set(pred: &str, deposit: u128, now_ms: u64) {
+pub(crate) fn set(pred: &str, deposit: u128, now_ms: u64) {
     testing_env!(VMContextBuilder::new()
         .current_account_id(acct(CONTRACT))
         .predecessor_account_id(acct(pred))
@@ -22,14 +22,14 @@ fn set(pred: &str, deposit: u128, now_ms: u64) {
         .block_timestamp(now_ms * 1_000_000)
         .build());
 }
-fn hex16(n: u8) -> String {
+pub(crate) fn hex16(n: u8) -> String {
     hex::encode([n; 16])
 }
-fn hex32(n: u8) -> String {
+pub(crate) fn hex32(n: u8) -> String {
     hex::encode([n; 32])
 }
-const RS_SEED: [u8; 32] = [7u8; 32];
-fn cfg() -> ConfigArgs {
+pub(crate) const RS_SEED: [u8; 32] = [7u8; 32];
+pub(crate) fn cfg() -> ConfigArgs {
     ConfigArgs {
         chain_id: "testnet".into(),
         node_keys: vec![hex::encode(sig::public_key(&[1u8; 32]))],
@@ -47,23 +47,24 @@ fn cfg() -> ConfigArgs {
         per_session_stake: near_sdk::json_types::U128(NEAR / 1000),
         rate_yocto_per_mib_day: near_sdk::json_types::U128(1_000_000_000_000_000_000),
         max_blob_bytes: 256 * 1024 * 1024,
+        node_accounts: vec![acct("node1.testnet")],
     }
 }
-fn new_contract() -> Keyhole {
+pub(crate) fn new_contract() -> Keyhole {
     set("deployer.testnet", 0, T0);
     Keyhole::new(cfg())
 }
-fn with_box() -> Keyhole {
+pub(crate) fn with_box() -> Keyhole {
     let mut c = new_contract();
     set("alice.testnet", NEAR / 10, T0);
     c.create_box(hex16(1), Kind::Handover, vec![1, 2, 3].into(), 3 * HOUR);
     c
 }
-const REQ_SEED: [u8; 32] = [5u8; 32];
-fn bearer() -> RequesterArg {
+pub(crate) const REQ_SEED: [u8; 32] = [5u8; 32];
+pub(crate) fn bearer() -> RequesterArg {
     RequesterArg::Bearer(hex::encode(sig::public_key(&REQ_SEED)))
 }
-fn grant_args(gid: u8, bid: u8, requester: RequesterArg, from: u64, to: u64, max_sessions: u16) -> GrantArgs {
+pub(crate) fn grant_args(gid: u8, bid: u8, requester: RequesterArg, from: u64, to: u64, max_sessions: u16) -> GrantArgs {
     GrantArgs {
         grant_id: hex16(gid),
         box_id: hex16(bid),
@@ -76,26 +77,48 @@ fn grant_args(gid: u8, bid: u8, requester: RequesterArg, from: u64, to: u64, max
         policy_hash: hex32(0xbb),
     }
 }
-fn with_grant() -> Keyhole {
+pub(crate) fn with_grant() -> Keyhole {
     let mut c = with_box();
     set("alice.testnet", NEAR / 10, T0);
     c.create_grant(grant_args(1, 1, bearer(), T0, T0 + 2 * HOUR, 3));
     c
 }
-fn open_at(c: &mut Keyhole, gid: u8, sid: u8, seed: &[u8; 32], now: u64, ts: u64) -> bool {
+pub(crate) fn open_at(c: &mut Keyhole, gid: u8, sid: u8, seed: &[u8; 32], now: u64, ts: u64) -> bool {
     set("relayer.testnet", 0, now);
     let spk = [9u8; 32];
     let msg = msgs::open_msg("testnet", CONTRACT, &[gid; 16], &[sid; 16], &spk, ts);
     let s = hex::encode(sig::sign(seed, &msg));
     c.open_session(hex16(gid), hex16(sid), hex::encode(spk), ts, Some(s))
 }
-fn events(name: &str) -> Vec<near_sdk::serde_json::Value> {
+pub(crate) fn events(name: &str) -> Vec<near_sdk::serde_json::Value> {
     get_logs()
         .iter()
         .filter_map(|l| l.strip_prefix("EVENT_JSON:"))
         .filter_map(|j| near_sdk::serde_json::from_str::<near_sdk::serde_json::Value>(j).ok())
         .filter(|v| v["event"] == name)
         .collect()
+}
+
+pub(crate) fn deal_stub(seller: &str, buyer: &str) -> DealRec {
+    DealRec {
+        box_id: [1u8; 16],
+        seller: acct(seller),
+        buyer: acct(buyer),
+        price: 0,
+        state: DealState::Ready,
+        created_at: T0,
+        offer_expires_at: T0 + HOUR,
+        waiting_ms: 20_000,
+        waiting_until: None,
+        manifest_blob: [0u8; 32],
+        manifest_seq: 1,
+        bmk_commit: [0u8; 32],
+        envelope_blob: [0u8; 32],
+        s2_commit: [0u8; 32],
+        funded: 0,
+        ended_at: None,
+        deposit: 0,
+    }
 }
 
 // ------------------------------------------------------------------ init
@@ -378,7 +401,7 @@ fn delete_grant_before_retention_rejected() {
 fn deal_rule_allows_only_buyer_grants() {
     let mut c = with_box();
     let deal = [0xd1u8; 16];
-    c.deals.insert(deal, DealRec { seller: acct("alice.testnet"), buyer: acct("bob.testnet") });
+    c.deals.insert(deal, deal_stub("alice.testnet", "bob.testnet"));
     c.boxes.get_mut(&[1u8; 16]).unwrap().state = BoxState::InDeal(deal);
     set("alice.testnet", NEAR / 10, T0);
     c.create_grant(grant_args(1, 1, RequesterArg::Account(acct("bob.testnet")), T0, T0 + HOUR, 1));
@@ -390,7 +413,7 @@ fn deal_rule_allows_only_buyer_grants() {
 fn deal_rule_rejects_other_accounts() {
     let mut c = with_box();
     let deal = [0xd1u8; 16];
-    c.deals.insert(deal, DealRec { seller: acct("alice.testnet"), buyer: acct("bob.testnet") });
+    c.deals.insert(deal, deal_stub("alice.testnet", "bob.testnet"));
     c.boxes.get_mut(&[1u8; 16]).unwrap().state = BoxState::InDeal(deal);
     set("alice.testnet", NEAR / 10, T0);
     c.create_grant(grant_args(1, 1, RequesterArg::Account(acct("carol.testnet")), T0, T0 + HOUR, 1));
@@ -401,7 +424,7 @@ fn deal_rule_rejects_other_accounts() {
 fn deal_rule_rejects_bearer_links() {
     let mut c = with_box();
     let deal = [0xd1u8; 16];
-    c.deals.insert(deal, DealRec { seller: acct("alice.testnet"), buyer: acct("bob.testnet") });
+    c.deals.insert(deal, deal_stub("alice.testnet", "bob.testnet"));
     c.boxes.get_mut(&[1u8; 16]).unwrap().state = BoxState::InDeal(deal);
     set("alice.testnet", NEAR / 10, T0);
     c.create_grant(grant_args(1, 1, bearer(), T0, T0 + HOUR, 1));
