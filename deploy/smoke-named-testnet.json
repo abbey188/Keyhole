@@ -1,0 +1,113 @@
+{
+  "contract": "keyhole-8ee967.testnet",
+  "checks": [
+    {
+      "name": "the named account's own open_session succeeded and emitted session_opened",
+      "ok": true
+    },
+    {
+      "name": "the real RPC returns the receipt event for the final transaction",
+      "ok": true
+    },
+    {
+      "name": "attach is refused for a session key that is not the one in the on-chain receipt",
+      "ok": true
+    },
+    {
+      "name": "attach is refused for a key that does not control the named account (the seller's key)",
+      "ok": true
+    },
+    {
+      "name": "attach minted a token after reading the final receipt",
+      "ok": true
+    },
+    {
+      "name": "the named account recombined the real segment key",
+      "ok": true
+    },
+    {
+      "name": "receipt chain recomputed with the account digest equals the on-chain head",
+      "ok": true
+    },
+    {
+      "name": "a second attach of the same session is refused",
+      "ok": true
+    },
+    {
+      "name": "after revoke the release service refuses the next key",
+      "ok": true
+    }
+  ],
+  "transactions": [
+    {
+      "label": "create_box",
+      "method": "create_box",
+      "ok": true,
+      "txHash": "HkzyLUigKCxZ2PQJ3wZHA44g2iTUpab5JuEShfjokpng",
+      "link": "https://explorer.testnet.near.org/transactions/HkzyLUigKCxZ2PQJ3wZHA44g2iTUpab5JuEShfjokpng",
+      "gasTgas": 3.61,
+      "submitToFinalMs": 4329,
+      "error": null
+    },
+    {
+      "label": "data blob: register",
+      "method": "register_blob",
+      "ok": true,
+      "txHash": "Gj1bbiuPHjL3gdLkH7WadnmdEf2oWKke9QffGUq1RYcJ",
+      "link": "https://explorer.testnet.near.org/transactions/Gj1bbiuPHjL3gdLkH7WadnmdEf2oWKke9QffGUq1RYcJ",
+      "gasTgas": 3.56,
+      "submitToFinalMs": 4534,
+      "error": null
+    },
+    {
+      "label": "data blob: certify",
+      "method": "certify_blob",
+      "ok": true,
+      "txHash": "4bYDeREdnUccV46siZin7GyidRFBNme8jp9sJRUG9j8m",
+      "link": "https://explorer.testnet.near.org/transactions/4bYDeREdnUccV46siZin7GyidRFBNme8jp9sJRUG9j8m",
+      "gasTgas": 2.77,
+      "submitToFinalMs": 4425,
+      "error": null
+    },
+    {
+      "label": "data blob: activate",
+      "method": "activate_blob",
+      "ok": true,
+      "txHash": "25ZHTjqimvLmMcFVDDUTgM1dYR5T7JxJLiw5AdhZRfKB",
+      "link": "https://explorer.testnet.near.org/transactions/25ZHTjqimvLmMcFVDDUTgM1dYR5T7JxJLiw5AdhZRfKB",
+      "gasTgas": 2.62,
+      "submitToFinalMs": 4143,
+      "error": null
+    },
+    {
+      "label": "create_grant (named account)",
+      "method": "create_grant",
+      "ok": true,
+      "txHash": "3fUUPqFqgXgV9W9LyLhvXXKL5eXYKyyPjRmuJepFf6cs",
+      "link": "https://explorer.testnet.near.org/transactions/3fUUPqFqgXgV9W9LyLhvXXKL5eXYKyyPjRmuJepFf6cs",
+      "gasTgas": 3.56,
+      "submitToFinalMs": 4281,
+      "error": null
+    },
+    {
+      "label": "open_session (by the named account itself)",
+      "method": "open_session",
+      "ok": true,
+      "txHash": "Ea86vb5netMSfRzZFAvGAYkTrk23o1iRuDsvj7cyMB6p",
+      "link": "https://explorer.testnet.near.org/transactions/Ea86vb5netMSfRzZFAvGAYkTrk23o1iRuDsvj7cyMB6p",
+      "gasTgas": 3.16,
+      "submitToFinalMs": 4147,
+      "error": null
+    },
+    {
+      "label": "revoke_grant",
+      "method": "revoke_grant",
+      "ok": true,
+      "txHash": "2i3xBzbYVTUPzEaPPJuZHnmjHzdR8N7tiDTdArwmPCqR",
+      "link": "https://explorer.testnet.near.org/transactions/2i3xBzbYVTUPzEaPPJuZHnmjHzdR8N7tiDTdArwmPCqR",
+      "gasTgas": 2.6,
+      "submitToFinalMs": 4025,
+      "error": null
+    }
+  ]
+}

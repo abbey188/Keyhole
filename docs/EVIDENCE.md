@@ -35,26 +35,44 @@ v1 (`deploy/testnet-v1-superseded.json`) is superseded. It was built without `--
 Offer; seller leaves the second key half with the release service and gets a signed acknowledgement; stranger grants refused while the box is in a deal; buyer funds 0.1 NEAR; completion before the waiting period refused; release service refuses the buyer's key half before Completed; after Completed ownership moved, epoch bumped, seller received the price from escrow, the contract kept no escrow, a grant from before the sale no longer opens, the previous owner is refused; buyer received the key half and rebuilt the box key matching `bmk_commit`; a second deal was funded, cancelled and refunded.
 
 ### Gas and time to final (spikes K4 and K6)
-Gas is gas burnt by the transaction and all its receipts (from the final outcome). Time is from submit until the transaction was FINAL, measured from this container to the public RPC `test.rpc.fastnear.com`. 38 successful transactions: median 3.8 s, 90th percentile 4.8 s, minimum 3.3 s, maximum 10.8 s (one slow outlier).
+Gas is gas burnt by the transaction and all its receipts (from the final outcome); rejected calls still burn gas, shown for the relayer's cost. Time is from submit until the transaction was FINAL, measured from this container to the public RPC `test.rpc.fastnear.com`. 45 successful transactions across the three smoke runs: median 4.0 s, 90th percentile 4.8 s, minimum 3.3 s, maximum 10.8 s (one slow outlier). Largest call: `complete_deal` (payout promise and callback) at about 6 Tgas, far below the 300 Tgas transaction limit.
 | Method | Result | Calls | Gas burnt (Tgas) | Submit to final (ms, median) | Example transaction |
 |---|---|---|---|---|---|
-| `activate_blob` | ok | 4 | 2.6 | 3661 | [5V115DuvDX…](https://explorer.testnet.near.org/transactions/5V115DuvDXPc8trhQscTjv39R6zbvHH9vqxCNbD4tXMo) |
+| `activate_blob` | ok | 5 | 2.6 to 2.6 | 3730 | [5V115DuvDX…](https://explorer.testnet.near.org/transactions/5V115DuvDXPc8trhQscTjv39R6zbvHH9vqxCNbD4tXMo) |
 | `attest_erasure` | ok | 1 | 4.0 | 4130 | [HCnXFy3yHA…](https://explorer.testnet.near.org/transactions/HCnXFy3yHAHmbBhKBmPdT6o1bQCkEWYZmSJ5DndrTjhX) |
 | `cancel_deal` | ok | 1 | 5.7 | 4962 | [8LhWbpS9PR…](https://explorer.testnet.near.org/transactions/8LhWbpS9PRPSr4jHtmmDire6DQfFUybrFFNA6nudSWWv) |
-| `certify_blob` | ok | 6 | 2.8 to 2.8 | 3612 | [Eygmiz9f16…](https://explorer.testnet.near.org/transactions/Eygmiz9f16bU2apr8hnLfjpciAoMLTQCnpiQHTYdAFKo) |
+| `certify_blob` | ok | 7 | 2.8 to 2.8 | 3645 | [Eygmiz9f16…](https://explorer.testnet.near.org/transactions/Eygmiz9f16bU2apr8hnLfjpciAoMLTQCnpiQHTYdAFKo) |
 | `close_session` | ok | 1 | 3.2 | 3761 | [BKSiYPbciQ…](https://explorer.testnet.near.org/transactions/BKSiYPbciQQbT3fv9MkL1QXpJQNSzcxuyvdEZNNLwK7S) |
 | `commit_manifest` | ok | 3 | 2.6 | 3972 | [9hunhmRDXe…](https://explorer.testnet.near.org/transactions/9hunhmRDXekhRTUxwsQbmm8tRj8KfuMh3A8WBXLEPDJR) |
 | `complete_deal` | ok | 1 | 6.3 | 5332 | [292tzBw8WM…](https://explorer.testnet.near.org/transactions/292tzBw8WMfuVF5FUTGLvBwskp2hZ3R4kJXoQcKGM26C) |
 | `complete_deal` | rejected (expected) | 1 | 2.1 | 3388 | [2ZFBf3skN1…](https://explorer.testnet.near.org/transactions/2ZFBf3skN1zKvF3bQiTYbZRaok45QiHzsE4ar9B6hEqD) |
-| `create_box` | ok | 3 | 3.6 to 3.6 | 4394 | [HhJ9iJKSJG…](https://explorer.testnet.near.org/transactions/HhJ9iJKSJGvyi9R8jMpB3AeST69iR6nWbNSWhJTzLBUd) |
+| `create_box` | ok | 4 | 3.6 to 3.6 | 4361 | [HhJ9iJKSJG…](https://explorer.testnet.near.org/transactions/HhJ9iJKSJGvyi9R8jMpB3AeST69iR6nWbNSWhJTzLBUd) |
 | `create_deal` | ok | 2 | 3.8 | 3943 | [Gf3puv7EuC…](https://explorer.testnet.near.org/transactions/Gf3puv7EuCDHGSpDUxHsxD5Le98oZJnu8kpMNPMyTUwp) |
-| `create_grant` | ok | 3 | 3.6 | 4293 | [FruVE9n8vZ…](https://explorer.testnet.near.org/transactions/FruVE9n8vZZcW8m2VboZcQEp8oLF6vYJuHwYdEBneq3W) |
+| `create_grant` | ok | 4 | 3.6 to 3.6 | 4287 | [FruVE9n8vZ…](https://explorer.testnet.near.org/transactions/FruVE9n8vZZcW8m2VboZcQEp8oLF6vYJuHwYdEBneq3W) |
 | `create_grant` | rejected (expected) | 2 | 2.5 to 2.6 | 3603 | [Gm9Kbuv5pj…](https://explorer.testnet.near.org/transactions/Gm9Kbuv5pjjhUR6VfDGBMa1rpwbTbhs5oQBmKyZutBFP) |
 | `fund_deal` | ok | 2 | 2.5 | 3784 | [J56CiBhTmq…](https://explorer.testnet.near.org/transactions/J56CiBhTmqdWSKCnnxUqQiqgG1mZW6Gx9QZjMSfQwLbz) |
-| `open_session` | ok | 3 | 3.4 | 3690 | [2chbQiJJ5Y…](https://explorer.testnet.near.org/transactions/2chbQiJJ5Yb7xaQYzwBEiFu9X7YUc5jgqovpijuQ7zDN) |
+| `open_session` | ok | 4 | 3.2 to 3.4 | 3918 | [2chbQiJJ5Y…](https://explorer.testnet.near.org/transactions/2chbQiJJ5Yb7xaQYzwBEiFu9X7YUc5jgqovpijuQ7zDN) |
 | `open_session` | rejected (expected) | 4 | 2.1 to 2.5 | 4083 | [EpdSWjUUvc…](https://explorer.testnet.near.org/transactions/EpdSWjUUvcdU31P8s4XcD5YZuUjkK59ZVbyJKeZfZooW) |
-| `register_blob` | ok | 6 | 3.6 to 3.6 | 4212 | [c5tFGTPtCx…](https://explorer.testnet.near.org/transactions/c5tFGTPtCxDqYRRzxhibdfebwoBgVK3XphEiG63fm2m) |
+| `register_blob` | ok | 7 | 3.6 to 3.6 | 4283 | [c5tFGTPtCx…](https://explorer.testnet.near.org/transactions/c5tFGTPtCxDqYRRzxhibdfebwoBgVK3XphEiG63fm2m) |
 | `retire_blob` | ok | 1 | 4.3 | 3614 | [FsXv2gfvP9…](https://explorer.testnet.near.org/transactions/FsXv2gfvP9Mtjmrb58Pk232Eb6KAxpW2qkGfqbSq6xw8) |
-| `revoke_grant` | ok | 1 | 2.6 | 3859 | [4zjfJNvGFp…](https://explorer.testnet.near.org/transactions/4zjfJNvGFpfhfDD8ESojcBDuwWbZ1t7yXi1pEAmWqSYu) |
+| `revoke_grant` | ok | 2 | 2.6 | 3942 | [4zjfJNvGFp…](https://explorer.testnet.near.org/transactions/4zjfJNvGFpfhfDD8ESojcBDuwWbZ1t7yXi1pEAmWqSYu) |
 
-What this does not show: methods not exercised on chain (`delete_grant`, `delete_box`, `delete_deal`, `set_wrapped_bmk`, `extend_blob`, `claim_fee`, `abandon_blob`, `expire_blob`, `expire_deal`, `finalize_retired`, `claim`, payout and refund failure paths; the Rust unit tests cover their logic); behaviour under load; larger blobs (the test blobs are 64 to 128 KiB); a deployed, separately hosted node and release service.
+### A named-account requester on testnet (`tools/testnet/src/smoke-named.ts`: 9 checks passed)
+The named account sent `open_session` itself, then attached the session to the release service, which read the receipt event for that transaction from the real RPC (`EXPERIMENTAL_tx_status`) and recomputed the commitment. Refused: a session key that is not the one in the receipt; a key that does not control the account. Accepted: the real key; the account recombined the segment key; the receipt chain recomputed with the account digest equals the on-chain head; a second attach was refused; revoke stopped further keys. Record: `deploy/smoke-named-testnet.json`.
+
+### FakeChain against the real contract (`deploy/conformance-testnet.json`, `packages/chain/src/conformance.ts`)
+One scenario of 118 contract calls (40 succeed, the rest are rejections) ran against the deployed contract (502 s) and recorded, for every call, success or the contract's exact panic message plus a snapshot of observable state (owner, epoch, counters, blob and deal states). `packages/chain/test/conformance.test.ts` runs the same scenario against the MOCK and requires an identical trace, call by call. Result: **no divergence in outcomes or state across the scenario.** The comparison is sensitive (altering one golden outcome, dropping the grant-ceiling rule, or ignoring the waiting period each make it fail). Before the comparison the mock lacked the deal methods and a transaction-events lookup; both were added. Not modelled by the mock and not compared: money and balances, gas, storage deposits, block-time boundaries that need waiting, the `claim` payout-failure paths, `delete_*` retention paths.
+
+### Services as real processes
+`services/release` and `services/node` were started with `pnpm start` equivalents (`tsx src/main.ts`) from environment variables against the deployed contract: each checked at boot that the contract lists its public key at its index, and answered `/v1/pubkeys`, `/v1/pubkey` and `/v1/health`. Not a hosted deployment.
+
+### What the real runs found that the tests had not
+1. **Panics carried no message** in the first deployment (build flag, see above). Fixed and covered by the smoke test, which checks the contract's own messages.
+2. **The real RPC answers an unknown access key as a normal result with an `error` string**, not a JSON-RPC error. The reader treated it as an outage (fail closed, but an authentication failure surfaced as 503). Fixed with tests that use the real shapes.
+3. `cargo test --workspace` failed (and would have failed in CI) because another crate turns on serde_json's `preserve_order`, changing key order in the vectors text; the comparison now parses JSON.
+4. The `wasm32` target was not installed in this container, so `verify.sh` had never printed a Wasm hash; the build script now installs nothing silently and `verify.sh` prints the hash of the optimized Wasm.
+
+### NEAR AI Cloud (check made 2026-11-10)
+`GET https://cloud-api.near.ai/v1/models` returned HTTP 200 with 63 models (text and image inputs; Anthropic, and other providers' models). No `NEARAI_API_KEY` was present in the environment, and the listing may not require one, so **this shows the endpoint is reachable from here, not that a key works**. Nothing was sent that would use one.
+
+What the on-chain runs do not show: methods not exercised on chain (`delete_grant`, `delete_box`, `delete_deal`, `set_wrapped_bmk`, `extend_blob`, `claim_fee`, `abandon_blob`, `expire_blob`, `expire_deal`, `finalize_retired`, `claim`, payout and refund failure paths; the Rust unit tests cover their logic); behaviour under load; larger blobs (the test blobs are 64 to 128 KiB); a deployed, separately hosted node and release service.

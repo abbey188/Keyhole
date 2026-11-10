@@ -142,7 +142,11 @@ export class RpcReader implements ChainReader {
       if (name === "UNKNOWN_ACCESS_KEY" || name === "UNKNOWN_ACCOUNT") return false;
       throw new ChainUnavailable(`access key lookup failed: ${name ?? env.error.name ?? "error"}`);
     }
-    const perm = (env.result as { permission?: unknown } | undefined)?.permission;
+    const res = env.result as { permission?: unknown; error?: unknown } | undefined;
+    // Some RPC nodes answer "no such key or account" as a normal result carrying an `error` string (seen on testnet),
+    // not as a JSON-RPC error. That is a definite "no", unlike an outage.
+    if (typeof res?.error === "string" && /^(access key .* does not exist|account .* does not exist)/.test(res.error)) return false;
+    const perm = res?.permission;
     if (perm === undefined) throw new ChainUnavailable("malformed access key answer");
     return perm === "FullAccess";
   }

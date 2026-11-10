@@ -19,9 +19,10 @@ for d in packages/chain services/node packages/store services/release; do
 done
 
 echo "== 4. Build artifacts and hashes"
-cargo build --target wasm32-unknown-unknown --release -p keyhole-contract --quiet 2>/dev/null || true
-if [ -f target/wasm32-unknown-unknown/release/keyhole_contract.wasm ]; then
-  echo "contract wasm sha256: $(sha256sum target/wasm32-unknown-unknown/release/keyhole_contract.wasm | cut -d' ' -f1)"
+if ./scripts/build-wasm.sh 2>&1 | sed 's/^/   /'; then
+  echo "   (compare with deploy/testnet.json only for the commit that was deployed: a rebuilt contract has a different hash)"
+else
+  echo "   Wasm build failed (needs the wasm32-unknown-unknown target and pnpm install)"
 fi
 echo "vectors sha256:       $(sha256sum vectors/keyhole-v1.json | cut -d' ' -f1)"
 

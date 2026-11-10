@@ -2,9 +2,10 @@
 
 Boxes for sensitive files on NEAR. You keep a box, give someone access for a set time, see every opening, take the access back, and, if you want, sell the box: the payment and the ownership move together.
 
-> **Status: in development, not yet runnable end to end.** What exists and passes today: the protocol crate, a TypeScript crypto package that matches it byte for byte, the NEAR contract (boxes, access, receipts, blobs, sales with escrow) with unit tests, and the storage node, client store and release service, tested together end to end against a labelled MOCK chain (not yet deployed or run on testnet). What does not exist yet: the testnet deployment, the web app, claims and the money module. See `docs/EVIDENCE.md` and `CLAIMS.md` for exactly what is proven.
+> **Status: in development, not yet runnable end to end.** What exists and passes today: the protocol crate, a TypeScript crypto package that matches it byte for byte, the NEAR contract (boxes, access, receipts, blobs, sales with escrow) with unit tests, and the storage node, client store and release service. The contract is **deployed on NEAR testnet** (demo configuration, no access keys) and has been exercised by real-chain runs: a session and receipt chain, a sale with escrow, and a named-account requester; the mock chain used by the service tests reproduces the real contract's behaviour on a recorded scenario. What does not exist yet: hosted services, the web app, claims and the money module. See `docs/EVIDENCE.md` and `CLAIMS.md` for exactly what is proven.
 
 ## Try it (needs Rust with wasm32 target, Node 22, pnpm)
+Deployed contract, code hash and every transaction: `docs/EVIDENCE.md` and `deploy/`.
 1. `./scripts/verify.sh`
 2. You should see passing test summaries for the protocol crate, the contract, the TypeScript crypto package, and the chain client, storage node, client store and release service, then the contract Wasm hash.
 

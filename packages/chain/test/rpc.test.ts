@@ -56,6 +56,11 @@ describe("RpcReader", () => {
     expect(await reader(async () => ok({ permission: { FunctionCall: {} } })).hasFullAccessKey("a.testnet", "00".repeat(32))).toBe(false);
     expect(await reader(async () => err("UNKNOWN_ACCESS_KEY")).hasFullAccessKey("a.testnet", "00".repeat(32))).toBe(false);
     await expect(reader(async () => err("UNAVAILABLE_SHARD")).hasFullAccessKey("a.testnet", "00".repeat(32))).rejects.toThrow(ChainUnavailable);
+    // shapes seen on the real testnet RPC: a normal result carrying an `error` string
+    expect(await reader(async () => ok({ error: "access key ed25519:8SFqwqnq4whPhs8icwHA2hQg3hUoN1qrCLK1SBx3WKwe does not exist while viewing", logs: [] })).hasFullAccessKey("a.testnet", "00".repeat(32))).toBe(false);
+    expect(await reader(async () => ok({ error: "account nobody.testnet does not exist while viewing", logs: [] })).hasFullAccessKey("nobody.testnet", "00".repeat(32))).toBe(false);
+    // any other error string is not an answer: fail closed
+    await expect(reader(async () => ok({ error: "the node is syncing" })).hasFullAccessKey("a.testnet", "00".repeat(32))).rejects.toThrow(ChainUnavailable);
   });
 
   it("base58 matches known values", () => {

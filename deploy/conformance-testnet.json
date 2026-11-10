@@ -1,0 +1,1021 @@
+{
+ "contract": "keyhole-8ee967.testnet",
+ "codeHash": "73bTrdrc22BP4xrDwWoT3h92ZKKsHULn758Y12xCGPzy",
+ "wasmSha256": "59d0402a8e787b5df44fb15d25f9adfa10b69d669492779fb16b4deb7ec5b6e2",
+ "steps": 118,
+ "receiptChainsConsistent": true,
+ "seconds": 502,
+ "trace": [
+  {
+   "step": "create_box",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 0,
+     "manifest_set": false,
+     "receipts_seq": 0,
+     "live_grants": 0,
+     "live_blobs": 0,
+     "has_wrapped_bmk": true
+    }
+   }
+  },
+  {
+   "step": "create_box: duplicate id",
+   "outcome": "Box id already used"
+  },
+  {
+   "step": "create_box: ceiling below the minimum",
+   "outcome": "max_grant_ms below the minimum"
+  },
+  {
+   "step": "create_grant: exactly the ceiling",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 0,
+     "manifest_set": false,
+     "receipts_seq": 0,
+     "live_grants": 1,
+     "live_blobs": 0,
+     "has_wrapped_bmk": true
+    },
+    "grant": {
+     "sessions_used": 0,
+     "revoked": false,
+     "epoch": 0,
+     "requester_kind": "bearer"
+    }
+   }
+  },
+  {
+   "step": "create_grant: one ms over the ceiling",
+   "outcome": "Grant longer than the box ceiling"
+  },
+  {
+   "step": "create_grant: not_after in the past",
+   "outcome": "not_after must be in the future"
+  },
+  {
+   "step": "create_grant: not_after before not_before",
+   "outcome": "not_after must follow not_before"
+  },
+  {
+   "step": "create_grant: shorter than the minimum",
+   "outcome": "Grant shorter than the minimum"
+  },
+  {
+   "step": "create_grant: zero sessions",
+   "outcome": "max_sessions must be 1 to 1000"
+  },
+  {
+   "step": "create_grant: too many sessions",
+   "outcome": "max_sessions must be 1 to 1000"
+  },
+  {
+   "step": "create_grant: duplicate id",
+   "outcome": "Grant id already used"
+  },
+  {
+   "step": "create_grant: not the owner",
+   "outcome": "Only the box owner can do this"
+  },
+  {
+   "step": "create_grant: unknown box",
+   "outcome": "Unknown box"
+  },
+  {
+   "step": "open_session: bearer",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 0,
+     "manifest_set": false,
+     "receipts_seq": 1,
+     "live_grants": 1,
+     "live_blobs": 0,
+     "has_wrapped_bmk": true
+    },
+    "grant": {
+     "sessions_used": 1,
+     "revoked": false,
+     "epoch": 0,
+     "requester_kind": "bearer"
+    }
+   }
+  },
+  {
+   "step": "open_session: missing signature",
+   "outcome": "Signature required"
+  },
+  {
+   "step": "open_session: bad signature",
+   "outcome": "Bad signature"
+  },
+  {
+   "step": "open_session: signed by another key",
+   "outcome": "Bad signature"
+  },
+  {
+   "step": "open_session: stale timestamp",
+   "outcome": "Open request timestamp is not fresh"
+  },
+  {
+   "step": "open_session: replayed session id",
+   "outcome": "Session id already used",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 0,
+     "manifest_set": false,
+     "receipts_seq": 1,
+     "live_grants": 1,
+     "live_blobs": 0,
+     "has_wrapped_bmk": true
+    },
+    "grant": {
+     "sessions_used": 1,
+     "revoked": false,
+     "epoch": 0,
+     "requester_kind": "bearer"
+    }
+   }
+  },
+  {
+   "step": "open_session: unknown grant",
+   "outcome": "Unknown grant"
+  },
+  {
+   "step": "create_grant: single session",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 0,
+     "manifest_set": false,
+     "receipts_seq": 1,
+     "live_grants": 2,
+     "live_blobs": 0,
+     "has_wrapped_bmk": true
+    }
+   }
+  },
+  {
+   "step": "open_session: the single session",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 0,
+     "manifest_set": false,
+     "receipts_seq": 2,
+     "live_grants": 2,
+     "live_blobs": 0,
+     "has_wrapped_bmk": true
+    },
+    "grant": {
+     "sessions_used": 1,
+     "revoked": false,
+     "epoch": 0,
+     "requester_kind": "bearer"
+    }
+   }
+  },
+  {
+   "step": "open_session: budget exhausted",
+   "outcome": "Session budget exhausted",
+   "state": {
+    "grant": {
+     "sessions_used": 1,
+     "revoked": false,
+     "epoch": 0,
+     "requester_kind": "bearer"
+    }
+   }
+  },
+  {
+   "step": "create_grant: starts in the future",
+   "outcome": "ok"
+  },
+  {
+   "step": "open_session: grant not yet valid",
+   "outcome": "Grant not yet valid"
+  },
+  {
+   "step": "create_grant: named account",
+   "outcome": "ok",
+   "state": {
+    "grant": {
+     "sessions_used": 0,
+     "revoked": false,
+     "epoch": 0,
+     "requester_kind": "account"
+    }
+   }
+  },
+  {
+   "step": "open_session: wrong account",
+   "outcome": "Wrong requester account"
+  },
+  {
+   "step": "open_session: the named account",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 0,
+     "manifest_set": false,
+     "receipts_seq": 3,
+     "live_grants": 4,
+     "live_blobs": 0,
+     "has_wrapped_bmk": true
+    },
+    "grant": {
+     "sessions_used": 1,
+     "revoked": false,
+     "epoch": 0,
+     "requester_kind": "account"
+    }
+   }
+  },
+  {
+   "step": "revoke_grant: not the owner",
+   "outcome": "Only the box owner can do this"
+  },
+  {
+   "step": "revoke_grant: unknown grant",
+   "outcome": "Unknown grant"
+  },
+  {
+   "step": "revoke_grant",
+   "outcome": "ok",
+   "state": {
+    "grant": {
+     "sessions_used": 1,
+     "revoked": true,
+     "epoch": 0,
+     "requester_kind": "bearer"
+    }
+   }
+  },
+  {
+   "step": "revoke_grant: twice",
+   "outcome": "Grant already revoked"
+  },
+  {
+   "step": "open_session: revoked grant",
+   "outcome": "Grant revoked"
+  },
+  {
+   "step": "close_session: unknown session",
+   "outcome": "Unknown session"
+  },
+  {
+   "step": "close_session: unknown key index",
+   "outcome": "Unknown release service key"
+  },
+  {
+   "step": "close_session: wrong key",
+   "outcome": "Bad signature"
+  },
+  {
+   "step": "close_session",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 0,
+     "manifest_set": false,
+     "receipts_seq": 4,
+     "live_grants": 4,
+     "live_blobs": 0,
+     "has_wrapped_bmk": true
+    }
+   }
+  },
+  {
+   "step": "close_session: twice",
+   "outcome": "Session already closed"
+  },
+  {
+   "step": "blob A: register",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Registered",
+     "leaves": 1,
+     "ack_bitmap": 0,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "register_blob: duplicate id",
+   "outcome": "Blob id already registered"
+  },
+  {
+   "step": "register_blob: zero size",
+   "outcome": "Blob size out of range"
+  },
+  {
+   "step": "register_blob: zero days",
+   "outcome": "days must be 1 to 3650"
+  },
+  {
+   "step": "register_blob: not the owner",
+   "outcome": "Only the box owner can do this"
+  },
+  {
+   "step": "register_blob: unknown box",
+   "outcome": "Unknown box"
+  },
+  {
+   "step": "activate_blob: before certification",
+   "outcome": "Blob must be certified first"
+  },
+  {
+   "step": "certify_blob: bad signature",
+   "outcome": "Bad node signature"
+  },
+  {
+   "step": "certify_blob: unknown node",
+   "outcome": "Unknown node"
+  },
+  {
+   "step": "certify_blob: no signatures",
+   "outcome": "Not enough acknowledgements"
+  },
+  {
+   "step": "certify_blob: duplicate signature",
+   "outcome": "Duplicate node acknowledgement"
+  },
+  {
+   "step": "certify_blob",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Complete",
+     "leaves": 1,
+     "ack_bitmap": 1,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "certify_blob: twice",
+   "outcome": "Blob is not awaiting certification"
+  },
+  {
+   "step": "activate_blob: not the owner",
+   "outcome": "Only the box owner can do this"
+  },
+  {
+   "step": "activate_blob",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 0,
+     "manifest_set": false,
+     "receipts_seq": 4,
+     "live_grants": 4,
+     "live_blobs": 1,
+     "has_wrapped_bmk": true
+    },
+    "blob": {
+     "state": "Active",
+     "leaves": 1,
+     "ack_bitmap": 1,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "commit_manifest: wrong sequence",
+   "outcome": "Manifest sequence must increase by one"
+  },
+  {
+   "step": "blob P: register",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Registered",
+     "leaves": 1,
+     "ack_bitmap": 0,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "blob P: certify",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Complete",
+     "leaves": 1,
+     "ack_bitmap": 1,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "commit_manifest: blob not active",
+   "outcome": "Manifest blob must be active"
+  },
+  {
+   "step": "commit_manifest: not the owner",
+   "outcome": "Only the box owner can do this"
+  },
+  {
+   "step": "commit_manifest",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 1,
+     "manifest_set": true,
+     "receipts_seq": 4,
+     "live_grants": 4,
+     "live_blobs": 2,
+     "has_wrapped_bmk": true
+    }
+   }
+  },
+  {
+   "step": "retire_blob: the current manifest",
+   "outcome": "Replace the manifest before retiring its blob"
+  },
+  {
+   "step": "retire_blob: not the owner",
+   "outcome": "Only the box owner can do this"
+  },
+  {
+   "step": "blob M2: register",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Registered",
+     "leaves": 1,
+     "ack_bitmap": 0,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "blob M2: certify",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Complete",
+     "leaves": 1,
+     "ack_bitmap": 1,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "blob M2: activate",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Active",
+     "leaves": 1,
+     "ack_bitmap": 1,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "commit_manifest: second",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 2,
+     "manifest_set": true,
+     "receipts_seq": 4,
+     "live_grants": 4,
+     "live_blobs": 3,
+     "has_wrapped_bmk": true
+    }
+   }
+  },
+  {
+   "step": "retire_blob",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 2,
+     "manifest_set": true,
+     "receipts_seq": 4,
+     "live_grants": 4,
+     "live_blobs": 3,
+     "has_wrapped_bmk": true
+    },
+    "blob": {
+     "state": "Retired",
+     "leaves": 1,
+     "ack_bitmap": 1,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "retire_blob: twice",
+   "outcome": "Blob cannot be retired in this state"
+  },
+  {
+   "step": "certify_blob: retired blob",
+   "outcome": "Blob is not awaiting certification"
+  },
+  {
+   "step": "attest_erasure: bad signature",
+   "outcome": "Bad node signature"
+  },
+  {
+   "step": "attest_erasure: unknown node",
+   "outcome": "Unknown node"
+  },
+  {
+   "step": "attest_erasure: not retired",
+   "outcome": "Blob is not retired"
+  },
+  {
+   "step": "attest_erasure: all nodes attested, record removed",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Bound",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 2,
+     "manifest_set": true,
+     "receipts_seq": 4,
+     "live_grants": 4,
+     "live_blobs": 2,
+     "has_wrapped_bmk": true
+    },
+    "blob": null
+   }
+  },
+  {
+   "step": "create_box: Handover",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Handover",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 0,
+     "manifest_set": false,
+     "receipts_seq": 0,
+     "live_grants": 0,
+     "live_blobs": 0,
+     "has_wrapped_bmk": true
+    }
+   }
+  },
+  {
+   "step": "create_grant: before the sale",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Handover",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 0,
+     "manifest_set": false,
+     "receipts_seq": 0,
+     "live_grants": 1,
+     "live_blobs": 0,
+     "has_wrapped_bmk": true
+    },
+    "grant": {
+     "sessions_used": 0,
+     "revoked": false,
+     "epoch": 0,
+     "requester_kind": "bearer"
+    }
+   }
+  },
+  {
+   "step": "envelope: register",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Registered",
+     "leaves": 1,
+     "ack_bitmap": 0,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "envelope: certify",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Complete",
+     "leaves": 1,
+     "ack_bitmap": 1,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "create_deal: box has no manifest yet",
+   "outcome": "Box has no manifest yet"
+  },
+  {
+   "step": "manifest H: register",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Registered",
+     "leaves": 1,
+     "ack_bitmap": 0,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "manifest H: certify",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Complete",
+     "leaves": 1,
+     "ack_bitmap": 1,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "manifest H: activate",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Active",
+     "leaves": 1,
+     "ack_bitmap": 1,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "commit_manifest: handover box",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Handover",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 1,
+     "manifest_set": true,
+     "receipts_seq": 0,
+     "live_grants": 1,
+     "live_blobs": 2,
+     "has_wrapped_bmk": true
+    }
+   }
+  },
+  {
+   "step": "envelope for the about-me box: register",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Registered",
+     "leaves": 1,
+     "ack_bitmap": 0,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "envelope for the about-me box: certify",
+   "outcome": "ok",
+   "state": {
+    "blob": {
+     "state": "Complete",
+     "leaves": 1,
+     "ack_bitmap": 1,
+     "erase_bitmap": 0
+    }
+   }
+  },
+  {
+   "step": "create_deal: about-me box",
+   "outcome": "About me boxes cannot be handed over"
+  },
+  {
+   "step": "create_deal: buyer is the seller",
+   "outcome": "Buyer and seller must differ"
+  },
+  {
+   "step": "create_deal: waiting period too short",
+   "outcome": "Waiting period out of range"
+  },
+  {
+   "step": "create_deal: offer already expired",
+   "outcome": "Offer must expire in the future"
+  },
+  {
+   "step": "create_deal: unknown envelope",
+   "outcome": "Unknown envelope blob"
+  },
+  {
+   "step": "create_deal: envelope of another box",
+   "outcome": "Envelope blob belongs to another box"
+  },
+  {
+   "step": "create_deal: not the owner",
+   "outcome": "Only the box owner can do this"
+  },
+  {
+   "step": "create_deal",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Handover",
+     "in_deal": true,
+     "key_epoch": 0,
+     "manifest_seq": 1,
+     "manifest_set": true,
+     "receipts_seq": 0,
+     "live_grants": 1,
+     "live_blobs": 2,
+     "has_wrapped_bmk": true
+    },
+    "deal": {
+     "state": "Ready",
+     "buyer": "bob",
+     "seller": "alice",
+     "funded": "0",
+     "price": "100000000000000000000000",
+     "has_waiting_until": false
+    }
+   }
+  },
+  {
+   "step": "create_deal: duplicate deal id",
+   "outcome": "Deal id already used"
+  },
+  {
+   "step": "create_deal: box already in a deal",
+   "outcome": "Box is already in a deal"
+  },
+  {
+   "step": "create_grant: to a stranger during a deal",
+   "outcome": "Box is in a deal"
+  },
+  {
+   "step": "register_blob: during a deal",
+   "outcome": "Box is in a deal"
+  },
+  {
+   "step": "retire_blob: during a deal",
+   "outcome": "Box is in a deal"
+  },
+  {
+   "step": "fund_deal: not the buyer",
+   "outcome": "Only the buyer can fund this deal"
+  },
+  {
+   "step": "fund_deal: wrong price",
+   "outcome": "Attach exactly the price"
+  },
+  {
+   "step": "expire_deal: not expired",
+   "outcome": "Deal has not expired"
+  },
+  {
+   "step": "complete_deal: not funded",
+   "outcome": "Deal is not funded"
+  },
+  {
+   "step": "fund_deal",
+   "outcome": "ok",
+   "state": {
+    "deal": {
+     "state": "Funded",
+     "buyer": "bob",
+     "seller": "alice",
+     "funded": "100000000000000000000000",
+     "price": "100000000000000000000000",
+     "has_waiting_until": true
+    }
+   }
+  },
+  {
+   "step": "fund_deal: twice",
+   "outcome": "Deal is not awaiting funding"
+  },
+  {
+   "step": "complete_deal: waiting period not over",
+   "outcome": "Waiting period has not passed"
+  },
+  {
+   "step": "cancel_deal: a third party",
+   "outcome": "Only the seller or the buyer can cancel"
+  },
+  {
+   "step": "cancel_deal: seller, funded",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Handover",
+     "in_deal": false,
+     "key_epoch": 0,
+     "manifest_seq": 1,
+     "manifest_set": true,
+     "receipts_seq": 0,
+     "live_grants": 1,
+     "live_blobs": 2,
+     "has_wrapped_bmk": true
+    },
+    "deal": {
+     "state": "Cancelled",
+     "buyer": "bob",
+     "seller": "alice",
+     "funded": "0",
+     "price": "100000000000000000000000",
+     "has_waiting_until": true
+    }
+   }
+  },
+  {
+   "step": "cancel_deal: twice",
+   "outcome": "Deal can no longer be cancelled"
+  },
+  {
+   "step": "fund_deal: cancelled",
+   "outcome": "Deal is not awaiting funding"
+  },
+  {
+   "step": "complete_deal: cancelled",
+   "outcome": "Deal is not funded"
+  },
+  {
+   "step": "claim: nothing to claim",
+   "outcome": "Nothing to claim"
+  },
+  {
+   "step": "create_deal: second offer",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "alice",
+     "kind": "Handover",
+     "in_deal": true,
+     "key_epoch": 0,
+     "manifest_seq": 1,
+     "manifest_set": true,
+     "receipts_seq": 0,
+     "live_grants": 1,
+     "live_blobs": 2,
+     "has_wrapped_bmk": true
+    },
+    "deal": {
+     "state": "Ready",
+     "buyer": "bob",
+     "seller": "alice",
+     "funded": "0",
+     "price": "100000000000000000000000",
+     "has_waiting_until": false
+    }
+   }
+  },
+  {
+   "step": "fund_deal: second offer",
+   "outcome": "ok",
+   "state": {
+    "deal": {
+     "state": "Funded",
+     "buyer": "bob",
+     "seller": "alice",
+     "funded": "100000000000000000000000",
+     "price": "100000000000000000000000",
+     "has_waiting_until": true
+    }
+   }
+  },
+  {
+   "step": "complete_deal",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "bob",
+     "kind": "Handover",
+     "in_deal": false,
+     "key_epoch": 1,
+     "manifest_seq": 1,
+     "manifest_set": true,
+     "receipts_seq": 0,
+     "live_grants": 1,
+     "live_blobs": 2,
+     "has_wrapped_bmk": false
+    },
+    "deal": {
+     "state": "Completed",
+     "buyer": "bob",
+     "seller": "alice",
+     "funded": "0",
+     "price": "100000000000000000000000",
+     "has_waiting_until": true
+    }
+   }
+  },
+  {
+   "step": "complete_deal: twice",
+   "outcome": "Deal is not funded"
+  },
+  {
+   "step": "open_session: grant from before the sale",
+   "outcome": "Grant belongs to an earlier epoch",
+   "state": {
+    "grant": {
+     "sessions_used": 0,
+     "revoked": false,
+     "epoch": 0,
+     "requester_kind": "bearer"
+    }
+   }
+  },
+  {
+   "step": "create_grant: the previous owner",
+   "outcome": "Only the box owner can do this"
+  },
+  {
+   "step": "create_grant: the new owner",
+   "outcome": "ok",
+   "state": {
+    "box": {
+     "owner": "bob",
+     "kind": "Handover",
+     "in_deal": false,
+     "key_epoch": 1,
+     "manifest_seq": 1,
+     "manifest_set": true,
+     "receipts_seq": 0,
+     "live_grants": 2,
+     "live_blobs": 2,
+     "has_wrapped_bmk": false
+    }
+   }
+  },
+  {
+   "step": "set manifest: the previous owner",
+   "outcome": "Only the box owner can do this"
+  },
+  {
+   "step": "receipt chain recomputed from public data equals the on-chain head",
+   "outcome": "ok"
+  }
+ ]
+}
