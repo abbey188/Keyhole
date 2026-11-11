@@ -8,6 +8,11 @@ import { decodeTicket } from "./ticket.js";
 export const BLOB_VERSION = 1;
 /** Leaves per read request. */
 export const MAX_RANGE = 256;
+/** Longest lifetime of an owner-signed read ticket. */
+export const MAX_OWNER_TICKET_MS = 600_000;
+/** A blob whose chain record reads as missing is erased only after this long and this many sweeps (a lagging RPC can answer "missing"). */
+export const MISSING_GRACE_MS = 600_000;
+export const MISSING_SWEEPS = 3;
 
 /** Errors carry only a short code; the HTTP layer never explains further. */
 export class NodeError extends Error {
@@ -37,6 +42,7 @@ export interface LeafPiece {
 
 export class StorageNode {
   private readonly hashCache = new Map<string, Uint8Array[]>();
+  private readonly missing = new Map<string, { since: number; count: number }>(); // blobs whose record read as missing
   readonly publicKey: Uint8Array;
 
   constructor(private readonly o: StorageNodeOptions) {
@@ -133,7 +139,7 @@ export class StorageNode {
       return;
     }
     if (blob.state !== "Active" && blob.state !== "Complete") throw new NodeError(404, "not_found");
-    if (!isHex(t.pk, 32)) throw new NodeError(403, "forbidden");
+    if (!isHex(t.pk, 32) || t.exp > now + MAX_OWNER_TICKET_MS) throw new NodeError(403, "forbidden");
     if (!sig.verify(hexToBytes(t.pk), msgs.ticketMsg(hexToBytes(blob.blob_id), new Uint8Array(16), t.exp), hexToBytes(t.sig))) {
       throw new NodeError(403, "forbidden");
     }
@@ -180,15 +186,28 @@ export class StorageNode {
   // ------------------------------------------------------------------ erasure (spec 03 section 11)
 
   /**
-   * For every blob held locally: if the chain says Retired, erase the bytes and attest; if the record is
-   * gone (abandoned or fully erased), erase the bytes. The attestation is a signed claim, not proof of
-   * physical erasure (spec 03 section 11).
+   * For every blob held locally: if the chain says Retired, erase the bytes and attest. If the record is gone
+   * (abandoned or fully erased), erase only after it has stayed missing for MISSING_SWEEPS sweeps over at least
+   * MISSING_GRACE_MS of chain time: one stale or wrong RPC answer must never destroy live data. Reads are refused
+   * the moment a record is missing or Retired, whatever this sweep does. The attestation is a signed claim, not
+   * proof of physical erasure (spec 03 section 11).
    */
   async sweep(writer: ChainWriter): Promise<{ erased: string[]; attested: string[] }> {
     const report = { erased: [] as string[], attested: [] as string[] };
+    const now = await this.chain(() => this.o.reader.finalTimeMs());
     for (const id of this.o.store.blobs()) {
       const blob = await this.chain(() => this.o.reader.blob(id));
-      if (blob && blob.state !== "Retired") continue;
+      if (blob && blob.state !== "Retired") {
+        this.missing.delete(id);
+        continue;
+      }
+      if (!blob) {
+        const m = this.missing.get(id) ?? { since: now, count: 0 };
+        m.count += 1;
+        this.missing.set(id, m);
+        if (m.count < MISSING_SWEEPS || now - m.since < MISSING_GRACE_MS) continue;
+      }
+      this.missing.delete(id);
       this.o.store.erase(id);
       this.hashCache.delete(id);
       report.erased.push(id);

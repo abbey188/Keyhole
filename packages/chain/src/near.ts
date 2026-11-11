@@ -130,6 +130,7 @@ export class NearWriter implements ChainWriter, DealApi {
       deal: {
         deal_id: a.dealId, box_id: a.boxId, buyer: a.buyer, price: a.priceYocto, waiting_ms: a.waitingMs,
         offer_expires_at_ms: a.offerExpiresAtMs, bmk_commit: a.bmkCommit, envelope_blob: a.envelopeBlob, s2_commit: a.s2Commit,
+        rs_idx: a.rsIdx, rs_ack: a.rsAck,
       },
     }, NEAR / 50n);
   fundDeal = (dealId: string, priceYocto: string) => this.call("fund_deal", { deal_id: dealId }, BigInt(priceYocto));

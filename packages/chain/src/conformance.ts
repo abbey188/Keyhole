@@ -2,7 +2,7 @@
 // against FakeChain (test/conformance.test.ts) and must produce the SAME trace: for every call, success or the
 // contract's exact panic message, plus a small snapshot of observable state. The real run is committed as a golden
 // file (deploy/conformance-testnet.json); FakeChain must reproduce it offline.
-import { bytesToHex, hexToBytes, msgs, randomBytes, receipt, sig } from "@keyhole/crypto";
+import { bytesToHex, hexToBytes, msgs, randomBytes, receipt, rs, sig } from "@keyhole/crypto";
 import { ChainUnavailable, ContractError } from "./chain.js";
 import type { ChainReader, ChainWriter, DealApi } from "./chain.js";
 import type { GrantArgs } from "./types.js";
@@ -240,10 +240,15 @@ export async function runScenario(env: ConformanceEnv): Promise<{ trace: TraceEn
   const gOld = await grantArgs(BH, { bearer: rOld.pk }, { maxSessions: 2 });
   await step("create_grant: before the sale", () => alice.createGrant(gOld), { box: BH, grant: gOld.grantId });
   const envBlob = await makeBlob(BH, "envelope", "complete");
-  const offer = async (dealId: string, over: Partial<Parameters<Actor["createDeal"]>[0]> = {}) => ({
-    dealId, boxId: BH, buyer: env.accounts.bob, priceYocto: "100000000000000000000000", waitingMs: cfg.min_wait_ms,
-    offerExpiresAtMs: (await nowMs()) + 3_600_000, bmkCommit: id(32), envelopeBlob: envBlob, s2Commit: id(32), ...over,
-  });
+  const offer = async (dealId: string, over: Partial<Parameters<Actor["createDeal"]>[0]> = {}) => {
+    const s2Commit = over.s2Commit ?? id(32);
+    return {
+      dealId, boxId: BH, buyer: env.accounts.bob, priceYocto: "100000000000000000000000", waitingMs: cfg.min_wait_ms,
+      offerExpiresAtMs: (await nowMs()) + 3_600_000, bmkCommit: id(32), envelopeBlob: envBlob, s2Commit, rsIdx: 0,
+      // the release service's acknowledgement that it holds the key half behind s2Commit
+      rsAck: bytesToHex(sig.sign(env.rsSeed, rs.dealAckMsg(dealId, s2Commit))), ...over,
+    };
+  };
   await step("create_deal: box has no manifest yet", async () => alice.createDeal(await offer(id(16))));
   const manBlob = await makeBlob(BH, "manifest H", "active");
   await step("commit_manifest: handover box", () => alice.commitManifest({ boxId: BH, manifestBlob: manBlob, seq: 1 }), { box: BH });
@@ -254,6 +259,13 @@ export async function runScenario(env: ConformanceEnv): Promise<{ trace: TraceEn
   await step("create_deal: offer already expired", async () => alice.createDeal(await offer(id(16), { offerExpiresAtMs: (await nowMs()) - 1000 })));
   await step("create_deal: unknown envelope", async () => alice.createDeal(await offer(id(16), { envelopeBlob: id(32) })));
   await step("create_deal: envelope of another box", async () => alice.createDeal(await offer(id(16), { envelopeBlob: envB1 })));
+  await step("create_deal: no valid release-service acknowledgement", async () => alice.createDeal(await offer(id(16), { rsAck: "00".repeat(64) })));
+  await step("create_deal: acknowledgement for another deal", async () => alice.createDeal(await offer(id(16), { rsAck: bytesToHex(sig.sign(env.rsSeed, rs.dealAckMsg(id(16), id(32)))) })));
+  await step("create_deal: acknowledgement signed by another key", async () => {
+    const o = await offer(id(16));
+    return alice.createDeal({ ...o, rsAck: bytesToHex(sig.sign(new Uint8Array(32).fill(5), rs.dealAckMsg(o.dealId, o.s2Commit))) });
+  });
+  await step("create_deal: unknown release-service key", async () => alice.createDeal(await offer(id(16), { rsIdx: 7 })));
   await step("create_deal: not the owner", async () => mallory.createDeal(await offer(id(16))));
   const D1 = id(16);
   await step("create_deal", async () => alice.createDeal(await offer(D1)), { box: BH, deal: D1 });

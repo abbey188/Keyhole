@@ -36,7 +36,8 @@ async function bobOpens(r: Rig, grantId: string, sessionId = hexN(0x71, 16)) {
   const tx = await r.chain.writer(BOB).openSession({ grantId, sessionId, sessionPk: pk, tsMs: r.chain.now() });
   return { sk, pk, sessionId, txHash: tx.txHash };
 }
-const attachAuth = (r: Rig, signer: Uint8Array, sessionId: string, pk: string, ts = r.chain.now()) => auth(signer, sessionId, authBody("session-attach", hexToBytes(pk)), ts);
+let tick = 0; // each request is signed with its own timestamp: a signed request is accepted only once
+const attachAuth = (r: Rig, signer: Uint8Array, sessionId: string, pk: string, ts = r.chain.now() + ++tick) => auth(signer, sessionId, authBody("session-attach", hexToBytes(pk)), ts);
 
 describe("named-account requesters", () => {
   it("the account opens on chain, attaches, and then gets keys exactly like a bearer link", async () => {

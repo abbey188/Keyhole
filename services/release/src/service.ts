@@ -79,6 +79,7 @@ export class ReleaseService {
   private readonly pending = new Set<string>(); // grant ids with an open in flight
   private readonly releases = new Map<string, number[]>(); // grant -> chain times of released segments
   private readonly backoff = new Map<string, { n: number; until: number }>();
+  private readonly usedSigs = new Map<string, number>(); // accepted owner signatures -> chain time they stop being fresh
   readonly publicKey: Uint8Array;
 
   constructor(private readonly o: ReleaseOptions) {
@@ -107,6 +108,11 @@ export class ReleaseService {
     const msg = msgs.rsPutMsg(this.o.reader.chainId, hexToBytes(idHex), bodyHash, a.ts);
     if (!sig.verify(hexToBytes(a.pk), msg, hexToBytes(a.sig))) throw deny();
     if (!(await this.chain(() => this.o.reader.hasFullAccessKey(account, a.pk)))) throw deny();
+    // Each signed request is accepted once: a captured request cannot be replayed inside its freshness window.
+    const skew = this.o.authSkewMs ?? 120_000;
+    for (const [k, until] of this.usedSigs) if (until < now) this.usedSigs.delete(k);
+    if (this.usedSigs.has(a.sig)) throw deny("replay");
+    this.usedSigs.set(a.sig, a.ts + skew);
   }
 
   // ------------------------------------------------------------------ grant material (owner)
@@ -141,14 +147,16 @@ export class ReleaseService {
    * Opens a session. Nothing is minted until `open_session` is FINAL on chain, its event has been seen and
    * the session is readable at final ("no receipt, no key", spec 05 section 4).
    */
-  async openSession(r: { grantId: string; sessionId: string; sessionPk: string; ts: number; sig: string }): Promise<{
+  async openSession(r: { grantId: string; sessionId: string; sessionPk: string; ts: number; sig: string }, caller = "local"): Promise<{
     token: string; lease_exp: number; head: string; seq: number; tx_hash: string;
   }> {
     if (!isHex(r.grantId, 16) || !isHex(r.sessionId, 16) || !isHex(r.sessionPk, 32) || !isHex(r.sig, 64) || !Number.isFinite(r.ts)) {
       throw new ReleaseError(400, "bad_request");
     }
     const t0 = await this.now();
-    const bo = this.backoff.get(r.grantId);
+    // Backoff is per caller and grant: grant ids are public, so a grant-wide lockout would let anyone block a recipient.
+    const boKey = `${caller}|${r.grantId}`;
+    const bo = this.backoff.get(boKey);
     if (bo && t0 < bo.until) throw new ReleaseError(429, "backoff");
     if (!this.o.store.get(r.grantId)) throw deny();
     const grant = await this.chain(() => this.o.reader.grant(r.grantId));
@@ -160,7 +168,8 @@ export class ReleaseService {
     const msg = msgs.openMsg(this.o.reader.chainId, this.o.reader.contractId, hexToBytes(r.grantId), hexToBytes(r.sessionId), hexToBytes(r.sessionPk), r.ts);
     if (!sig.verify(hexToBytes(grant.requester.slice("bearer:".length)), msg, hexToBytes(r.sig))) {
       const n = (bo?.n ?? 0) + 1;
-      this.backoff.set(r.grantId, { n, until: t0 + Math.min(2 ** n * 1000, 300_000) });
+      this.backoff.set(boKey, { n, until: t0 + Math.min(2 ** n * 1000, 300_000) });
+      if (this.backoff.size > 10_000) for (const [k, v] of this.backoff) if (v.until < t0) this.backoff.delete(k);
       throw deny();
     }
     // One active session per link.
@@ -205,7 +214,7 @@ export class ReleaseService {
     this.sessions.set(s.sessionId, s);
     this.tokens.set(token, s.sessionId);
     this.append(s, { t: now, session_id: s.sessionId, item_uid: "", seg: -1, action: "open" });
-    this.backoff.delete(grant.grant_id);
+
     return { token, lease_exp: s.leaseExp, head: s.head, seq: s.seq, tx_hash: s.txHash };
   }
 
@@ -319,6 +328,7 @@ export class ReleaseService {
       const tx = await this.o.relayer.closeSession({ sessionId: s.sessionId, logRoot: root, closedAtMs: now, rsIdx: this.o.rsIdx, rsSig: closeSig });
       return { log_root: root, tx_hash: tx.txHash };
     } catch (e) {
+      s.closed = false; // nothing was committed: the session stays open so the close can be retried
       if (e instanceof ChainUnavailable) throw new ReleaseError(503, "unavailable");
       throw new ReleaseError(502, "close_failed");
     }
@@ -344,16 +354,29 @@ export class ReleaseService {
 
   // ------------------------------------------------------------------ deals (spec 06 section 5)
 
-  /** `PUT /v1/deals/{id}/s2`: the seller leaves B2; RS returns a signed acknowledgement the buyer can verify. */
-  async putDealS2(dealId: string, b2Hex: string, auth: Auth): Promise<{ ack: string; s2_commit: string }> {
-    if (!isHex(dealId, 16) || !isHex(b2Hex, 32)) throw new ReleaseError(400, "bad_request");
-    const deal = await this.chain(() => this.o.reader.deal(dealId));
-    if (!deal) throw deny();
-    await this.checkAuth(deal.seller, dealId, authBody("deal-put", hexToBytes(b2Hex)), auth);
+  /**
+   * `PUT /v1/deals/{id}/s2`: the seller leaves B2 and gets a signed acknowledgement. The contract requires that
+   * acknowledgement in `create_deal`, so this normally happens BEFORE the offer exists: the caller must then be the
+   * owner of the box named in the request. Once the deal exists, only its seller may (re)send, and only the B2 the
+   * on-chain commitment matches.
+   */
+  async putDealS2(dealId: string, b2Hex: string, auth: Auth, boxId?: string): Promise<{ ack: string; s2_commit: string; rs_idx: number }> {
+    if (!isHex(dealId, 16) || !isHex(b2Hex, 32) || (boxId !== undefined && !isHex(boxId, 16))) throw new ReleaseError(400, "bad_request");
     const commit = dealS2Commit(dealId, hexToBytes(b2Hex));
-    if (commit !== deal.s2_commit) throw deny("s2_commit");
+    const deal = await this.chain(() => this.o.reader.deal(dealId));
+    if (deal) {
+      await this.checkAuth(deal.seller, dealId, authBody("deal-put", hexToBytes(b2Hex)), auth);
+      if (commit !== deal.s2_commit) throw deny("s2_commit");
+    } else {
+      const box = boxId ? await this.chain(() => this.o.reader.box(boxId)) : null;
+      if (!box) throw deny();
+      await this.checkAuth(box.owner, dealId, authBody("deal-put", hexToBytes(b2Hex)), auth);
+      // A different key half already left for this deal id is not overwritten (first writer wins until the deal exists).
+      const held = this.o.store.getSecret(`deal-${dealId}`);
+      if (held && dealS2Commit(dealId, held) !== commit) throw deny("s2_commit");
+    }
     this.o.store.putSecret(`deal-${dealId}`, hexToBytes(b2Hex));
-    return { ack: bytesToHex(sig.sign(this.o.rsSeed, dealAckMsg(dealId, commit))), s2_commit: commit };
+    return { ack: bytesToHex(sig.sign(this.o.rsSeed, dealAckMsg(dealId, commit))), s2_commit: commit, rs_idx: this.o.rsIdx };
   }
 
   /** `GET /v1/deals/{id}/key`: only after the deal is COMPLETED at final and only to the buyer. */

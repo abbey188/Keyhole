@@ -70,7 +70,7 @@ export function createReleaseServer(svc: ReleaseService, o: HttpOptions = {}): S
       }
       if (m === "POST" && p === "/v1/sessions") {
         const b = await json<{ grant_id: string; session_id: string; session_pk: string; ts: number; sig: string }>(req);
-        return send(res, 200, await svc.openSession({ grantId: b.grant_id, sessionId: b.session_id, sessionPk: b.session_pk, ts: b.ts, sig: b.sig }));
+        return send(res, 200, await svc.openSession({ grantId: b.grant_id, sessionId: b.session_id, sessionPk: b.session_pk, ts: b.ts, sig: b.sig }, ip));
       }
       if (m === "POST" && p === "/v1/sessions/attach") {
         const b = await json<{ tx_hash: string; grant_id: string; session_id: string; session_pk: string }>(req);
@@ -90,8 +90,8 @@ export function createReleaseServer(svc: ReleaseService, o: HttpOptions = {}): S
         return send(res, 200, { events: await svc.boxEvents(x[1] as string, auth(req)) });
       }
       if (m === "PUT" && (x = p.match(/^\/v1\/deals\/([0-9a-f]{32})\/s2$/))) {
-        const b = await json<{ b2: string }>(req);
-        return send(res, 200, await svc.putDealS2(x[1] as string, b.b2, auth(req)));
+        const b = await json<{ b2: string; box_id?: string }>(req);
+        return send(res, 200, await svc.putDealS2(x[1] as string, b.b2, auth(req), b.box_id));
       }
       if (m === "GET" && (x = p.match(/^\/v1\/deals\/([0-9a-f]{32})\/key$/))) {
         return send(res, 200, await svc.getDealKey(x[1] as string, url.searchParams.get("x25519") ?? "", auth(req)));

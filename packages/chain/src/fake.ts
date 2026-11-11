@@ -3,7 +3,7 @@
 // signature checks) using the same @keyhole/crypto messages. The real contract is tested in Rust
 // (contracts/keyhole, 149 tests); this mock is checked against it only by the sandbox run in step 2.
 // It adds what a unit test needs and a real chain cannot offer: held finality, outages, a controllable clock.
-import { bytesToHex, hexToBytes, merkle, msgs, receipt, sig } from "@keyhole/crypto";
+import { bytesToHex, hexToBytes, merkle, msgs, receipt, rs, sig } from "@keyhole/crypto";
 import { ChainUnavailable, ContractError } from "./chain.js";
 import type { ChainReader, ChainWriter, DealApi, DealArgs } from "./chain.js";
 import type {
@@ -482,6 +482,9 @@ class FakeWriter implements ChainWriter, DealApi {
       const cfg = this.c._cfg();
       requireC(a.waitingMs >= cfg.min_wait_ms && a.waitingMs <= cfg.max_wait_ms, "Waiting period out of range");
       requireC(a.buyer !== this.account, "Buyer and seller must differ");
+      const rsPk = cfg.rs_keys[a.rsIdx];
+      requireC(rsPk !== undefined, "Unknown release service key");
+      requireC(/^[0-9a-f]{128}$/.test(a.rsAck) && sig.verify(hexToBytes(rsPk), rs.dealAckMsg(a.dealId, a.s2Commit), hexToBytes(a.rsAck)), "Release service acknowledgement is not valid");
       const env = w.blobs.get(a.envelopeBlob);
       requireC(env, "Unknown envelope blob");
       requireC(env.box_id === a.boxId, "Envelope blob belongs to another box");

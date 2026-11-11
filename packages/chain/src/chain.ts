@@ -72,6 +72,10 @@ export interface DealArgs {
   bmkCommit: string;
   envelopeBlob: string;
   s2Commit: string;
+  /** Index of the release-service key that signed `rsAck`. */
+  rsIdx: number;
+  /** Release service's signature over the deal ack message (it holds the second key half). */
+  rsAck: string;
 }
 
 /** Deal methods (spec 06). Implemented by the real writer; FakeChain only has `setDeal` for now. */

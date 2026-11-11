@@ -26,7 +26,7 @@ const config = {
   reg_window_ms: 3_600_000,
   retention_ms: 3_600_000, // DEMO
   withdraw_delay_ms: 60_000, // DEMO (money module not built)
-  per_session_stake: "1000000000000000000000", // 0.001 NEAR
+  per_session_stake: "2000000000000000000000", // 0.002 NEAR: must cover a session record's storage (the contract checks at init)
   rate_yocto_per_mib_day: "1000000000000000000",
   max_blob_bytes: 256 * 1024 * 1024,
   node_accounts: [need(env, "NODE_ACCOUNT")],

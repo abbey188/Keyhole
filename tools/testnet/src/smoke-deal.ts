@@ -56,12 +56,14 @@ async function offer(boxId: string, dealId: string, buyerPk: Uint8Array) {
   const { acks } = await pushBlob({ nodes: [nodeApi], blob: envBlob, regId: reg.reg_id, threshold: 1 });
   L("envelope blob: certify");
   await relayer.certifyBlob(envBlob.blobId, acks);
+  // the release service takes the key half first and acknowledges it; the contract requires that acknowledgement
+  const put = await rs.putDealS2(dealId, bytesToHex(B2), await sign(ownerSeed, dealId, authBody("deal-put", B2)), boxId);
   L("create_deal");
   await seller.createDeal({
     dealId, boxId, buyer: buyerId, priceYocto: PRICE.toString(), waitingMs: 15_000, offerExpiresAtMs: (await reader.finalTimeMs()) + 3_600_000,
-    bmkCommit: bytesToHex(kdf.bmkCommit(bmk)), envelopeBlob: envBlob.blobId, s2Commit: dealS2Commit(dealId, B2),
+    bmkCommit: bytesToHex(kdf.bmkCommit(bmk)), envelopeBlob: envBlob.blobId, s2Commit: dealS2Commit(dealId, B2), rsIdx: put.rs_idx, rsAck: put.ack,
   });
-  return { B2, bmk, envBlob };
+  return { B2, bmk, envBlob, put };
 }
 
 const ts = async () => reader.finalTimeMs();
@@ -83,11 +85,12 @@ L("create_grant");
 await seller.createGrant({ grantId: oldGrant, boxId, requester: { bearer: old.pk }, mode: "View", notBeforeMs: await ts(), notAfterMs: (await ts()) + 1_800_000, maxSessions: 2, scopeHash: hex(32), policyHash: hex(32) });
 
 const dealId = hex(16);
-const { B2, bmk, envBlob } = await offer(boxId, dealId, buyerPk);
+const { B2, bmk, envBlob, put } = await offer(boxId, dealId, buyerPk);
 check("box is frozen in the deal", (await reader.box(boxId))?.in_deal === dealId);
 await expectFail("a grant to a stranger is refused while the box is in a deal", seller.createGrant({ grantId: hex(16), boxId, requester: { bearer: old.pk }, mode: "View", notBeforeMs: await ts(), notAfterMs: (await ts()) + 600_000, maxSessions: 1, scopeHash: hex(32), policyHash: hex(32) }), "Box is in a deal");
 
-const put = await rs.putDealS2(dealId, bytesToHex(B2), await sign(ownerSeed, dealId, authBody("deal-put", B2)));
+L("create_deal (FAILED: no acknowledgement)");
+await expectFail("an offer without the release service's acknowledgement is refused by the contract", seller.createDeal({ dealId: hex(16), boxId, buyer: buyerId, priceYocto: PRICE.toString(), waitingMs: 15_000, offerExpiresAtMs: (await reader.finalTimeMs()) + 3_600_000, bmkCommit: hex(32), envelopeBlob: hex(32), s2Commit: hex(32), rsIdx: 0, rsAck: "00".repeat(64) }), "acknowledgement is not valid");
 const rsPk = hexToBytes((await reader.config()).rs_keys[0]!);
 check("release service acknowledged the seller's key half; ack verifies against the contract's rs_keys", sig.verify(rsPk, dealAckMsg(dealId, put.s2_commit), hexToBytes(put.ack)));
 

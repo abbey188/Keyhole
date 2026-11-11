@@ -378,3 +378,65 @@ describe("deal key release (spec 06 section 5)", () => {
 
 void OWNER;
 void pkHex;
+
+describe("review fixes: lockout, replay, close retry, key half before the offer", () => {
+  it("S7: bad opens from one caller do not lock the grant for another caller", async () => {
+    const r = await rig();
+    const link = await giveAccess(r);
+    const bad = openRequest(r, { ...link, reqSeed: seed(201) }).req;
+    for (let i = 0; i < 5; i++) await code(r.svc.openSession(bad, "attacker-ip"));
+    expect(await code(r.svc.openSession(bad, "attacker-ip"))).toBe("429:backoff");
+    expect(await code(r.svc.openSession(openRequest(r, link).req, "recipient-ip"))).toBe("ok");
+  });
+
+  it("S8: a signed owner request is accepted once; a captured copy is refused", async () => {
+    const r = await rig();
+    await giveAccess(r);
+    const a = auth(OWNER_SEED, BOX, authBody("box-events", hexToBytes(BOX)), r.chain.now());
+    expect(await code(r.svc.boxEvents(BOX, a))).toBe("ok");
+    expect(await code(r.svc.boxEvents(BOX, a))).toBe("403:replay");
+    expect(await code(r.svc.boxEvents(BOX, auth(OWNER_SEED, BOX, authBody("box-events", hexToBytes(BOX)), r.chain.now() + 1)))).toBe("ok");
+  });
+
+  it("S13: a close that fails on chain can be retried and then commits the same log root", async () => {
+    const r = await rig();
+    const link = await giveAccess(r);
+    const v = await visit(r, link);
+    await r.svc.release(v.token, ITEM, [0]);
+    r.chain.setDown(true);
+    expect(await code(r.svc.close(v.token))).toBe("503:unavailable");
+    r.chain.setDown(false);
+    const done = await r.svc.close(v.token);
+    expect((await r.chain.session(v.sessionId))?.log_root).toBe(done.log_root);
+    expect(await code(r.svc.close(v.token))).toBe("403:denied");
+  });
+
+  it("S2: the box owner leaves the key half before the offer exists and gets an acknowledgement the contract accepts", async () => {
+    const r = await rig();
+    const DEAL = hexN(0xd7, 16);
+    const B2 = new Uint8Array(32).fill(0x55);
+    const put = await r.svc.putDealS2(DEAL, bytesToHex(B2), auth(OWNER_SEED, DEAL, authBody("deal-put", B2), r.chain.now()), BOX);
+    expect(put.s2_commit).toBe(dealS2Commit(DEAL, B2));
+    expect(sig.verify(sig.publicKey(seed(2)), dealAckMsg(DEAL, put.s2_commit), hexToBytes(put.ack))).toBe(true);
+    // not the owner of that box
+    const other = new Uint8Array(32).fill(0x56);
+    expect(await code(r.svc.putDealS2(hexN(0xd8, 16), bytesToHex(other), auth(seed(4), hexN(0xd8, 16), authBody("deal-put", other), r.chain.now()), BOX))).toBe("403:denied");
+    // a different key half for the same deal id does not replace the first
+    expect(await code(r.svc.putDealS2(DEAL, bytesToHex(other), auth(OWNER_SEED, DEAL, authBody("deal-put", other), r.chain.now() + 1), BOX))).toBe("403:s2_commit");
+    // no deal and no box named: refused
+    expect(await code(r.svc.putDealS2(hexN(0xd9, 16), bytesToHex(B2), auth(OWNER_SEED, hexN(0xd9, 16), authBody("deal-put", B2), r.chain.now() + 2)))).toBe("403:denied");
+    // the fake contract accepts the offer only with this acknowledgement
+    const blob = hexN(0xe1, 32);
+    await r.owner.registerBlob({ blobId: blob, boxId: BOX, size: 65536, days: 1 });
+    const rec = (await r.chain.blob(blob))!;
+    const { msgs } = await import("@keyhole/crypto");
+    await r.chain.writer("x").certifyBlob(blob, [{ idx: 0, sig: bytesToHex(sig.sign(seed(1), msgs.ackMsg("testnet", "keyhole.testnet", rec.reg_id, hexToBytes(blob), 0, rec.paid_until))) }]);
+    await r.owner.activateBlob(blob);
+    await r.owner.commitManifest({ boxId: BOX, manifestBlob: blob, seq: 1 });
+    const seller = r.chain.writer(OWNER);
+    const offer = { dealId: DEAL, boxId: BOX, buyer: "buyer.testnet", priceYocto: "1", waitingMs: 1000, offerExpiresAtMs: r.chain.now() + 60_000, bmkCommit: hexN(1, 32), envelopeBlob: blob, s2Commit: put.s2_commit, rsIdx: put.rs_idx };
+    await expect(seller.createDeal({ ...offer, rsAck: "00".repeat(64) })).rejects.toThrow("acknowledgement is not valid");
+    await seller.createDeal({ ...offer, rsAck: put.ack });
+    expect((await r.chain.deal(DEAL))?.state).toBe("Ready");
+  });
+});

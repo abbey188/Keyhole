@@ -222,7 +222,7 @@ describe("retire and erase (S4/S6 node side)", () => {
     expect(await r.chain.blob(b.blobId)).toBeNull(); // N=1: all attested, record removed
   });
 
-  it("erases leftovers of abandoned registrations and leaves live blobs alone", async () => {
+  it("erases leftovers of abandoned registrations only after the record stays missing, and leaves live blobs alone", async () => {
     const r = await rig();
     const live = await activeBlob(r, 2, 1);
     const dead = makeBlob(2, 5);
@@ -233,8 +233,37 @@ describe("retire and erase (S4/S6 node side)", () => {
     r.chain.advance(3_700_000);
     (r.chain as any).head.blobs.delete(dead.blobId);
     (r.chain as any).finalize();
-    const rep = await r.node.sweep(r.chain.writer("n"));
+    expect((await r.node.sweep(r.chain.writer("n"))).erased).toEqual([]); // first sighting: keep
+    r.chain.advance(300_000);
+    expect((await r.node.sweep(r.chain.writer("n"))).erased).toEqual([]); // second: keep
+    r.chain.advance(300_001);
+    const rep = await r.node.sweep(r.chain.writer("n")); // third sweep, more than the grace later
     expect(rep).toEqual({ erased: [dead.blobId], attested: [] });
     expect(r.store.blobs()).toEqual([live.blobId]);
+  });
+
+  it("S5: one stale 'missing' answer from the RPC never erases a live blob", async () => {
+    const r = await rig();
+    const live = await activeBlob(r, 2, 1);
+    let lie = true;
+    const stale = new Proxy(r.chain, { get: (t, k) => (k === "blob" ? async (id: string) => (lie ? null : t.blob(id)) : (t as any)[k].bind?.(t) ?? (t as any)[k]) });
+    const node = new StorageNode({ reader: stale as never, store: r.store, idx: 0, seed: NODE_SEED });
+    for (let i = 0; i < 2; i++) {
+      r.chain.advance(400_000);
+      expect((await node.sweep(r.chain.writer("n"))).erased).toEqual([]);
+    }
+    lie = false; // the RPC catches up: the counter resets
+    expect((await node.sweep(r.chain.writer("n"))).erased).toEqual([]);
+    lie = true;
+    r.chain.advance(700_000);
+    expect((await node.sweep(r.chain.writer("n"))).erased).toEqual([]);
+    expect(r.store.blobs()).toEqual([live.blobId]);
+  });
+
+  it("S14: an owner ticket valid for longer than ten minutes is refused", async () => {
+    const r = await rig();
+    const b = await activeBlob(r);
+    const long = encodeTicket(signOwnerTicket(OWNER_SEED, OWNER, b.blobId, r.chain.now() + 3_600_000));
+    expect(await code(r.node.getLeaves({ ticket: long, blobId: b.blobId, from: 0, to: 1 }))).toBe("403:forbidden");
   });
 });
