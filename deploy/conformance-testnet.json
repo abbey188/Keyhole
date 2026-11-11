@@ -1,10 +1,10 @@
 {
- "contract": "keyhole-8ee967.testnet",
- "codeHash": "73bTrdrc22BP4xrDwWoT3h92ZKKsHULn758Y12xCGPzy",
- "wasmSha256": "59d0402a8e787b5df44fb15d25f9adfa10b69d669492779fb16b4deb7ec5b6e2",
- "steps": 118,
+ "contract": "keyhole-06728d.testnet",
+ "codeHash": "9FMSd8zpPjV4uuDRDtUbtzeeB4TFkjGvAokob6fB3j23",
+ "wasmSha256": "7a8abd8630a4fd9b44346bf0e5e94794017295f6631938859b73ea47101a3514",
+ "steps": 122,
  "receiptChainsConsistent": true,
- "seconds": 502,
+ "seconds": 526,
  "trace": [
   {
    "step": "create_box",
@@ -770,6 +770,22 @@
   {
    "step": "create_deal: envelope of another box",
    "outcome": "Envelope blob belongs to another box"
+  },
+  {
+   "step": "create_deal: no valid release-service acknowledgement",
+   "outcome": "Release service acknowledgement is not valid"
+  },
+  {
+   "step": "create_deal: acknowledgement for another deal",
+   "outcome": "Release service acknowledgement is not valid"
+  },
+  {
+   "step": "create_deal: acknowledgement signed by another key",
+   "outcome": "Release service acknowledgement is not valid"
+  },
+  {
+   "step": "create_deal: unknown release-service key",
+   "outcome": "Unknown release service key"
   },
   {
    "step": "create_deal: not the owner",

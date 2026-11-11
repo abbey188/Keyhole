@@ -16,53 +16,54 @@ Claims with proof. Entries are added only when they exist; each says what it sho
 ## On-chain evidence (NEAR testnet, recorded 2026-11-10)
 Everything below ran against a real deployment; raw records are in `deploy/` (`testnet.json`, `smoke-testnet.json`, `smoke-deal-testnet.json`). The configuration is a labelled **DEMO** configuration (15 s sale waiting period, 1 h retention and grace, N=1 storage node, T=1) and the release service and node ran in-process in the test script, not as deployed services.
 
-### Deployment (current: v2)
+### Deployment (current: v3)
 | | |
 |---|---|
-| Contract account | [`keyhole-8ee967.testnet`](https://explorer.testnet.near.org/accounts/keyhole-8ee967.testnet) |
-| Wasm (wasm-opt output, 359,358 bytes) sha256 | `59d0402a8e787b5df44fb15d25f9adfa10b69d669492779fb16b4deb7ec5b6e2` |
-| Source commit and reproduction | `277ae3474fba14da3956b4cc35d8788cdc4146d2`; building that commit with `./scripts/build-wasm.sh` reproduces this sha256 exactly (checked 2026-11-10 in a clean worktree). A later checkout gives a different hash because the protocol crate gained unused code. |
-| NEAR code hash (base58, read from chain) | `73bTrdrc22BP4xrDwWoT3h92ZKKsHULn758Y12xCGPzy` (matches the sha256 above) |
-| Deploy + `new(config)` in ONE transaction | [3PhHVXaGkR…](https://explorer.testnet.near.org/transactions/3PhHVXaGkR9Zbrsjda7w5bxcRqcSX3wZ1qyz5gCRBavZ) (28.1 Tgas, 3958 ms) |
-| Launch: delete every access key | [R67wmr4SCz…](https://explorer.testnet.near.org/transactions/R67wmr4SCzw1iU84wPv2kXF5nqhyruLPiJT8439duQ7) (1 key deleted) |
+| Contract account | [`keyhole-06728d.testnet`](https://explorer.testnet.near.org/accounts/keyhole-06728d.testnet) |
+| Wasm (wasm-opt output, 360,776 bytes) sha256 | `7a8abd8630a4fd9b44346bf0e5e94794017295f6631938859b73ea47101a3514` |
+| Source commit and reproduction | `5e92bac846a10c1a57db5562d24f32792f21e979`; building that commit with `./scripts/build-wasm.sh` reproduces this sha256 exactly (the v2 build was reproduced this way in a clean worktree; v3 was built from this commit with a clean tree). |
+| NEAR code hash (base58, read from chain) | `9FMSd8zpPjV4uuDRDtUbtzeeB4TFkjGvAokob6fB3j23` (matches the sha256 above) |
+| Deploy + `new(config)` in ONE transaction | [DL41rsixSE…](https://explorer.testnet.near.org/transactions/DL41rsixSEXfZ91JMwVgJFRkdvDN8CyWfSTA57q1y2pV) (28.2 Tgas, 3859 ms) |
+| Launch: delete every access key | [F5o4Wrnjsn…](https://explorer.testnet.near.org/transactions/F5o4Wrnjsnhsx3rBmPDgr1cG9xXV53QLE1VaVH2AheTU) (1 key deleted) |
 | **C1** access key list of the contract account | empty (RPC `view_access_key_list` at final); re-check any time with `pnpm --filter @keyhole/testnet-tools exec tsx src/launch.ts --check` |
 
-v1 (`deploy/testnet-v1-superseded.json`) is superseded. It was built without `--cfg near`, so every `require!` failure surfaced as a bare `unreachable` trap with no message (near-sdk-env only emits its `panic_utf8` host call under that cfg). The flag is now set in `.cargo/config.toml`; the v2 Wasm imports `panic_utf8` and the real messages appear in the smoke run. v1 still exists on testnet and is keyless; it is not used.
+v2 (`deploy/testnet-v2-superseded.json`, `keyhole-8ee967.testnet`) is superseded: a security review found that it refunded the stake of opened sessions while keeping their records (the contract's own balance carried the storage) and accepted a sale offer without proof that the release service held the key half; v3 fixes both (see `SECURITY.md`). v1 (`deploy/testnet-v1-superseded.json`) is superseded. It was built without `--cfg near`, so every `require!` failure surfaced as a bare `unreachable` trap with no message (near-sdk-env only emits its `panic_utf8` host call under that cfg). The flag is now set in `.cargo/config.toml`; the v2 Wasm imports `panic_utf8` and the real messages appear in the smoke run. v1 still exists on testnet and is keyless; it is not used.
 
 ### Smoke test with real components (`tools/testnet/src/smoke.ts`: 19 checks passed)
 `NearWriter` and `RpcReader` against the contract, the real `StorageNode` (reading chain state at final) and the real `ReleaseService` (relaying through the real chain): box, two blobs (register, node ack, certify, activate), manifest commit, a bearer grant opened with a real recipient signature, a scoped grant opened through the release service (token only after the receipt was final: about 4.9 s from request to token), sealed key release and recombination, a verified leaf read with a release-service ticket, close with a signed log root, **receipt chain recomputed from public data equals the box's on-chain head**, revoke (release service and node both refuse afterwards), three rejected opens (forged signature, revoked grant, replayed session id) with the contract's own messages, retire, erase attestation and removal of the record.
 
-### A real sale (`tools/testnet/src/smoke-deal.ts`: 15 checks passed, testnet NEAR only)
-Offer; seller leaves the second key half with the release service and gets a signed acknowledgement; stranger grants refused while the box is in a deal; buyer funds 0.1 NEAR; completion before the waiting period refused; release service refuses the buyer's key half before Completed; after Completed ownership moved, epoch bumped, seller received the price from escrow, the contract kept no escrow, a grant from before the sale no longer opens, the previous owner is refused; buyer received the key half and rebuilt the box key matching `bmk_commit`; a second deal was funded, cancelled and refunded.
+### A real sale (`tools/testnet/src/smoke-deal.ts`: 16 checks passed, testnet NEAR only)
+The seller leaves the second key half with the release service first and gets a signed acknowledgement, which the contract now requires in the offer (an offer without it was refused on chain); stranger grants refused while the box is in a deal; buyer funds 0.1 NEAR; completion before the waiting period refused; release service refuses the buyer's key half before Completed; after Completed ownership moved, epoch bumped, seller received the price from escrow, the contract kept no escrow, a grant from before the sale no longer opens, the previous owner is refused; buyer received the key half and rebuilt the box key matching `bmk_commit`; a second deal was funded, cancelled and refunded.
 
 ### Gas and time to final (spikes K4 and K6)
-Gas is gas burnt by the transaction and all its receipts (from the final outcome); rejected calls still burn gas, shown for the relayer's cost. Time is from submit until the transaction was FINAL, measured from this container to the public RPC `test.rpc.fastnear.com`. 45 successful transactions across the three smoke runs: median 4.0 s, 90th percentile 4.8 s, minimum 3.3 s, maximum 10.8 s (one slow outlier). Largest call: `complete_deal` (payout promise and callback) at about 6 Tgas, far below the 300 Tgas transaction limit.
+Gas is gas burnt by the transaction and all its receipts (from the final outcome); rejected calls still burn gas, shown for the relayer's cost. Time is from submit until the transaction was FINAL, measured from this container to the public RPC `test.rpc.fastnear.com`. 45 successful transactions across the three smoke runs on v3: median 4.1 s, 90th percentile 4.8 s, minimum 3.1 s, maximum 5.4 s. Largest call: `complete_deal` (payout promise and callback) at about 6 Tgas, far below the 300 Tgas transaction limit.
 | Method | Result | Calls | Gas burnt (Tgas) | Submit to final (ms, median) | Example transaction |
 |---|---|---|---|---|---|
-| `activate_blob` | ok | 5 | 2.6 to 2.6 | 3730 | [5V115DuvDX…](https://explorer.testnet.near.org/transactions/5V115DuvDXPc8trhQscTjv39R6zbvHH9vqxCNbD4tXMo) |
-| `attest_erasure` | ok | 1 | 4.0 | 4130 | [HCnXFy3yHA…](https://explorer.testnet.near.org/transactions/HCnXFy3yHAHmbBhKBmPdT6o1bQCkEWYZmSJ5DndrTjhX) |
-| `cancel_deal` | ok | 1 | 5.7 | 4962 | [8LhWbpS9PR…](https://explorer.testnet.near.org/transactions/8LhWbpS9PRPSr4jHtmmDire6DQfFUybrFFNA6nudSWWv) |
-| `certify_blob` | ok | 7 | 2.8 to 2.8 | 3645 | [Eygmiz9f16…](https://explorer.testnet.near.org/transactions/Eygmiz9f16bU2apr8hnLfjpciAoMLTQCnpiQHTYdAFKo) |
-| `close_session` | ok | 1 | 3.2 | 3761 | [BKSiYPbciQ…](https://explorer.testnet.near.org/transactions/BKSiYPbciQQbT3fv9MkL1QXpJQNSzcxuyvdEZNNLwK7S) |
-| `commit_manifest` | ok | 3 | 2.6 | 3972 | [9hunhmRDXe…](https://explorer.testnet.near.org/transactions/9hunhmRDXekhRTUxwsQbmm8tRj8KfuMh3A8WBXLEPDJR) |
-| `complete_deal` | ok | 1 | 6.3 | 5332 | [292tzBw8WM…](https://explorer.testnet.near.org/transactions/292tzBw8WMfuVF5FUTGLvBwskp2hZ3R4kJXoQcKGM26C) |
-| `complete_deal` | rejected (expected) | 1 | 2.1 | 3388 | [2ZFBf3skN1…](https://explorer.testnet.near.org/transactions/2ZFBf3skN1zKvF3bQiTYbZRaok45QiHzsE4ar9B6hEqD) |
-| `create_box` | ok | 4 | 3.6 to 3.6 | 4361 | [HhJ9iJKSJG…](https://explorer.testnet.near.org/transactions/HhJ9iJKSJGvyi9R8jMpB3AeST69iR6nWbNSWhJTzLBUd) |
-| `create_deal` | ok | 2 | 3.8 | 3943 | [Gf3puv7EuC…](https://explorer.testnet.near.org/transactions/Gf3puv7EuCDHGSpDUxHsxD5Le98oZJnu8kpMNPMyTUwp) |
-| `create_grant` | ok | 4 | 3.6 to 3.6 | 4287 | [FruVE9n8vZ…](https://explorer.testnet.near.org/transactions/FruVE9n8vZZcW8m2VboZcQEp8oLF6vYJuHwYdEBneq3W) |
-| `create_grant` | rejected (expected) | 2 | 2.5 to 2.6 | 3603 | [Gm9Kbuv5pj…](https://explorer.testnet.near.org/transactions/Gm9Kbuv5pjjhUR6VfDGBMa1rpwbTbhs5oQBmKyZutBFP) |
-| `fund_deal` | ok | 2 | 2.5 | 3784 | [J56CiBhTmq…](https://explorer.testnet.near.org/transactions/J56CiBhTmqdWSKCnnxUqQiqgG1mZW6Gx9QZjMSfQwLbz) |
-| `open_session` | ok | 4 | 3.2 to 3.4 | 3918 | [2chbQiJJ5Y…](https://explorer.testnet.near.org/transactions/2chbQiJJ5Yb7xaQYzwBEiFu9X7YUc5jgqovpijuQ7zDN) |
-| `open_session` | rejected (expected) | 4 | 2.1 to 2.5 | 4083 | [EpdSWjUUvc…](https://explorer.testnet.near.org/transactions/EpdSWjUUvcdU31P8s4XcD5YZuUjkK59ZVbyJKeZfZooW) |
-| `register_blob` | ok | 7 | 3.6 to 3.6 | 4283 | [c5tFGTPtCx…](https://explorer.testnet.near.org/transactions/c5tFGTPtCxDqYRRzxhibdfebwoBgVK3XphEiG63fm2m) |
-| `retire_blob` | ok | 1 | 4.3 | 3614 | [FsXv2gfvP9…](https://explorer.testnet.near.org/transactions/FsXv2gfvP9Mtjmrb58Pk232Eb6KAxpW2qkGfqbSq6xw8) |
-| `revoke_grant` | ok | 2 | 2.6 | 3942 | [4zjfJNvGFp…](https://explorer.testnet.near.org/transactions/4zjfJNvGFpfhfDD8ESojcBDuwWbZ1t7yXi1pEAmWqSYu) |
+| `activate_blob` | ok | 5 | 2.6 | 4016 | [21Z7ce6NaG…](https://explorer.testnet.near.org/transactions/21Z7ce6NaGQdsQDferXptSRRCxmEAyib5GgeVs4woD6S) |
+| `attest_erasure` | ok | 1 | 4.0 | 3777 | [HwDBHA5Env…](https://explorer.testnet.near.org/transactions/HwDBHA5EnvQp35AQMPPgJEnNrCmuXBzxtmEppAC2wfik) |
+| `cancel_deal` | ok | 1 | 5.7 | 4759 | [8GZ1ircv64…](https://explorer.testnet.near.org/transactions/8GZ1ircv64wbMRCs6Mq65AqT7xPzbwRg9XjiKquo3x2V) |
+| `certify_blob` | ok | 7 | 2.8 to 2.8 | 4015 | [CcVcAtTDz9…](https://explorer.testnet.near.org/transactions/CcVcAtTDz9PJK6xW9qojA9GpBQakJnfTucQ2Bur8xAqe) |
+| `close_session` | ok | 1 | 3.2 | 4081 | [EKi8sHANSY…](https://explorer.testnet.near.org/transactions/EKi8sHANSYJasKEagyDUcDNAC9rtr4cPnLB1MmqoNfsa) |
+| `commit_manifest` | ok | 3 | 2.6 | 3785 | [D1PUYCnqad…](https://explorer.testnet.near.org/transactions/D1PUYCnqad9aa7znxsjow5tUu6p2mffWEXKqQEqidu47) |
+| `complete_deal` | ok | 1 | 6.3 | 5447 | [3QoMiop8SB…](https://explorer.testnet.near.org/transactions/3QoMiop8SBFZ5dNw7zeqqduTuojs86Y18ZiDu8WFT5eJ) |
+| `complete_deal` | rejected (expected) | 1 | 2.1 | 3921 | [41R9V9ozJS…](https://explorer.testnet.near.org/transactions/41R9V9ozJSEs6rNLTVfoU4aAdF1E6zkjdE6PjWiaf1No) |
+| `create_box` | ok | 4 | 3.5 to 3.6 | 4553 | [3z6KErfqyH…](https://explorer.testnet.near.org/transactions/3z6KErfqyHVQqLgWLX6abUnYiNtBPJgo1VB53eAtZujT) |
+| `create_deal` | ok | 2 | 4.1 to 4.1 | 4588 | [8o7CiRGPQD…](https://explorer.testnet.near.org/transactions/8o7CiRGPQDf7SoxnJmL49pPDKZ3g4NHzTfHezrMJC2Tn) |
+| `create_deal` | rejected (expected) | 1 | 2.6 | 3850 | [5DKfa7zoTf…](https://explorer.testnet.near.org/transactions/5DKfa7zoTfvXWbGgbjZAiTQ29nZw7D12VyjaKpkyH7qZ) |
+| `create_grant` | ok | 4 | 3.6 to 3.6 | 4262 | [25nbMCfH4R…](https://explorer.testnet.near.org/transactions/25nbMCfH4RMakbrv3sg4UuCb3pLxf2K58ZWoGuHCjxEk) |
+| `create_grant` | rejected (expected) | 2 | 2.5 to 2.6 | 4252 | [GfwZzqwfym…](https://explorer.testnet.near.org/transactions/GfwZzqwfymNXep8U3MmuG9fwbZ7DEfikJefpZHeya4ep) |
+| `fund_deal` | ok | 2 | 2.5 to 2.5 | 4046 | [Ehk8GUG5RM…](https://explorer.testnet.near.org/transactions/Ehk8GUG5RMFXnsijxWgwGxti1uRE8fgKgoECJfdKDaDY) |
+| `open_session` | ok | 4 | 3.2 to 3.4 | 4042 | [2WeEXiMgqX…](https://explorer.testnet.near.org/transactions/2WeEXiMgqXgCsR1XndxEhoxTDj7DuXh86YvfWr6m9jgw) |
+| `open_session` | rejected (expected) | 4 | 2.1 to 2.5 | 3923 | [B4MyzZvSHb…](https://explorer.testnet.near.org/transactions/B4MyzZvSHbAitXEqfRVLbBhBMaNmbajoksJuPiwaS6NF) |
+| `register_blob` | ok | 7 | 3.6 | 4674 | [GGBaAxCXEe…](https://explorer.testnet.near.org/transactions/GGBaAxCXEeg7z6MHgu1XnKQFfEJQK7SKr77Ginctib8b) |
+| `retire_blob` | ok | 1 | 4.3 | 3936 | [3kgYgTbHya…](https://explorer.testnet.near.org/transactions/3kgYgTbHyaD4sCGmEtLCd85amhvkg4JHHDPYCL8qEKWW) |
+| `revoke_grant` | ok | 2 | 2.6 | 3908 | [9pSwKYdPCd…](https://explorer.testnet.near.org/transactions/9pSwKYdPCdvCxRQeztCC79pTS8tve79bG8tAuZx13dec) |
 
 ### A named-account requester on testnet (`tools/testnet/src/smoke-named.ts`: 9 checks passed)
 The named account sent `open_session` itself, then attached the session to the release service, which read the receipt event for that transaction from the real RPC (`EXPERIMENTAL_tx_status`) and recomputed the commitment. Refused: a session key that is not the one in the receipt; a key that does not control the account. Accepted: the real key; the account recombined the segment key; the receipt chain recomputed with the account digest equals the on-chain head; a second attach was refused; revoke stopped further keys. Record: `deploy/smoke-named-testnet.json`.
 
 ### FakeChain against the real contract (`deploy/conformance-testnet.json`, `packages/chain/src/conformance.ts`)
-One scenario of 118 contract calls (40 succeed, the rest are rejections) ran against the deployed contract (502 s) and recorded, for every call, success or the contract's exact panic message plus a snapshot of observable state (owner, epoch, counters, blob and deal states). `packages/chain/test/conformance.test.ts` runs the same scenario against the MOCK and requires an identical trace, call by call. Result: **no divergence in outcomes or state across the scenario.** The comparison is sensitive (altering one golden outcome, dropping the grant-ceiling rule, or ignoring the waiting period each make it fail). Before the comparison the mock lacked the deal methods and a transaction-events lookup; both were added. Not modelled by the mock and not compared: money and balances, gas, storage deposits, block-time boundaries that need waiting, the `claim` payout-failure paths, `delete_*` retention paths.
+One scenario of 122 contract calls (40 succeed, the rest are rejections) ran against the deployed contract (526 s) and recorded, for every call, success or the contract's exact panic message plus a snapshot of observable state (owner, epoch, counters, blob and deal states). `packages/chain/test/conformance.test.ts` runs the same scenario against the MOCK and requires an identical trace, call by call. Result: **no divergence in outcomes or state across the scenario.** The comparison is sensitive (altering one golden outcome, dropping the grant-ceiling rule, or ignoring the waiting period each make it fail). Before the comparison the mock lacked the deal methods and a transaction-events lookup; both were added. Not modelled by the mock and not compared: money and balances, gas, storage deposits, block-time boundaries that need waiting, the `claim` payout-failure paths, `delete_*` retention paths.
 
 ### Services as real processes
 `services/release` and `services/node` were started with `pnpm start` equivalents (`tsx src/main.ts`) from environment variables against the deployed contract: each checked at boot that the contract lists its public key at its index, and answered `/v1/pubkeys`, `/v1/pubkey` and `/v1/health`. Not a hosted deployment.

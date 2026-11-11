@@ -1,0 +1,56 @@
+{
+  "network": "testnet",
+  "contract": "keyhole-8ee967.testnet",
+  "accounts": {
+    "relayer": "kh-relayer-964348.testnet",
+    "owner": "kh-owner-964348.testnet",
+    "node": "kh-node-964348.testnet"
+  },
+  "wasm": {
+    "file": "target/keyhole_opt.wasm",
+    "bytes": 359358,
+    "sha256": "59d0402a8e787b5df44fb15d25f9adfa10b69d669492779fb16b4deb7ec5b6e2",
+    "near_code_hash_base58": "73bTrdrc22BP4xrDwWoT3h92ZKKsHULn758Y12xCGPzy",
+    "sourceCommit": "277ae3474fba14da3956b4cc35d8788cdc4146d2",
+    "reproduce": "git checkout 277ae3474fba14da3956b4cc35d8788cdc4146d2 && pnpm install && ./scripts/build-wasm.sh  (prints the same opt sha256)"
+  },
+  "config": {
+    "chain_id": "testnet",
+    "node_keys": [
+      "7a10ae0f24a4316bd41dafa292b1c788b989673f8f4b2449c7a351e4f89bd360"
+    ],
+    "threshold": 1,
+    "rs_keys": [
+      "bd9a8fcd220dba6e10ba288d308d069f8643ea80b9df0ebb3ac31cd33a3b00e9"
+    ],
+    "allowed_tokens": [],
+    "min_grant_ms": 60000,
+    "max_lease_ms": 300000,
+    "min_wait_ms": 15000,
+    "max_wait_ms": 604800000,
+    "grace_ms": 3600000,
+    "reg_window_ms": 3600000,
+    "retention_ms": 3600000,
+    "withdraw_delay_ms": 60000,
+    "per_session_stake": "1000000000000000000000",
+    "rate_yocto_per_mib_day": "1000000000000000000",
+    "max_blob_bytes": 268435456,
+    "node_accounts": [
+      "kh-node-964348.testnet"
+    ]
+  },
+  "deploy": {
+    "txHash": "3PhHVXaGkR9Zbrsjda7w5bxcRqcSX3wZ1qyz5gCRBavZ",
+    "link": "https://explorer.testnet.near.org/transactions/3PhHVXaGkR9Zbrsjda7w5bxcRqcSX3wZ1qyz5gCRBavZ",
+    "gasBurnt": 28129663563170,
+    "submitToFinalMs": 3958
+  },
+  "storageUsageBytes": 359874,
+  "launch": {
+    "txHash": "R67wmr4SCzw1iU84wPv2kXF5nqhyruLPiJT8439duQ7",
+    "link": "https://explorer.testnet.near.org/transactions/R67wmr4SCzw1iU84wPv2kXF5nqhyruLPiJT8439duQ7",
+    "keysDeleted": 1,
+    "gasBurnt": 629194812500,
+    "submitToFinalMs": 3164
+  }
+}
