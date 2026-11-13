@@ -167,6 +167,10 @@ export class FakeChain implements ChainReader {
   async box(id: string) {
     return this.get(this.fin.boxes, id);
   }
+  async boxesOf(account: string) {
+    this.ensureUp();
+    return [...this.fin.boxes.values()].filter((b) => b.owner === account).map((b) => structuredClone(b));
+  }
   async grant(id: string) {
     return this.get(this.fin.grants, id);
   }

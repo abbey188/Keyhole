@@ -119,6 +119,7 @@ export class RpcReader implements ChainReader {
 
   config = () => this.view<ConfigView>("get_config", {});
   box = (box_id: string) => this.view<BoxView | null>("get_box", { box_id });
+  boxesOf = (account_id: string) => this.view<BoxView[]>("boxes_of", { account_id, from: 0, limit: 100 });
   grant = (grant_id: string) => this.view<GrantView | null>("get_grant", { grant_id });
   grantValid = (grant_id: string) => this.view<ValidView>("grant_valid", { grant_id });
   session = (session_id: string) => this.view<SessionView | null>("get_session", { session_id });

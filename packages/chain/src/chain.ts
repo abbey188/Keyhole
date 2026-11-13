@@ -30,6 +30,8 @@ export interface ChainReader {
   finalTimeMs(): Promise<number>;
   config(): Promise<ConfigView>;
   box(boxId: string): Promise<BoxView | null>;
+  /** Boxes owned by an account (contract view `boxes_of`). */
+  boxesOf(account: string): Promise<BoxView[]>;
   grant(grantId: string): Promise<GrantView | null>;
   grantValid(grantId: string): Promise<ValidView>;
   session(sessionId: string): Promise<SessionView | null>;

@@ -1,0 +1,23 @@
+:root { --bg:#0f1115; --panel:#171a21; --line:#262b36; --text:#e8eaf0; --mute:#9aa3b2; --accent:#6ea8ff; --ok:#46c28a; --warn:#e0a84a; --bad:#e5645b; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif; }
+main { max-width: 880px; margin: 0 auto; padding: 24px 16px 80px; }
+h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 18px; margin: 24px 0 8px; }
+.sub { color: var(--mute); margin: 0 0 20px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 12px 0; }
+.row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+.grow { flex:1; }
+button { background: var(--accent); color:#0b1220; border:0; border-radius:8px; padding:10px 16px; font-weight:600; cursor:pointer; font-size:15px; }
+button.ghost { background: transparent; color: var(--text); border:1px solid var(--line); }
+button.danger { background: var(--bad); color:#fff; }
+button:disabled { opacity:.5; cursor: default; }
+input, select { background:#0c0e13; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:15px; width:100%; }
+.pill { display:inline-block; padding:2px 10px; border-radius:99px; font-size:12px; border:1px solid var(--line); color:var(--mute); }
+.pill.ok { color:var(--ok); border-color:var(--ok); } .pill.warn { color:var(--warn); border-color:var(--warn); } .pill.bad { color:var(--bad); border-color:var(--bad); }
+.tabs { display:flex; gap:4px; border-bottom:1px solid var(--line); margin: 16px 0; flex-wrap:wrap; }
+.tab { padding:8px 14px; border-radius:8px 8px 0 0; cursor:pointer; color:var(--mute); background:none; font-weight:500; }
+.tab.on { color:var(--text); border-bottom:2px solid var(--accent); }
+.mono { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--mute); word-break: break-all; }
+.err { color: var(--bad); } .note { color: var(--mute); font-size: 14px; }
+table { width:100%; border-collapse: collapse; } td, th { text-align:left; padding:8px 6px; border-bottom:1px solid var(--line); font-size:14px; }
+a { color: var(--accent); }
