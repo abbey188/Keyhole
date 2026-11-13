@@ -1,7 +1,7 @@
 :root { --bg:#0f1115; --panel:#171a21; --line:#262b36; --text:#e8eaf0; --mute:#9aa3b2; --accent:#6ea8ff; --ok:#46c28a; --warn:#e0a84a; --bad:#e5645b; color-scheme: dark; }
 * { box-sizing: border-box; }
 body { margin:0; background:var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif; }
-main { max-width: 880px; margin: 0 auto; padding: 24px 16px 80px; }
+main { max-width: 1000px; margin: 0 auto; padding: 24px 16px 80px; }
 h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 18px; margin: 24px 0 8px; }
 .sub { color: var(--mute); margin: 0 0 20px; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 12px 0; }

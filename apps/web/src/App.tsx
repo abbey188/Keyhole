@@ -10,6 +10,7 @@ import { SafePage } from "./ui/SafePage";
 import { Recipient } from "./ui/Recipient";
 import { Receive } from "./ui/Receive";
 import { Verify } from "./ui/Verify";
+import { Judge } from "./judge/Judge";
 
 const LS = { cred: "keyhole.credId", salt: "keyhole.salt", mode: "keyhole.mode" };
 const get = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -17,6 +18,7 @@ const put = (k: string, v: string) => { try { localStorage.setItem(k, v); } catc
 
 export function App() {
   const [id, setId] = useState<Identity | null>(null);
+  if (location.hash.startsWith("#judge")) return <main><h1>Keyhole</h1><Judge /></main>;
   if (location.hash.startsWith("#verify")) return <main><h1>Keyhole</h1><Verify /></main>;
   if (location.hash.startsWith("#open=")) return <main><h1>Keyhole</h1><Recipient /></main>;
   return (
