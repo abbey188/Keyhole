@@ -62,7 +62,7 @@ describe("recorded real report (MOCK-free fixture from the live API, ed25519)", 
   it("fails when the nonce is flipped in the quote's report data (signature breaks)", async () => {
     const t = clone(base);
     const q = hexToBytes(t.model_attestations[0].intel_quote);
-    q[48 + 520 + 63] ^= 1; // last byte of report_data = last nonce byte
+    q[48 + 520 + 63] = (q[48 + 520 + 63] as number) ^ 1; // last byte of report_data = last nonce byte
     t.model_attestations[0].intel_quote = bytesToHex(q);
     const r = await run(t);
     expect(r.ok).toBe(false);
@@ -93,7 +93,7 @@ describe("recorded real report (MOCK-free fixture from the live API, ed25519)", 
     for (const off of [0, 5, 48 + 16, 48 + 48 * 2 + 24 + 8, 48 + 48 * 6 + 8 + 10, 48 + 300]) {
       const t = clone(base);
       const q = hexToBytes(t.model_attestations[0].intel_quote);
-      q[off] ^= 0x01;
+      q[off] = (q[off] as number) ^ 0x01;
       t.model_attestations[0].intel_quote = bytesToHex(q);
       const r = await run(t);
       expect(r.ok, `offset ${off}`).toBe(false);
@@ -106,7 +106,7 @@ describe("recorded real report (MOCK-free fixture from the live API, ed25519)", 
     for (const off of [48 + 584 + 4 + 3, 48 + 584 + 4 + 64 + 3, 48 + 584 + 4 + 128 + 6 + 10, q0.length - 400, q0.length - 2000]) {
       const t = clone(base);
       const q = hexToBytes(t.model_attestations[0].intel_quote);
-      q[off] ^= 0x01;
+      q[off] = (q[off] as number) ^ 0x01;
       t.model_attestations[0].intel_quote = bytesToHex(q);
       const r = await run(t);
       expect(r.ok, `offset ${off}`).toBe(false);
@@ -118,7 +118,7 @@ describe("recorded real report (MOCK-free fixture from the live API, ed25519)", 
   it("fails when the TDX debug bit is set (and the quote re-signing is impossible)", async () => {
     const t = clone(base);
     const q = hexToBytes(t.model_attestations[0].intel_quote);
-    q[48 + 16 + 48 + 48 + 8] |= 1; // td_attributes[0]
+    q[48 + 16 + 48 + 48 + 8] = (q[48 + 16 + 48 + 48 + 8] as number) | 1; // td_attributes[0]
     t.model_attestations[0].intel_quote = bytesToHex(q);
     const r = await run(t);
     expect(r.ok).toBe(false);
