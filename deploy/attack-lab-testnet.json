@@ -1,0 +1,106 @@
+{
+  "contract": "keyhole-06728d.testnet",
+  "ranAt": "2026-11-13T01:45:01.524Z",
+  "allRefused": true,
+  "results": [
+    {
+      "id": "A1",
+      "attack": "Forged open",
+      "how": "open_session signed with a key that is not the grant's recipient key",
+      "expected": "Bad signature",
+      "got": "Bad signature",
+      "refused": true,
+      "txHash": "7PnayQru5HL5nacZUm9rH8Z7hkwcty42cQr1GuPekotC",
+      "link": "https://explorer.testnet.near.org/transactions/7PnayQru5HL5nacZUm9rH8Z7hkwcty42cQr1GuPekotC",
+      "gasTgas": 2.54
+    },
+    {
+      "id": "A2",
+      "attack": "Replayed open",
+      "how": "the same session id submitted a second time",
+      "expected": "Session id already used",
+      "got": "Session id already used",
+      "refused": true,
+      "txHash": "CpYJXZDjLXqPavhSz1ssptcDcBojhdhttxkGhUFhdKYn",
+      "link": "https://explorer.testnet.near.org/transactions/CpYJXZDjLXqPavhSz1ssptcDcBojhdhttxkGhUFhdKYn",
+      "gasTgas": 2.1
+    },
+    {
+      "id": "A3",
+      "attack": "Stale open",
+      "how": "a correctly signed open request that is 10 minutes old",
+      "expected": "not fresh",
+      "got": "Open request timestamp is not fresh",
+      "refused": true,
+      "txHash": "ALRon5e4WQJ3RnhqfeeoA6PiRxUbWFGmprBGiTC95UoD",
+      "link": "https://explorer.testnet.near.org/transactions/ALRon5e4WQJ3RnhqfeeoA6PiRxUbWFGmprBGiTC95UoD",
+      "gasTgas": 2.31
+    },
+    {
+      "id": "A4",
+      "attack": "Open after revoke",
+      "how": "a valid recipient opens after the owner ended the grant",
+      "expected": "Grant revoked",
+      "got": "Grant revoked",
+      "refused": true,
+      "txHash": "ALCbYqRx3oM3mxmv4fmE9KoRB65NLKb7n7fC2SUBJiUj",
+      "link": "https://explorer.testnet.near.org/transactions/ALCbYqRx3oM3mxmv4fmE9KoRB65NLKb7n7fC2SUBJiUj",
+      "gasTgas": 2.19
+    },
+    {
+      "id": "A5",
+      "attack": "Open after expiry",
+      "how": "a valid recipient opens after the grant's end time",
+      "expected": "Grant expired",
+      "got": "Grant expired",
+      "refused": true,
+      "txHash": "9rn7UThNHWBGdnNhqLSmsomxVrYQwqU4dY4ggFtCspBF",
+      "link": "https://explorer.testnet.near.org/transactions/9rn7UThNHWBGdnNhqLSmsomxVrYQwqU4dY4ggFtCspBF",
+      "gasTgas": 2.19
+    },
+    {
+      "id": "A6",
+      "attack": "Grant by a non-owner",
+      "how": "another account calls create_grant on the owner's box",
+      "expected": "Only the box owner",
+      "got": "Only the box owner can do this",
+      "refused": true,
+      "txHash": "gUwgTNs22jh8TWXGwTKsLz7NVvAPvXwrpeouaVCrVnz",
+      "link": "https://explorer.testnet.near.org/transactions/gUwgTNs22jh8TWXGwTKsLz7NVvAPvXwrpeouaVCrVnz",
+      "gasTgas": 2.45
+    },
+    {
+      "id": "A7",
+      "attack": "Transfer the NFT directly",
+      "how": "the owner calls nft_transfer to move the safe to another account",
+      "expected": "only through a deal",
+      "got": "{\"ActionError\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Boxes change owner only through a deal\"}}}}",
+      "refused": true,
+      "txHash": "52awT95QwYxtTazZXyDinLahaJX9Jt2MxqUdSTpJrYV2",
+      "link": "https://explorer.testnet.near.org/transactions/52awT95QwYxtTazZXyDinLahaJX9Jt2MxqUdSTpJrYV2",
+      "gasTgas": 2.21
+    },
+    {
+      "id": "A8",
+      "attack": "Transfer-and-call",
+      "how": "the owner calls nft_transfer_call",
+      "expected": "only through a deal",
+      "got": "{\"ActionError\":{\"index\":0,\"kind\":{\"FunctionCallError\":{\"ExecutionError\":\"Smart contract panicked: Boxes change owner only through a deal\"}}}}",
+      "refused": true,
+      "txHash": "CqR3GFfNK45Ft1fzfbcbybkKZbBDeJxEp4tVQpAViuns",
+      "link": "https://explorer.testnet.near.org/transactions/CqR3GFfNK45Ft1fzfbcbybkKZbBDeJxEp4tVQpAViuns",
+      "gasTgas": 2.21
+    },
+    {
+      "id": "A9",
+      "attack": "Sale offer without proof the key half is held",
+      "how": "create_deal with an invalid release-service acknowledgement",
+      "expected": "acknowledgement is not valid",
+      "got": "Release service acknowledgement is not valid",
+      "refused": true,
+      "txHash": "b77U8mN8RbYogwiS495GjZbdjPSKoB4jsBFxnCMCCWg",
+      "link": "https://explorer.testnet.near.org/transactions/b77U8mN8RbYogwiS495GjZbdjPSKoB4jsBFxnCMCCWg",
+      "gasTgas": 2.63
+    }
+  ]
+}
