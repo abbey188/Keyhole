@@ -5,6 +5,7 @@ import { AccessEnded, askPages, closeVisit, decodeLink, logAnswer, openVisit, re
 import { askSafe } from "@keyhole/askclaims";
 import type { AskResult } from "@keyhole/askclaims";
 import { aiClient, FALLBACK_MODEL } from "../lib/ai";
+import { buildAnswerPackage } from "../lib/verifyAnswer";
 import type { LinkPayload, Services, Visit } from "../lib/access";
 
 const svc: Services = { releaseUrl: config.releaseUrl, nodeUrls: config.nodeUrls, chainId: config.chainId, contractId: config.contractId };
@@ -81,7 +82,7 @@ function AskPanel({ visit }: { visit: Visit }) {
   const [q, setQ] = useState("");
   const [left, setLeft] = useState(visit.payload.q?.budget ?? 0);
   const [busy, setBusy] = useState("");
-  const [out, setOut] = useState<{ text: string; note: string } | null>(null);
+  const [out, setOut] = useState<{ text: string; note: string; pkg?: string } | null>(null);
   const [pages, setPages] = useState<Awaited<ReturnType<typeof askPages>> | null>(null);
   const go = async () => {
     setOut(null); setBusy("Reserving your question…");
@@ -93,7 +94,7 @@ function AskPanel({ visit }: { visit: Visit }) {
       if (res.status === "no_answer" && res.reason === "model_error") res = await askSafe(q.trim(), p, { client: aiClient() as never, model: FALLBACK_MODEL });
       const text = res.status === "answer" ? res.answer : res.status === "no_answer" && res.tier === "device" ? REFUSAL : res.message;
       await logAnswer(visit, svc, r.n, { answer: text, status: res.status, ...(res.status === "answer" ? { citations: res.citations, evidence: res.evidence } : {}) });
-      setOut({ text, note: res.status === "answer" ? `Private · ${res.evidence.model_id}. Quoted from the shared files.` : "" });
+      setOut({ text, note: res.status === "answer" ? `Private · ${res.evidence.model_id}. Quoted from the shared files.` : "", ...(res.status === "answer" ? { pkg: JSON.stringify(buildAnswerPackage(visit, q.trim(), res)) } : {}) });
     } catch (e) { setOut({ text: (e as Error).message, note: "" }); }
     setBusy("");
   };
@@ -102,7 +103,7 @@ function AskPanel({ visit }: { visit: Visit }) {
       <p className="note">Answers come only from the files shared with you, using a private model in attested hardware. The owner can see every question you ask.</p>
       <div className="row"><input className="grow" placeholder="Your question" value={q} onChange={(e) => setQ(e.target.value)} /><button disabled={!!busy || !q.trim() || left < 1} onClick={go}>Ask</button></div>
       {busy && <p className="note">{busy}</p>}
-      {out && <><p style={{ fontSize: 17 }}>{out.text}</p>{out.note && <p className="note">{out.note}</p>}</>}
+      {out && <><p style={{ fontSize: 17 }}>{out.text}</p>{out.note && <p className="note">{out.note}</p>}{out.pkg && <p className="note"><button className="ghost" onClick={() => void navigator.clipboard?.writeText(out.pkg!)}>Copy the answer package</button> and paste it on the <a href="#verify" target="_blank" rel="noreferrer">Verify page</a> to check the evidence.</p>}</>}
     </div>
   );
 }
