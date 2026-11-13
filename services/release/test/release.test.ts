@@ -228,6 +228,10 @@ describe("A7: receipts and the signed log", () => {
     expect(feed.length).toBe(1);
     const rec = feed[0]!;
     expect(rec.log.map((e) => e.action)).toEqual(["open", "release", "release"]);
+    // the raw inputs of the receipt are in the feed, and the close receipt (seq 2) carries the log root that was committed
+    expect(rec.session_pk).toBe(v.sessionPk);
+    expect(rec.close).toMatchObject({ seq: 2, log_root: closed.log_root });
+    expect(rec.requester_digest).toBe(bytesToHex(receipt.requesterDigestBearer(sig.publicKey(link.reqSeed))));
     expect(rec.log_head).toBe(closed.log_root);
     expect(sig.verify(sig.publicKey(seed(2)), logHeadMsg(rec.session_id, hexToBytes(rec.log_head), rec.log.length), hexToBytes(rec.log_sig))).toBe(true);
     // chain: genesis -> open commitment -> close commitment

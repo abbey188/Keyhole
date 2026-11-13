@@ -58,11 +58,17 @@ interface Session {
   commitment: string;
   txHash: string;
   closed: boolean;
+  /** Receipt inputs the owner needs to recompute the commitment, and the close receipt once it is on chain. */
+  requesterDigest: string;
+  close: { seq: number; head: string; commitment: string; closedAt: number; logRoot: string; txHash: string } | null;
   log: LogEntry[];
   logHead: Uint8Array;
 }
 
 export interface ReceiptRecord {
+  session_pk: string;
+  requester_digest: string;
+  close: { seq: number; head: string; commitment: string; closed_at: number; log_root: string; tx_hash: string } | null;
   seq: number;
   grant_id: string;
   session_id: string;
@@ -212,7 +218,7 @@ export class ReleaseService {
       sessionId, grantId: grant.grant_id, boxId: grant.box_id, sessionPk: hexToBytes(sessionPkHex),
       leaseExp: Math.min(now + maxLease, grant.not_after_ms), openedAt: onChain.opened_at,
       seq: Number(ev.data.seq), head: String(ev.data.head), commitment: String(ev.data.commitment), txHash,
-      closed: false, log: [], logHead: LOG_GENESIS,
+      closed: false, requesterDigest: grant.requester.startsWith("account:") ? bytesToHex(receipt.requesterDigestAccount(grant.requester.slice(8))) : bytesToHex(receipt.requesterDigestBearer(hexToBytes(grant.requester.slice(7)))), close: null, log: [], logHead: LOG_GENESIS,
     };
     this.sessions.set(s.sessionId, s);
     this.tokens.set(token, s.sessionId);
@@ -329,6 +335,8 @@ export class ReleaseService {
     s.closed = true;
     try {
       const tx = await this.o.relayer.closeSession({ sessionId: s.sessionId, logRoot: root, closedAtMs: now, rsIdx: this.o.rsIdx, rsSig: closeSig });
+      const ev = tx.events.find((x) => x.event === "session_closed" && x.data.session_id === s.sessionId);
+      if (ev) s.close = { seq: Number(ev.data.seq), head: String(ev.data.head), commitment: String(ev.data.commitment), closedAt: now, logRoot: root, txHash: tx.txHash };
       return { log_root: root, tx_hash: tx.txHash };
     } catch (e) {
       s.closed = false; // nothing was committed: the session stays open so the close can be retried
@@ -349,6 +357,8 @@ export class ReleaseService {
       .filter((s) => s.boxId === boxId)
       .sort((a, b) => a.seq - b.seq)
       .map((s) => ({
+        session_pk: bytesToHex(s.sessionPk), requester_digest: s.requesterDigest,
+        close: s.close ? { seq: s.close.seq, head: s.close.head, commitment: s.close.commitment, closed_at: s.close.closedAt, log_root: s.close.logRoot, tx_hash: s.close.txHash } : null,
         seq: s.seq, grant_id: s.grantId, session_id: s.sessionId, commitment: s.commitment, head: s.head, opened_at: s.openedAt,
         tx_hash: s.txHash, closed: s.closed, log: s.log, log_head: bytesToHex(s.logHead),
         log_sig: bytesToHex(sig.sign(this.o.rsSeed, logHeadMsg(s.sessionId, s.logHead, s.log.length))),

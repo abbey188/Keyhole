@@ -59,7 +59,8 @@ function Viewer({ visit, onEnded }: { visit: Visit; onEnded: () => void }) {
   return (
     <div>
       <div className="row"><strong className="grow">{visit.payload.l ? `Viewing as ${visit.payload.l}` : "Viewing"}</strong>
-        <span className="pill ok">recorded · visit #{visit.seq}</span><span className="pill">{fmtLeft(end - now)} left</span></div>
+        <span className="pill ok">recorded · visit #{visit.seq}</span><span className="pill">{fmtLeft(end - now)} left</span>
+        <button className="ghost" onClick={() => { void closeVisit(visit, svc).then(onEnded); }}>I'm done</button></div>
       {loaded < total && !err && <p className="note">Loading {loaded + 1} of {total}…</p>}
       {err && <p className="err">{err}</p>}
       {visit.payload.items.map((it) => (
