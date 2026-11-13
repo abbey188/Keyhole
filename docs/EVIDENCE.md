@@ -78,3 +78,11 @@ One scenario of 122 contract calls (40 succeed, the rest are rejections) ran aga
 `GET https://cloud-api.near.ai/v1/models` returned HTTP 200 with 63 models (text and image inputs; Anthropic, and other providers' models). No `NEARAI_API_KEY` was present in the environment, and the listing may not require one, so **this shows the endpoint is reachable from here, not that a key works**. Nothing was sent that would use one.
 
 What the on-chain runs do not show: methods not exercised on chain (`delete_grant`, `delete_box`, `delete_deal`, `set_wrapped_bmk`, `extend_blob`, `claim_fee`, `abandon_blob`, `expire_blob`, `expire_deal`, `finalize_retired`, `claim`, payout and refund failure paths; the Rust unit tests cover their logic); behaviour under load; larger blobs (the test blobs are 64 to 128 KiB); a deployed, separately hosted node and release service.
+
+## Build window 2026-11-13: running evidence
+Each row is a claim with the test or testnet transaction that proves it. Rows are added only when the proof exists.
+| ID | Claim | Proof |
+|---|---|---|
+| G0 | NEAR AI chat answers through the sandbox proxy with a placeholder header; attestation reports are fetched for the chosen models | `docs/GATE0_NEAR_AI_2026-11-13.md` |
+| A0 | Browser plumbing: CORS, testnet sponsor endpoint (one funding per account, capped, testnet only), Buffer-free chain reader | `services/release/test/release.test.ts` "sponsor"; `packages/chain` tests |
+| A1 | Passkey sign-in (WebAuthn PRF in a virtual authenticator) derives the account and data root; the same passkey unlocks the same account; a safe is created on the deployed contract and listed with public facts only | `apps/web/test/keys.test.ts` (matches the Rust vectors), `apps/web/test/safe.test.ts`; browser run `apps/web/e2e/a1.mjs`, transaction [8hKsAE9UcH…](https://explorer.testnet.near.org/transactions/8hKsAE9UcHWaiQ3GSH16QZhBJzjiC7ECyNfeicUn8wJ5). Real-device passkey test: `[NOT FINISHED]` (needs the owner's device). Passphrase fallback labelled weaker. |

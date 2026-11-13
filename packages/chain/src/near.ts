@@ -5,6 +5,7 @@ import { bytesToHex } from "@keyhole/crypto";
 import { ContractError } from "./chain.js";
 import type { ChainReader, ChainWriter, DealApi, DealArgs } from "./chain.js";
 import { parseEvents } from "./events.js";
+import { toBase64 } from "./rpc.js";
 import type { GrantArgs, TxResult } from "./types.js";
 
 const TGAS = 10n ** 12n;
@@ -99,7 +100,7 @@ export class NearWriter implements ChainWriter, DealApi {
   certifyBlob = (blobId: string, acks: { idx: number; sig: string }[]) => this.call("certify_blob", { blob_id: blobId, acks });
   attestErasure = (blobId: string, idx: number, sig: string) => this.call("attest_erasure", { blob_id: blobId, idx, sig });
   createBox = (a: { boxId: string; kind: "Bound" | "Handover"; wrappedBmk: Uint8Array; maxGrantMs: number }) =>
-    this.call("create_box", { box_id: a.boxId, kind: a.kind, wrapped_bmk: Buffer.from(a.wrappedBmk).toString("base64"), max_grant_ms: a.maxGrantMs }, NEAR / 50n);
+    this.call("create_box", { box_id: a.boxId, kind: a.kind, wrapped_bmk: toBase64(a.wrappedBmk), max_grant_ms: a.maxGrantMs }, NEAR / 50n);
   async createGrant(g: GrantArgs) {
     const cfg = await this.o.reader.config();
     const deposit = NEAR / 50n + BigInt(cfg.per_session_stake) * BigInt(g.maxSessions);

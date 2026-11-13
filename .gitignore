@@ -8,3 +8,4 @@ node_modules/
 .keys/
 .claude/
 dist/
+data/

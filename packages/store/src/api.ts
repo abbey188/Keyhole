@@ -27,7 +27,7 @@ type FetchFn = (url: string, init?: { method?: string; headers?: Record<string, 
 
 /** Talks to a node's HTTP API (services/node/src/http.ts). */
 export class HttpNodeApi implements NodeApi {
-  constructor(readonly name: string, private readonly base: string, private readonly f: FetchFn = globalThis.fetch as unknown as FetchFn, private readonly timeoutMs = 10_000) {}
+  constructor(readonly name: string, private readonly base: string, private readonly f: FetchFn = ((...a: Parameters<FetchFn>) => (globalThis.fetch as unknown as FetchFn)(...a)) as FetchFn, private readonly timeoutMs = 10_000) {}
 
   private async call<T>(path: string, init: Parameters<FetchFn>[1]): Promise<T> {
     const ac = new AbortController();

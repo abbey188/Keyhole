@@ -64,7 +64,7 @@ export class RpcReader implements ChainReader {
     this.urls = o.rpcUrls;
     this.contractId = o.contractId;
     this.chainId = o.chainId;
-    this.f = o.fetch ?? (globalThis.fetch as unknown as FetchLike);
+    this.f = o.fetch ?? (((...a: Parameters<FetchLike>) => (globalThis.fetch as unknown as FetchLike)(...a)) as FetchLike); // not stored bare: browsers reject fetch called with another `this`
     this.timeoutMs = o.timeoutMs ?? 8000;
   }
 
