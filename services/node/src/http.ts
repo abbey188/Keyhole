@@ -17,9 +17,18 @@ async function body(req: IncomingMessage): Promise<Uint8Array> {
   return new Uint8Array(Buffer.concat(chunks));
 }
 
+/** Browser access (testnet demo): the app is served from another origin. Set APP_ORIGIN to restrict it. */
+const ORIGIN = process.env.APP_ORIGIN ?? "*";
+const CORS = {
+  "access-control-allow-origin": ORIGIN,
+  "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS",
+  "access-control-allow-headers": "content-type,authorization,x-ts,x-pk,x-sig,x-ticket,x-reg-id,x-root,x-proof",
+  "access-control-max-age": "600",
+};
+
 function send(res: ServerResponse, status: number, json: unknown): void {
   const b = JSON.stringify(json);
-  res.writeHead(status, { "content-type": "application/json", "content-length": Buffer.byteLength(b), "cache-control": "no-store" });
+  res.writeHead(status, { ...CORS, "content-type": "application/json", "content-length": Buffer.byteLength(b), "cache-control": "no-store" });
   res.end(b);
 }
 
@@ -31,6 +40,11 @@ const header = (req: IncomingMessage, k: string): string | undefined => {
 /** HTTP front for a StorageNode. Errors are `{error: code}` and nothing more. */
 export function createNodeServer(node: StorageNode): Server {
   return createServer(async (req, res) => {
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, CORS);
+      res.end();
+      return;
+    }
     try {
       const url = new URL(req.url ?? "/", "http://x");
       const path = url.pathname;

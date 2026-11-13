@@ -60,6 +60,8 @@ export interface ChainWriter {
   activateBlob(blobId: string): Promise<TxResult>;
   commitManifest(a: { boxId: string; manifestBlob: string; seq: number }): Promise<TxResult>;
   retireBlob(blobId: string): Promise<TxResult>;
+  /** Sends NEAR from this account (used by the sponsor endpoint to fund new safes' accounts on testnet). */
+  transfer?(to: string, yocto: string): Promise<{ txHash: string }>;
 }
 
 export interface DealArgs {

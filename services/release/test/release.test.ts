@@ -440,3 +440,19 @@ describe("review fixes: lockout, replay, close retry, key half before the offer"
     expect((await r.chain.deal(DEAL))?.state).toBe("Ready");
   });
 });
+
+describe("sponsor (testnet)", () => {
+  it("funds an implicit account once, refuses everything else, and caps the total", async () => {
+    const r = await rig();
+    const acct = "ab".repeat(32);
+    const out = await r.svc.sponsor(acct);
+    expect(out.amount).toBe("500000000000000000000000");
+    expect(r.chain.calls.some((c) => c.method.startsWith(`transfer:${acct}`))).toBe(true);
+    expect(await code(r.svc.sponsor(acct))).toBe("403:already_funded");
+    expect(await code(r.svc.sponsor("alice.testnet"))).toBe("400:bad_request");
+    expect(await code(r.svc.sponsor("zz".repeat(32)))).toBe("400:bad_request");
+    const capped = await rig({ sponsorMax: 1 });
+    await capped.svc.sponsor("cd".repeat(32));
+    expect(await code(capped.svc.sponsor("ef".repeat(32)))).toBe("429:sponsor_cap");
+  });
+});

@@ -41,6 +41,9 @@ export interface ReleaseOptions {
   authSkewMs?: number;
   /** Ticket lifetime (default 60 s). */
   ticketMs?: number;
+  /** Testnet sponsorship: yoctoNEAR sent once to each new implicit account (default 0.5 NEAR) and the overall cap. */
+  sponsorYocto?: string;
+  sponsorMax?: number;
 }
 
 interface Session {
@@ -388,6 +391,34 @@ export class ReleaseService {
     const b2 = this.o.store.getSecret(`deal-${dealId}`);
     if (!b2 || dealS2Commit(dealId, b2) !== deal.s2_commit) throw deny();
     return { sealed: bytesToHex(seal.sealTo(hexToBytes(buyerX25519Pk), b2)) };
+  }
+
+  /**
+   * `POST /v1/sponsor` (TESTNET ONLY): funds a new safe's account once so a passkey-derived key can send transactions.
+   * Only implicit accounts (64 hex characters = an Ed25519 public key) qualify; each is funded once; the total is capped.
+   * Nothing here can reach a mainnet: the reader's chain id must be testnet.
+   */
+  async sponsor(accountId: string): Promise<{ tx_hash: string; amount: string }> {
+    if (this.o.reader.chainId !== "testnet") throw new ReleaseError(403, "testnet_only");
+    if (!/^[0-9a-f]{64}$/.test(accountId)) throw new ReleaseError(400, "bad_request");
+    if (!this.o.relayer.transfer) throw new ReleaseError(501, "not_supported");
+    const key = `sponsored-${accountId}`;
+    const marker = this.o.store.getSecret(key);
+    if (marker && marker.length > 0) throw deny("already_funded");
+    let count = 0;
+    try { count = Number(new TextDecoder().decode(this.o.store.getSecret("sponsored-count") ?? new Uint8Array())) || 0; } catch { /* first use */ }
+    if (count >= (this.o.sponsorMax ?? 20)) throw new ReleaseError(429, "sponsor_cap");
+    const amount = this.o.sponsorYocto ?? "500000000000000000000000";
+    this.o.store.putSecret(key, new Uint8Array([1]));
+    this.o.store.putSecret("sponsored-count", new TextEncoder().encode(String(count + 1)));
+    try {
+      const r = await this.o.relayer.transfer(accountId, amount);
+      return { tx_hash: r.txHash, amount };
+    } catch (e) {
+      this.o.store.putSecret(key, new Uint8Array()); // allow a retry after a failed transfer (empty marker is treated as absent below)
+      if (e instanceof ChainUnavailable) throw new ReleaseError(503, "unavailable");
+      throw new ReleaseError(502, "transfer_failed");
+    }
   }
 
   /** `GET /v1/pubkeys`. */

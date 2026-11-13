@@ -6,6 +6,13 @@ import type { BlobView, BoxView, ConfigView, DealView, GrantView, KeyholeEvent, 
 
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
+/** Base64 without Node's Buffer, so the reader runs in browsers. */
+export function toBase64(b: Uint8Array): string {
+  let s = "";
+  for (const x of b) s += String.fromCharCode(x);
+  return btoa(s);
+}
+
 export function base58(bytes: Uint8Array): string {
   let zeros = 0;
   while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
@@ -92,12 +99,12 @@ export class RpcReader implements ChainReader {
       finality: "final",
       account_id: this.contractId,
       method_name: methodName,
-      args_base64: Buffer.from(JSON.stringify(args)).toString("base64"),
+      args_base64: toBase64(new TextEncoder().encode(JSON.stringify(args))),
     });
     const r = env.result as { result?: number[]; error?: string } | undefined;
     if (env.error || !r || r.error || !Array.isArray(r.result)) throw new ChainUnavailable(`view ${methodName} failed`);
     try {
-      return JSON.parse(Buffer.from(r.result).toString("utf8")) as T;
+      return JSON.parse(new TextDecoder().decode(new Uint8Array(r.result))) as T;
     } catch {
       throw new ChainUnavailable(`view ${methodName} returned malformed data`);
     }

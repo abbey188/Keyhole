@@ -16,9 +16,18 @@ async function readBody(req: IncomingMessage): Promise<Uint8Array> {
   return new Uint8Array(Buffer.concat(chunks));
 }
 
+/** Browser access (testnet demo): the app is served from another origin. Set APP_ORIGIN to restrict it. */
+const ORIGIN = process.env.APP_ORIGIN ?? "*";
+const CORS = {
+  "access-control-allow-origin": ORIGIN,
+  "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS",
+  "access-control-allow-headers": "content-type,authorization,x-ts,x-pk,x-sig,x-ticket,x-reg-id,x-root,x-proof",
+  "access-control-max-age": "600",
+};
+
 function send(res: ServerResponse, status: number, json: unknown): void {
   const b = JSON.stringify(json);
-  res.writeHead(status, { "content-type": "application/json", "content-length": Buffer.byteLength(b), "cache-control": "no-store" });
+  res.writeHead(status, { ...CORS, "content-type": "application/json", "content-length": Buffer.byteLength(b), "cache-control": "no-store" });
   res.end(b);
 }
 
@@ -46,6 +55,11 @@ export function createReleaseServer(svc: ReleaseService, o: HttpOptions = {}): S
   const hits = new Map<string, { start: number; n: number }>();
   const limit = o.perIpPerMinute ?? 600;
   return createServer(async (req, res) => {
+    if (req.method === "OPTIONS") {
+      res.writeHead(204, CORS);
+      res.end();
+      return;
+    }
     try {
       // Per-IP limit on the local wall clock only bounds request volume; it never decides access.
       const ip = req.socket.remoteAddress ?? "?";
@@ -59,6 +73,10 @@ export function createReleaseServer(svc: ReleaseService, o: HttpOptions = {}): S
       const m = req.method;
       let x: RegExpMatchArray | null;
       if (m === "GET" && p === "/v1/health") return send(res, 200, { ok: true });
+      if (m === "POST" && p === "/v1/sponsor") {
+        const b = await json<{ account_id: string }>(req);
+        return send(res, 200, await svc.sponsor(b.account_id));
+      }
       if (m === "GET" && p === "/v1/pubkeys") return send(res, 200, svc.pubkeys());
       if (m === "PUT" && (x = p.match(/^\/v1\/grants\/([0-9a-f]{32})\/scope$/))) {
         await svc.putScope(x[1] as string, await readBody(req), auth(req));

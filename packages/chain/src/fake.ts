@@ -252,6 +252,12 @@ class FakeWriter implements ChainWriter, DealApi {
     return b;
   }
 
+  /** MOCK: records the call, moves no money. */
+  async transfer(to: string, yocto: string): Promise<{ txHash: string }> {
+    this.c.calls.push({ by: this.account, method: `transfer:${to}:${yocto}` });
+    return { txHash: "fake-transfer" };
+  }
+
   openSession(a: { grantId: string; sessionId: string; sessionPk: string; tsMs: number; reqSig?: string }) {
     return this.c._exec(this.account, "open_session", (w, ev) => {
       const g = w.grants.get(a.grantId);
