@@ -15,6 +15,8 @@ export interface Rendered {
 /** DOM-dependent steps, injected so the rest is testable. */
 export interface Renderers {
   pdfPages(bytes: Uint8Array): Promise<Rendered[]>;
+  /** Text of each page from the PDF's own text layer, on the device. Scanned pages come back empty (no OCR in this version). */
+  pdfText?(bytes: Uint8Array): Promise<string[]>;
   /** Re-encodes an image, which drops metadata such as location and camera data. */
   cleanImage(bytes: Uint8Array, mime: string): Promise<Rendered>;
 }
@@ -43,7 +45,9 @@ export async function planItem(f: FileInput, r: Renderers): Promise<PlannedItem>
       const pages = await r.pdfPages(f.bytes);
       if (pages.length === 0) throw new FileRefused("This PDF has no pages we can show.");
       if (pages.length > MAX_PDF_PAGES) throw new FileRefused(`This PDF has ${pages.length} pages; the demo limit is ${MAX_PDF_PAGES}.`);
-      return { kind, notes: [`${pages.length} pages shown as images. The original file stays with you only.`], parts: [...pages.map((p, i): Part => ({ role: "page", mime: p.mime, bytes: p.bytes, page: i + 1, ...(p.w ? { w: p.w } : {}), ...(p.h ? { h: p.h } : {}) })), ...original()] };
+      const texts = (await r.pdfText?.(f.bytes).catch(() => [] as string[])) ?? [];
+      const textParts: Part[] = texts.map((t, i) => ({ role: "text" as const, mime: "text/plain", bytes: new TextEncoder().encode(t), page: i + 1 })).filter((p) => p.bytes.length > 0);
+      return { kind, notes: [`${pages.length} pages shown as images. The original file stays with you only.`, textParts.length ? `Text found on ${textParts.length} pages, kept encrypted for searching and Ask.` : "No text layer found: scanned pages can't be searched in this version."], parts: [...pages.map((p, i): Part => ({ role: "page", mime: p.mime, bytes: p.bytes, page: i + 1, ...(p.w ? { w: p.w } : {}), ...(p.h ? { h: p.h } : {}) })), ...original(), ...textParts] };
     }
     case "image": {
       const img = await r.cleanImage(f.bytes, f.mime);

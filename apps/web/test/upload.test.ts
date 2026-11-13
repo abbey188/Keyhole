@@ -14,6 +14,7 @@ import type { Renderers } from "../src/lib/files";
 const id = identityFromSecrets(new Uint8Array(32).fill(1), new Uint8Array(32).fill(2), "passkey");
 const te = new TextEncoder();
 const fakeRenderers: Renderers = {
+  async pdfText() { return ["Monthly rent is 1,200", "Guarantor: A. Finch"]; },
   async pdfPages(b) { return [1, 2].map((n) => ({ mime: "image/png", bytes: te.encode(`PNG page ${n} of ${b.length}`), w: 100, h: 200 })); },
   async cleanImage(b) { return { mime: "image/png", bytes: b.slice(0, 20), w: 5, h: 5 }; },
 };
@@ -49,6 +50,7 @@ describe("adding files to a safe", () => {
     const plan = await planItem({ name: "lease.pdf", mime: "application/pdf", bytes: pdfBytes }, fakeRenderers);
     expect(plan.kind).toBe("pdf");
     const a = await addItem(ctx, man, box, { name: "lease.pdf", mime: "application/pdf", kind: plan.kind, size: pdfBytes.length, parts: plan.parts });
+    expect(plan.parts.filter((p) => p.role === "text").length).toBe(2);
     expect(a.txs.map((t) => t.step)).toEqual(["file: register", "file: certify", "file: activate", "index: register", "index: certify", "index: activate", "index: commit"]);
 
     box = (await chain.box(ctx.boxId))!;
@@ -106,3 +108,19 @@ describe("adding files to a safe", () => {
   });
 });
 void msgs;
+
+import { buildIndex } from "../src/lib/index";
+describe("search index", () => {
+  it("is rebuilt from the owner's encrypted text parts and never includes shareable page images", async () => {
+    const { chain, ctx } = await rig();
+    const box = (await chain.box(ctx.boxId))!;
+    const pdf = new TextEncoder().encode("%PDF x");
+    const plan = await planItem({ name: "lease.pdf", mime: "application/pdf", bytes: pdf }, fakeRenderers);
+    const r = await addItem(ctx, await loadManifest(ctx, box), box, { name: "lease.pdf", mime: "application/pdf", kind: plan.kind, size: pdf.length, parts: plan.parts });
+    const idx = await buildIndex(ctx, r.manifest);
+    expect(idx.map((p) => [p.itemName, p.page, p.text])).toEqual([["lease.pdf", 1, "Monthly rent is 1,200"], ["lease.pdf", 2, "Guarantor: A. Finch"]]);
+    // text parts are not shareable: a grant takes only role "page"
+    expect(r.record.segments.filter((s) => s.role === "page").length).toBe(2);
+    expect(r.record.segments.filter((s) => s.role === "text").length).toBe(2);
+  });
+});

@@ -27,6 +27,15 @@ export const browserRenderers: Renderers = {
     }
     return out;
   },
+  async pdfText(bytes) {
+    const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise;
+    const out: string[] = [];
+    for (let n = 1; n <= doc.numPages; n++) {
+      const tc = await (await doc.getPage(n)).getTextContent();
+      out.push(tc.items.map((i) => ("str" in i ? i.str : "")).join(" ").replace(/\s+/g, " ").trim());
+    }
+    return out;
+  },
   async cleanImage(bytes, mime) {
     const bmp = await createImageBitmap(new Blob([bytes.slice()], { type: mime }));
     const scale = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));

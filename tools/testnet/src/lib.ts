@@ -86,3 +86,9 @@ export function writeRecord(patch: Record<string, any>): void {
   mkdirSync(DEPLOY_DIR, { recursive: true });
   writeFileSync(join(DEPLOY_DIR, "testnet.json"), JSON.stringify({ ...readRecord(), ...patch }, null, 2) + "\n");
 }
+
+/** Balance in yoctoNEAR at final. */
+export async function balance(accountId: string): Promise<bigint> {
+  const r = await rpc<{ amount: string }>("query", { request_type: "view_account", finality: "final", account_id: accountId });
+  return BigInt(r.amount);
+}

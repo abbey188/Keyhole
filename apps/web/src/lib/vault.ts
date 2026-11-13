@@ -6,8 +6,8 @@ import { prepareBlob } from "@keyhole/store";
 import type { PreparedBlob } from "@keyhole/store";
 
 export type ItemKind = "pdf" | "image" | "text" | "audio" | "video" | "other";
-/** page: shareable rendered page or image or text; chunk: a fixed-size slice of a file kept for the owner; original: the uploaded bytes, owner only. */
-export type SegmentRole = "page" | "chunk" | "original";
+/** text: the page's extracted text, kept encrypted for the owner's search and Ask (never put in an access link); page: shareable rendered page or image or text; chunk: a fixed-size slice of a file kept for the owner; original: the uploaded bytes, owner only. */
+export type SegmentRole = "page" | "chunk" | "original" | "text";
 
 export interface SegmentRef {
   s: number;
