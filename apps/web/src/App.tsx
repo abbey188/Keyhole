@@ -7,6 +7,7 @@ import type { SafeCard } from "./lib/safe";
 import { config, txLink } from "./lib/config";
 import { bytesToHex, hexToBytes } from "@keyhole/crypto";
 import { SafePage } from "./ui/SafePage";
+import { Recipient } from "./ui/Recipient";
 
 const LS = { cred: "keyhole.credId", salt: "keyhole.salt", mode: "keyhole.mode" };
 const get = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -14,6 +15,7 @@ const put = (k: string, v: string) => { try { localStorage.setItem(k, v); } catc
 
 export function App() {
   const [id, setId] = useState<Identity | null>(null);
+  if (location.hash.startsWith("#open=")) return <main><h1>Keyhole</h1><Recipient /></main>;
   return (
     <main>
       <h1>Keyhole</h1>

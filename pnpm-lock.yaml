@@ -38,6 +38,9 @@ importers:
       '@keyhole/node':
         specifier: workspace:*
         version: link:../../services/node
+      '@keyhole/release':
+        specifier: workspace:*
+        version: link:../../services/release
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6

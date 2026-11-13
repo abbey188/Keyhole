@@ -115,10 +115,11 @@ export function encryptItem(a: {
 }
 
 /** Decrypts one unit taken from the stream (`unit` = the `len` bytes at `offset`). Throws "invalid" on any tampering. */
-export function decryptSegment(a: { bmk: Uint8Array; epoch: number; boxId: string; record: ItemRecord; s: number; unit: Uint8Array }): Uint8Array {
+export function decryptSegment(a: { bmk: Uint8Array; epoch: number; boxId: string; record: Pick<ItemRecord, "uid" | "segments">; s: number; unit: Uint8Array; key?: Uint8Array }): Uint8Array {
   const seg = a.record.segments[a.s];
   if (!seg) throw new Error("invalid");
-  return padme.unpad(aead.open(segmentKeyOf(a.bmk, a.epoch, a.record.uid, a.s), a.unit, aead.segAad(hexToBytes(a.boxId), hexToBytes(a.record.uid), a.s, a.record.segments.length, a.epoch)));
+  // `key` is the segment key a recipient reassembled from the two halves; the owner derives it from the box key.
+  return padme.unpad(aead.open(a.key ?? segmentKeyOf(a.bmk, a.epoch, a.record.uid, a.s), a.unit, aead.segAad(hexToBytes(a.boxId), hexToBytes(a.record.uid), a.s, a.record.segments.length, a.epoch)));
 }
 
 /** The leaves `[first, last]` that hold a segment's unit, and where the unit sits inside their concatenation. */

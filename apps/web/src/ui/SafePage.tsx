@@ -10,6 +10,7 @@ import type { Ctx, Receipt } from "../lib/upload";
 import { planItem, FileRefused } from "../lib/files";
 import { browserRenderers } from "../lib/render";
 import type { ItemRecord, Manifest } from "../lib/vault";
+import { AccessTab } from "./AccessTab";
 
 export type Tab = "files" | "access" | "visitors" | "handover";
 
@@ -46,7 +47,8 @@ export function SafePage({ id, boxId, serial, onBack }: { id: Identity; boxId: s
       </div>
       {err && <p className="err">{err}</p>}
       {tab === "files" && ctx && box && <Files ctx={ctx} box={box} man={man} afterAdd={async (t) => { setTxs(t); await refresh(); }} />}
-      {tab !== "files" && <p className="note">[NOT FINISHED] This tab is built next.</p>}
+      {tab === "access" && ctx && <AccessTab ctx={ctx} man={man} onChanged={() => void refresh()} />}
+      {(tab === "visitors" || tab === "handover") && <p className="note">[NOT FINISHED] This tab is built next.</p>}
       {txs.length > 0 && (
         <details className="card"><summary>Recorded on chain ({txs.length} transactions)</summary>
           <table><tbody>{txs.map((t) => <tr key={t.txHash}><td>{t.step}</td><td><a href={txLink(t.txHash)} target="_blank" rel="noreferrer">{t.txHash.slice(0, 10)}…</a></td></tr>)}</tbody></table>
