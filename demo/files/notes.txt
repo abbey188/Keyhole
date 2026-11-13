@@ -1,0 +1,6 @@
+Keyhole demo notes (SAMPLE - FICTIONAL)
+=======================================
+This is a plain text file used to test the Keyhole viewer.
+Owner: Maria Santos (fictional)
+Reminder: viewing window for the landlord is 2 hours.
+Secret phrase for tests: harbour-lantern-7421
