@@ -16,6 +16,9 @@ export interface ReleaseConfig {
   dataDir: string;
   segmentsPerMinute: number;
   perIpPerMinute: number;
+  /** Testnet sponsorship: how many accounts may be funded, and how much each gets (NEAR). */
+  sponsorMax: number;
+  sponsorNear: number;
   relayerAccount: string;
   relayerKey: string;
 }
@@ -38,6 +41,8 @@ export function loadReleaseConfig(env: Env): ReleaseConfig {
     dataDir: env.RELEASE_DATA_DIR ?? "./data/release",
     segmentsPerMinute: intVar(env, "RS_SEGMENTS_PER_MINUTE", 30, 1, 10_000),
     perIpPerMinute: intVar(env, "RS_PER_IP_PER_MINUTE", 600, 1, 1_000_000),
+    sponsorMax: intVar(env, "RS_SPONSOR_MAX", 20, 0, 10_000),
+    sponsorNear: intVar(env, "RS_SPONSOR_NEAR", 1, 1, 5),
     relayerAccount: accountVar(env, "RELAYER_ACCOUNT"),
     relayerKey: requireVar(env, "RELAYER_PRIVATE_KEY"),
   };

@@ -15,7 +15,7 @@ export interface RunningRelease {
 
 /** Assembles the release service. Refuses to start if the contract does not list this service's public key at `idx`. */
 export async function startRelease(o: {
-  config: Pick<ReleaseConfig, "seed" | "idx" | "port" | "host" | "segmentsPerMinute" | "perIpPerMinute">;
+  config: Pick<ReleaseConfig, "seed" | "idx" | "port" | "host" | "segmentsPerMinute" | "perIpPerMinute"> & Partial<Pick<ReleaseConfig, "sponsorMax" | "sponsorNear">>;
   reader: ChainReader;
   relayer: ChainWriter;
   store: GrantStore;
@@ -27,6 +27,8 @@ export async function startRelease(o: {
   if (cfg.chain_id !== o.reader.chainId) throw new Error("chain id mismatch between the reader and the contract");
   const service = new ReleaseService({
     reader: o.reader, relayer: o.relayer, store: o.store, rsSeed: o.config.seed, rsIdx: o.config.idx, segmentsPerMinute: o.config.segmentsPerMinute,
+    ...(o.config.sponsorMax !== undefined ? { sponsorMax: o.config.sponsorMax } : {}),
+    ...(o.config.sponsorNear !== undefined ? { sponsorYocto: (BigInt(o.config.sponsorNear) * 10n ** 24n / 2n).toString() } : {}),
   });
   const server = createReleaseServer(service, { perIpPerMinute: o.config.perIpPerMinute });
   await new Promise<void>((resolve, reject) => {

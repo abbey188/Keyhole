@@ -19,6 +19,7 @@ console.log("rules found:", JSON.stringify(await owner.locator("table tbody tr")
 await owner.getByRole("button", { name: "Cross-check with a private model" }).click();
 await owner.getByText(/The model read the same pages|could not be used/).waitFor({ timeout: 360000 }); console.log("cross-check text:", await owner.getByText(/The model read the same pages|could not be used/).textContent());
 console.log("cross-check:", JSON.stringify(await owner.locator(".pill").allTextContents()));
+if (/could not be used/.test(await owner.locator("p.note", { hasText: /model/ }).first().textContent().catch(() => ""))) { console.log("model unavailable: falling back to a self-declared claim (grade C)"); await owner.getByPlaceholder(/To self-declare/).fill("3,850.00"); }
 await owner.getByLabel("I checked this against the document myself").check();
 await owner.getByRole("button", { name: "Create signed claim" }).click();
 await owner.getByText(/Grade [BC] claim saved|checked|Did not|no grade|rules and model/).first().waitFor({ timeout: 240000 }); console.log("after create:", (await owner.locator(".err").allTextContents()).join(" | ") || "no error", "|", (await owner.locator("table").first().innerText()).replace(/\s+/g," ").slice(0,300)); await owner.getByText(/Grade [BC] claim saved/).waitFor({ timeout: 240000 });
