@@ -11,7 +11,7 @@ import { bytesToHex, randomHex } from "../src/hex.js";
 
 const live = process.env.KEYHOLE_LIVE === "1";
 const d = live ? describe : describe.skip;
-const MODEL = "Qwen/Qwen3.8-27B";
+const MODEL = process.env.KEYHOLE_LIVE_MODEL ?? "Qwen/Qwen3.8-27B";
 const client = () => new NearAiClient({ apiKey: "placeholder" });
 
 d("live NEAR AI Cloud", () => {
