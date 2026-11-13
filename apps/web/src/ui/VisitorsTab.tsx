@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Ctx } from "../lib/upload";
-import { fetchFeed, verifyLog } from "../lib/visitors";
+import { fetchFeed, readAskLog, verifyLog } from "../lib/visitors";
 import type { FeedRecord, LogCheck } from "../lib/visitors";
 import { config, txLink } from "../lib/config";
 import type { Services } from "../lib/access";
@@ -16,6 +16,7 @@ export function VisitorsTab({ ctx, refreshKey }: { ctx: Ctx; refreshKey: number 
   const [tampered, setTampered] = useState(false);
   const [err, setErr] = useState("");
   const names = labels(ctx.boxId);
+  const asks = feed && !tampered ? readAskLog(ctx.id, feed) : [];
 
   const load = async () => {
     setErr("");
@@ -49,6 +50,11 @@ export function VisitorsTab({ ctx, refreshKey }: { ctx: Ctx; refreshKey: number 
               <td>{r.txHash && <a href={txLink(r.txHash)} target="_blank" rel="noreferrer">tx</a>}</td></tr>
           ))}
         </tbody></table>
+      )}
+      {asks.length > 0 && (
+        <div style={{ marginTop: 12 }}><strong>Questions asked about your files</strong>
+          {asks.map((a, i) => <p key={i} className="note"><span className={`pill ${a.ok ? "ok" : "bad"}`}>{a.ok ? "matches log" : "does not match"}</span> visit #{a.seq} · {names[a.grantId] ?? "link holder"}: “{a.question}” → {a.answer ?? "(no answer was recorded)"}</p>)}
+        </div>
       )}
       <div className="row" style={{ marginTop: 12 }}>
         <button className="ghost" onClick={load}>Check again</button>

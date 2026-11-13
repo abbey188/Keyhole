@@ -1,6 +1,6 @@
 // The visitor log (spec 05 section 6). The release service supplies the raw inputs of each receipt; everything else is
 // recomputed here and compared with the receipt chain the contract holds. A missing, added or altered row breaks the chain.
-import { bytesToHex, hexToBytes, receipt, rs } from "@keyhole/crypto";
+import { bytesToHex, hexToBytes, receipt, rs, seal, sha256 } from "@keyhole/crypto";
 import type { ChainReader } from "@keyhole/chain";
 import { ownerAuth } from "./access";
 import type { Services } from "./access";
@@ -18,6 +18,7 @@ export interface FeedRecord {
   tx_hash: string;
   closed: boolean;
   close: { seq: number; head: string; commitment: string; closed_at: number; log_root: string; tx_hash: string } | null;
+  asks?: { commit_q: string; sealed_q: string; commit_a: string | null; sealed_a: string | null; t: number }[];
   log: { t: number; session_id: string; item_uid: string; seg: number; action: string }[];
 }
 
@@ -101,4 +102,23 @@ export async function verifyLog(feed: FeedRecord[], boxId: string, reader: Chain
   if (!problem && head !== box.receipts_head) fail("The recomputed chain does not end at the contract's head.");
   if (!problem && bySeq.size !== box.receipts_seq) fail("The log has receipts the contract does not.");
   return { ok: !problem, reason: problem, rows, onChain: box.receipts_seq };
+}
+
+export interface AskLogRow { seq: number; grantId: string; at: number; question: string; answer: string | null; ok: boolean }
+
+/** Opens the sealed questions and answers with the owner's key and checks each against the commitment the service logged. */
+export function readAskLog(id: Identity, feed: FeedRecord[]): AskLogRow[] {
+  const open = (sealed: string, commit: string): { text: Record<string, unknown> | null; ok: boolean } => {
+    try {
+      const plain = seal.openSealed(id.x25519Secret, hexToBytes(sealed));
+      return { text: JSON.parse(new TextDecoder().decode(plain)) as Record<string, unknown>, ok: bytesToHex(sha256(plain)) === commit };
+    } catch { return { text: null, ok: false }; }
+  };
+  const rows: AskLogRow[] = [];
+  for (const r of feed) for (const a of r.asks ?? []) {
+    const q = open(a.sealed_q, a.commit_q);
+    const an = a.sealed_a && a.commit_a ? open(a.sealed_a, a.commit_a) : null;
+    rows.push({ seq: r.seq, grantId: r.grant_id, at: a.t, question: String(q.text?.question ?? "(unreadable)"), answer: an ? String((an.text as { answer?: string } | null)?.answer ?? "(no answer)") : null, ok: q.ok && (an?.ok ?? true) });
+  }
+  return rows;
 }

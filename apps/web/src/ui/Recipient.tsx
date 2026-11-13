@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { reader } from "../lib/clients";
 import { config } from "../lib/config";
-import { AccessEnded, closeVisit, decodeLink, openVisit, renew, viewSegment } from "../lib/access";
+import { AccessEnded, askPages, closeVisit, decodeLink, logAnswer, openVisit, renew, reserveQuestion, viewSegment, REFUSAL } from "../lib/access";
+import { askSafe } from "@keyhole/askclaims";
+import type { AskResult } from "@keyhole/askclaims";
+import { aiClient, FALLBACK_MODEL } from "../lib/ai";
 import type { LinkPayload, Services, Visit } from "../lib/access";
 
 const svc: Services = { releaseUrl: config.releaseUrl, nodeUrls: config.nodeUrls, chainId: config.chainId, contractId: config.contractId };
@@ -63,11 +66,43 @@ function Viewer({ visit, onEnded }: { visit: Visit; onEnded: () => void }) {
         <button className="ghost" onClick={() => { void closeVisit(visit, svc).then(onEnded); }}>I'm done</button></div>
       {loaded < total && !err && <p className="note">Loading {loaded + 1} of {total}…</p>}
       {err && <p className="err">{err}</p>}
+      {visit.payload.q && <AskPanel visit={visit} />}
       {visit.payload.items.map((it) => (
         <div key={it.u}><h2>{it.n}</h2>
           {it.segs.map((seg) => <Page key={seg.s} visit={visit} item={it} seg={seg} onLoaded={() => setLoaded((n) => n + 1)} onError={(e) => { if (e instanceof AccessEnded) onEnded(); else setErr(e.message); }} />)}
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Questions the owner allowed. Each one is counted first, logged sealed to the owner, and answered only from the shared files. */
+function AskPanel({ visit }: { visit: Visit }) {
+  const [q, setQ] = useState("");
+  const [left, setLeft] = useState(visit.payload.q?.budget ?? 0);
+  const [busy, setBusy] = useState("");
+  const [out, setOut] = useState<{ text: string; note: string } | null>(null);
+  const [pages, setPages] = useState<Awaited<ReturnType<typeof askPages>> | null>(null);
+  const go = async () => {
+    setOut(null); setBusy("Reserving your question…");
+    try {
+      const p = pages ?? await askPages(visit, svc); setPages(p);
+      const r = await reserveQuestion(visit, svc, q.trim()); setLeft(r.left);
+      setBusy("Checking the private hardware, then asking…");
+      let res: AskResult = await askSafe(q.trim(), p, { client: aiClient() as never });
+      if (res.status === "no_answer" && res.reason === "model_error") res = await askSafe(q.trim(), p, { client: aiClient() as never, model: FALLBACK_MODEL });
+      const text = res.status === "answer" ? res.answer : res.status === "no_answer" && res.tier === "device" ? REFUSAL : res.message;
+      await logAnswer(visit, svc, r.n, { answer: text, status: res.status, ...(res.status === "answer" ? { citations: res.citations, evidence: res.evidence } : {}) });
+      setOut({ text, note: res.status === "answer" ? `Private · ${res.evidence.model_id}. Quoted from the shared files.` : "" });
+    } catch (e) { setOut({ text: (e as Error).message, note: "" }); }
+    setBusy("");
+  };
+  return (
+    <div className="card"><strong>Ask about these files</strong> <span className="pill">{left} question{left === 1 ? "" : "s"} left</span>
+      <p className="note">Answers come only from the files shared with you, using a private model in attested hardware. The owner can see every question you ask.</p>
+      <div className="row"><input className="grow" placeholder="Your question" value={q} onChange={(e) => setQ(e.target.value)} /><button disabled={!!busy || !q.trim() || left < 1} onClick={go}>Ask</button></div>
+      {busy && <p className="note">{busy}</p>}
+      {out && <><p style={{ fontSize: 17 }}>{out.text}</p>{out.note && <p className="note">{out.note}</p>}</>}
     </div>
   );
 }

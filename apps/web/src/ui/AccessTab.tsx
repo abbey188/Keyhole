@@ -20,6 +20,7 @@ export function AccessTab({ ctx, man, onChanged }: { ctx: Ctx; man: Manifest | n
   const [pick, setPick] = useState<Record<string, boolean>>({});
   const [label, setLabel] = useState("");
   const [hours, setHours] = useState(2);
+  const [ask, setAsk] = useState(false);
   const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
   const [made, setMade] = useState<{ link: string; sentence: string; tx: string } | null>(null);
@@ -32,7 +33,7 @@ export function AccessTab({ ctx, man, onChanged }: { ctx: Ctx; man: Manifest | n
   const give = async () => {
     setErr(""); setBusy("Giving access…");
     try {
-      const r = await giveAccess({ id: ctx.id, reader: ctx.reader, writer: ctx.writer, svc, boxId: ctx.boxId, bmk: ctx.bmk, epoch: ctx.epoch, label: label.trim(), items: chosen, durationMs: hours * 3_600_000, maxSessions: 3, origin: `${location.origin}${location.pathname}` });
+      const r = await giveAccess({ id: ctx.id, reader: ctx.reader, writer: ctx.writer, svc, boxId: ctx.boxId, bmk: ctx.bmk, epoch: ctx.epoch, label: label.trim(), items: chosen, durationMs: hours * 3_600_000, maxSessions: 3, ...(ask ? { askBudget: 5 } : {}), origin: `${location.origin}${location.pathname}` });
       const sentence = `${label.trim() || "They"} can view ${chosen.length} file${chosen.length === 1 ? "" : "s"} for ${hours} hour${hours === 1 ? "" : "s"}. They cannot download. You can end it any time. Every open is recorded.`;
       const next = [{ grantId: r.grantId, label: label.trim() || "Visitor", exp: r.payload.exp, files: chosen.map((c) => c.name), link: r.link }, ...list];
       save(ctx.boxId, next); setList(next); setMade({ link: r.link, sentence, tx: r.txHash }); onChanged();
@@ -71,6 +72,7 @@ export function AccessTab({ ctx, man, onChanged }: { ctx: Ctx; man: Manifest | n
               <input className="grow" placeholder="Who is this for? (e.g. Maria)" value={label} onChange={(e) => setLabel(e.target.value)} />
               <select style={{ width: 140 }} value={hours} onChange={(e) => setHours(Number(e.target.value))}>{DURATIONS.map(([n, h]) => <option key={h} value={h}>{n}</option>)}</select>
             </div>
+            <label className="row" style={{ marginTop: 10 }}><input type="checkbox" style={{ width: "auto" }} checked={ask} onChange={(e) => setAsk(e.target.checked)} /> Let them ask up to 5 questions about these files <span className="note">(answers only from these files; you see every question)</span></label>
             <div className="row" style={{ marginTop: 12 }}><button disabled={!!busy || chosen.length === 0 || !label.trim()} onClick={give}>Give access</button>{busy && <span className="note">{busy}</span>}</div>
           </>
         )}
