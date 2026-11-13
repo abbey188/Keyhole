@@ -13,8 +13,8 @@ cargo test -p keyhole-contract --quiet 2>&1 | grep -E "test result" || true
 echo "== 3. TypeScript crypto package reproduces the Rust vectors byte for byte"
 (cd packages/crypto && npx vitest run 2>&1 | grep -E "Tests |Test Files" || true)
 
-echo "== 3b. Chain client, storage node, client store and release service (all on the labelled MOCK chain)"
-for d in packages/chain services/node packages/store services/release; do
+echo "== 3b. Chain client, node, client store, release service, AI client, ask/claims, web app (service tests use the labelled MOCK chain)"
+for d in packages/chain services/node packages/store services/release packages/ai packages/askclaims apps/web; do
   printf '%-18s ' "$d"; (cd "$d" && npx vitest run 2>&1 | grep -E "Tests " || echo "FAILED")
 done
 
@@ -25,6 +25,9 @@ else
   echo "   Wasm build failed (needs the wasm32-unknown-unknown target and pnpm install)"
 fi
 echo "vectors sha256:       $(sha256sum vectors/keyhole-v1.json | cut -d' ' -f1)"
+
+echo "== 4b. Secret scan"
+./scripts/secret-scan.sh || { echo "SECRET SCAN FAILED"; exit 1; }
 
 echo "== 5. Chain checks (needs network): C1, no access keys on the deployed contract"
 if [ -f deploy/testnet.json ]; then

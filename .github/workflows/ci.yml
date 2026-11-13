@@ -21,3 +21,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r typecheck
       - run: pnpm -r test
+      - run: pnpm --filter @keyhole/web build
+      - run: ./scripts/secret-scan.sh

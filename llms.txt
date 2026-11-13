@@ -1,0 +1,13 @@
+# Keyhole
+
+> A private-NFT safe on NEAR testnet: encrypted files in an NFT, time-limited access with a tamper-evident visitor log, handover that kills old keys, Ask and Claims through an attested private AI. Demo configuration, no external audit.
+
+Start here:
+- [README](README.md): what it is, how to verify in 2 minutes, do-this-see-that, trust model, AI trust model, limits.
+- [CLAIMS.md](CLAIMS.md): each claim and the test or transaction that proves it.
+- [docs/EVIDENCE.md](docs/EVIDENCE.md): evidence log with transaction links; `deploy/*.json` are the raw testnet records.
+- Judge page: run `pnpm --filter @keyhole/web dev` and open `/#judge` (live keyless check, attack lab with transactions).
+- [SECURITY.md](SECURITY.md): internal review, fixed and open findings.
+- `./scripts/verify.sh`: one command that runs every test and the on-chain keyless check.
+
+Facts for machine readers: contract `keyhole-06728d.testnet` (testnet), 0 access keys; mocks are labelled MOCK; unfinished work is labelled [NOT FINISHED] and deferred work [LATER]; the word "verified" is never used for machine-read claims. Most code was written by AI assistants under the owner's direction (see THIRD_PARTY_NOTICES.md).
