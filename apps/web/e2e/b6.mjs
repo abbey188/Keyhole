@@ -1,0 +1,48 @@
+// B6 on testnet: the owner allows questions on a link; the recipient asks inside the grant and outside it; the owner reads the log.
+import { readFileSync } from "node:fs";
+import { APP, launch, newUser } from "./lib.mjs";
+const [PDF, SHOT] = [process.argv[2], process.argv[3]];
+const browser = await launch();
+const owner = (await newUser(browser)).page;
+await owner.goto(APP);
+await owner.getByRole("button", { name: "Create with passkey" }).click();
+await owner.getByText("Your safes").waitFor({ timeout: 20000 });
+await owner.getByRole("button", { name: "New safe" }).click();
+await owner.getByText("Safe #1").waitFor({ timeout: 90000 });
+await owner.getByText("Safe #1").click();
+await owner.getByText("This safe is empty").waitFor({ timeout: 30000 });
+await owner.locator("input[type=file]").setInputFiles({ name: "lease.pdf", mimeType: "application/pdf", buffer: readFileSync(PDF) });
+await owner.getByText("lease.pdf").first().waitFor({ timeout: 240000 });
+await owner.getByRole("button", { name: "Access" }).click();
+await owner.getByLabel("lease.pdf").check();
+await owner.getByPlaceholder("Who is this for?").fill("Maria");
+await owner.getByLabel(/Let them ask up to 5 questions/).check();
+await owner.getByRole("button", { name: "Give access" }).click();
+await owner.getByText("Link ready").waitFor({ timeout: 120000 });
+const link = await owner.locator("input[readonly]").inputValue();
+console.log("owner: ask link ready");
+
+const rec = await (await browser.newContext({ viewport: { width: 1000, height: 1000 } })).newPage();
+await rec.goto(link);
+await rec.getByRole("button", { name: "Open" }).click();
+await rec.getByText(/recorded · visit #1/).waitFor({ timeout: 120000 });
+await rec.getByText(/5 questions left/).waitFor({ timeout: 10000 });
+// inside the grant
+const t0 = Date.now();
+await rec.getByPlaceholder("Your question").fill("How much is the monthly rent?");
+await rec.getByRole("button", { name: "Ask", exact: true }).click();
+await rec.getByText(/Private · .*Quoted from the shared files/).waitFor({ timeout: 180000 });
+console.log("recipient answer in", Math.round((Date.now() - t0) / 1000), "s:", await rec.locator("p[style*='font-size']").first().textContent());
+// outside the grant
+await rec.getByPlaceholder("Your question").fill("What is the airspeed velocity of a swallow?");
+await rec.getByRole("button", { name: "Ask", exact: true }).click();
+await rec.getByText("This access does not cover that.").waitFor({ timeout: 120000 });
+console.log("recipient outside question: refused with the fixed wording;", await rec.getByText(/3 questions left/).count() ? "3 left" : "budget not as expected");
+await rec.screenshot({ path: SHOT });
+
+// the owner sees both questions, sealed to them and matching the log
+await owner.getByRole("button", { name: "Visitors" }).click();
+await owner.getByText("Questions asked about your files").waitFor({ timeout: 60000 });
+console.log("owner log:", JSON.stringify(await owner.locator("p.note", { hasText: "visit #" }).allTextContents()));
+console.log("log rows matching:", await owner.locator(".pill.ok", { hasText: "matches log" }).count());
+await browser.close();
