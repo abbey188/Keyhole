@@ -29,6 +29,7 @@ For the AI features the local service relays encrypted traffic to NEAR AI; set `
 | Ask tab: "How much is the monthly rent?" | An answer quoting your own page, with the model, the attestation evidence and what that does and does not prove | `b3.mjs` |
 | Give access with "Let them ask up to 5 questions"; the recipient asks | Answers only from the shared files; anything else: "This access does not cover that."; you see every question in Visitors | `b6.mjs` |
 | Verify page → paste an answer package | Signature, source roots and receipt checked in fixed order; unchecked steps say "not run" | `b6.mjs`, `verify-answer.test.ts` |
+| Files → "Hide details…" on a text document | Detected values listed; blocked out in a copy; self-test must pass; share the copy instead | `b5.mjs`, `redact.test.ts` |
 | Hand over → paste the new owner's address | Ownership moves, every old link dies, the new owner re-locks with keys you never had | `a6.mjs` |
 
 ## The trust model in one table
@@ -54,7 +55,7 @@ Claims use fixed wording: grade **B** "machine-read and owner-reviewed", grade *
 Built and tested: the protocol and contract (boxes as NFTs with blocked transfers, grants, receipt chain, blobs, handover with escrow), storage node, release service, client store, the web app (passkey sign-in, files, give access with a watermarked viewer, visitor log with verification, re-lock, handover, Ask, Claims, Verify, judge page), the attestation client, and an attack lab. Mock components are labelled `MOCK` in code (the mock chain is compared with the real contract on a recorded scenario).
 
 `[NOT FINISHED]`: the AI relay is rate-capped (90 per minute in total, `RS_RELAY_PER_MIN`) but not tied to visit sessions (local demo only); the Verify page does not re-run the attestation or re-match quotes; real-device passkey test (a virtual authenticator is used); scanned-document search (no OCR); audio and video playback (stored, owner-download only); persistent encrypted copy of access links.
-`[LATER]`: threshold release, release service in a hardware enclave, zero-knowledge proofs, auditor view, redaction, issuer-signed claims, multi-party rooms.
+`[LATER]`: threshold release, release service in a hardware enclave, zero-knowledge proofs, auditor view, redaction of scanned pages and images, issuer-signed claims, multi-party rooms.
 
 ## Honest limits
 A photo of the screen cannot be prevented. A recipient keeps whatever they saw. A stolen passkey is a full compromise. The contract has no upgrade path by design. Testnet only; demo timings. No external audit (see [SECURITY.md](SECURITY.md) for the internal review and its open items).

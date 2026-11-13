@@ -8,6 +8,7 @@ import { unwrapBmk } from "../lib/safe";
 import { addItem, loadManifest, readOriginal, readSegment } from "../lib/upload";
 import type { Ctx, Receipt } from "../lib/upload";
 import { planItem, FileRefused } from "../lib/files";
+import { RedactPanel } from "./RedactPanel";
 import { browserRenderers } from "../lib/render";
 import type { ItemRecord, Manifest } from "../lib/vault";
 import { AccessTab } from "./AccessTab";
@@ -70,6 +71,7 @@ function Files({ ctx, box, man, afterAdd }: { ctx: Ctx; box: BoxView; man: Manif
   const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
+  const [redact, setRedact] = useState<ItemRecord | null>(null);
   const [preview, setPreview] = useState<{ item: ItemRecord; urls: { kind: string; src: string }[] } | null>(null);
 
   const onFile = async (f: File) => {
@@ -113,7 +115,7 @@ function Files({ ctx, box, man, afterAdd }: { ctx: Ctx; box: BoxView; man: Manif
           <div className="row"><strong className="grow">{it.name}</strong><span className="pill">{it.kind}</span>
             <span className={`pill ${it.shareable ? "ok" : "warn"}`}>{it.shareable ? "can be shared" : "only you"}</span></div>
           <p className="note">{(it.size / 1024).toFixed(1)} KB · {it.segments.filter((s) => s.role === "page").length || it.segments.length} parts, encrypted</p>
-          <div className="row">{it.segments.some((s) => s.role === "page") && <button className="ghost" onClick={() => open(it)}>Open</button>}<button className="ghost" onClick={() => download(it)}>Download</button></div>
+          <div className="row">{it.segments.some((s) => s.role === "page") && <button className="ghost" onClick={() => open(it)}>Open</button>}{(it.kind === "text" || it.segments.some((s) => s.role === "text")) && <button className="ghost" onClick={() => setRedact(it)}>Hide details…</button>}<button className="ghost" onClick={() => download(it)}>Download</button></div>
         </div>
       ))}
       {man && man.items.length === 0 && <p className="note">This safe is empty. Add a file: it is encrypted on this device before anything leaves it.</p>}
@@ -123,6 +125,7 @@ function Files({ ctx, box, man, afterAdd }: { ctx: Ctx; box: BoxView; man: Manif
         {busy && <p className="note">{busy}</p>}
         {notes.map((n) => <p className="note" key={n}>{n}</p>)}
       </div>
+      {redact && man && <RedactPanel ctx={ctx} box={box} man={man} item={redact} onDone={afterAdd} onClose={() => setRedact(null)} />}
       {err && <p className="err">{err}</p>}
       {preview && (
         <div className="card"><div className="row"><strong className="grow">{preview.item.name}</strong><button className="ghost" onClick={() => setPreview(null)}>Close</button></div>

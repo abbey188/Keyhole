@@ -44,4 +44,4 @@ A claim is listed only with a test that fails if the claim is false. "Planned" m
 Limits of the current evidence: contract tests run in a mocked runtime, not on a network; service tests run against `FakeChain`, a labelled MOCK that re-implements the contract's rules (it is not yet checked against the real contract in a sandbox); in-process nodes stand in for network nodes; gas and timing are unmeasured; the web app does not exist yet. The release-service formats (scope hash, deal S2 commitment and ack, auth bodies, log chain) are now in the Rust crate (`release.rs`) and pinned by the `release` section of `vectors/keyhole-v1.json`, checked by `packages/crypto/test/vectors.test.ts`.
 | B6 | Ask grants: budget committed in the grant, sealed question log, out-of-scope refusal | `services/release/test/ask.test.ts`, `apps/web/test/ask-access.test.ts`, `apps/web/e2e/b6.mjs` |
 | VERIFY-ANS | Answer package checks (signature, source roots, receipt) in fixed order | `apps/web/test/verify-answer.test.ts`, `apps/web/e2e/b6.mjs` |
-
+| B5 | Redaction with a self-test before saving | `apps/web/test/redact.test.ts`, `apps/web/e2e/b5.mjs` |
