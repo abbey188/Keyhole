@@ -115,6 +115,17 @@ describe("ack and certificate", () => {
   });
 });
 
+describe("blob root lookup", () => {
+  it("returns the root for a held blob; refuses unknown, unheld and retired blobs", async () => {
+    const r = await rig();
+    const b = await activeBlob(r);
+    expect(await r.node.rootOf(b.blobId)).toBe(b.root);
+    expect(await code(r.node.rootOf(hexN(7, 32)))).toBe("404:not_found");
+    await r.owner.retireBlob(b.blobId);
+    expect(await code(r.node.rootOf(b.blobId))).toBe("404:not_found");
+  });
+});
+
 describe("reads need a valid ticket and a live blob (A6-adjacent, S8 support)", () => {
   it("serves leaves with proofs that verify against the root", async () => {
     const r = await rig();

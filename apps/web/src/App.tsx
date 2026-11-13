@@ -6,6 +6,7 @@ import { createSafe, listSafes } from "./lib/safe";
 import type { SafeCard } from "./lib/safe";
 import { config, txLink } from "./lib/config";
 import { bytesToHex, hexToBytes } from "@keyhole/crypto";
+import { SafePage } from "./ui/SafePage";
 
 const LS = { cred: "keyhole.credId", salt: "keyhole.salt", mode: "keyhole.mode" };
 const get = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -70,6 +71,7 @@ function Safes({ id, onLock }: { id: Identity; onLock: () => void }) {
   const [status, setStatus] = useState("");
   const [err, setErr] = useState("");
   const [last, setLast] = useState("");
+  const [open, setOpen] = useState<SafeCard | null>(null);
   const refresh = async () => setCards(await listSafes(reader, id.accountId));
   useEffect(() => { refresh().catch((e) => setErr((e as Error).message)); }, []);
   const create = async () => {
@@ -81,12 +83,13 @@ function Safes({ id, onLock }: { id: Identity; onLock: () => void }) {
       setLast(r.txHash); await refresh(); setStatus("");
     } catch (e) { setErr((e as Error).message); setStatus(""); }
   };
+  if (open) return <SafePage id={id} boxId={open.boxId} serial={open.serial} onBack={() => { setOpen(null); void refresh(); }} />;
   return (
     <div>
       <div className="row"><h2 className="grow" style={{ margin: 0 }}>Your safes</h2><button className="ghost" onClick={onLock}>Lock</button></div>
       <p className="mono">account {id.accountId.slice(0, 16)}… · contract {config.contractId} {id.mode === "passphrase" && <span className="pill warn">passphrase mode</span>}</p>
       {cards?.map((c) => (
-        <div className="card" key={c.boxId}>
+        <div className="card" key={c.boxId} style={{ cursor: "pointer" }} onClick={() => setOpen(c)}>
           <div className="row"><strong className="grow">Safe #{c.serial}</strong>
             <span className={`pill ${c.state === "open" ? "ok" : "warn"}`}>{c.state === "open" ? "locked to you" : "being handed over"}</span></div>
           <p className="note">{c.activeGrants} people have access · {c.openings} recorded visits · key set {c.epoch}</p>

@@ -14,6 +14,8 @@ export interface NodeApi {
   putLeaf(a: { blobId: string; regId: number; root: string; index: number; piece: Uint8Array; proof: Uint8Array[] }): Promise<void>;
   ack(blobId: string): Promise<{ idx: number; sig: string }>;
   getLeaves(a: { blobId: string; from: number; to: number; ticket: string }): Promise<LeafWithProof[]>;
+  /** The blob's Merkle root as this node holds it. Untrusted: check it against the blob id (`rootMatchesBlobId`). */
+  getRoot?(blobId: string): Promise<string>;
 }
 
 export class NodeCallError extends Error {
@@ -51,6 +53,9 @@ export class HttpNodeApi implements NodeApi {
       headers: { "x-reg-id": String(a.regId), "x-root": a.root, "x-proof": a.proof.map(bytesToHex).join(",") },
       body: a.piece,
     });
+  }
+  async getRoot(blobId: string): Promise<string> {
+    return (await this.call<{ root: string }>(`/v1/blobs/${blobId}/root`, {})).root;
   }
   ack(blobId: string) {
     return this.call<{ idx: number; sig: string }>(`/v1/blobs/${blobId}/ack`, { method: "POST" });

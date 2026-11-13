@@ -109,6 +109,18 @@ export class StorageNode {
     return { idx: this.o.idx, sig: bytesToHex(sig.sign(this.o.seed, msg)) };
   }
 
+  /**
+   * The Merkle root of a blob this node holds. Not secret, and not trusted either: the caller checks that it hashes,
+   * with the blob's size and parameters, to the blob id recorded on chain (a wrong root cannot pass that check).
+   */
+  async rootOf(blobId: string): Promise<string> {
+    if (!isHex(blobId, 32)) throw new NodeError(400, "bad_request");
+    const blob = await this.chain(() => this.o.reader.blob(blobId));
+    const meta = this.o.store.meta(blobId);
+    if (!blob || !meta || meta.regId !== blob.reg_id || blob.state === "Retired") throw new NodeError(404, "not_found");
+    return meta.root;
+  }
+
   // ------------------------------------------------------------------ reads (spec 03 section 7)
 
   /**

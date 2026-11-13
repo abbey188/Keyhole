@@ -17,7 +17,8 @@
     "near-api-js": "^7.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@noble/hashes": "^2.4.0"
+    "@noble/hashes": "^2.4.0",
+    "pdfjs-dist": "^5.4.0"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
@@ -26,6 +27,7 @@
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "^7.0.2",
     "vite": "^7.0.0",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.0",
+    "@keyhole/node": "workspace:*"
   }
 }

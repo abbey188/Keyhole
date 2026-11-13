@@ -70,6 +70,9 @@ export function createNodeServer(node: StorageNode): Server {
         });
         return send(res, 200, { ok: true });
       }
+      if (req.method === "GET" && (m = path.match(/^\/v1\/blobs\/([0-9a-f]{64})\/root$/))) {
+        return send(res, 200, { root: await node.rootOf(m[1] as string) });
+      }
       if (req.method === "POST" && (m = path.match(/^\/v1\/blobs\/([0-9a-f]{64})\/ack$/))) {
         return send(res, 200, await node.ack(m[1] as string));
       }
