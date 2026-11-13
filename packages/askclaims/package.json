@@ -1,0 +1,22 @@
+{
+  "name": "@keyhole/askclaims",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "MIT OR Apache-2.0",
+  "dependencies": {
+    "@keyhole/ai": "workspace:*",
+    "@keyhole/crypto": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
+  }
+}
