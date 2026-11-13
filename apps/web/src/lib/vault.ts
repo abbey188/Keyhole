@@ -5,7 +5,7 @@ import { aead, bytesToHex, concatBytes, hexToBytes, kdf, merkle, padme, randomBy
 import { prepareBlob } from "@keyhole/store";
 import type { PreparedBlob } from "@keyhole/store";
 
-export type ItemKind = "pdf" | "image" | "text" | "audio" | "video" | "other";
+export type ItemKind = "pdf" | "image" | "text" | "audio" | "video" | "other" | "claim";
 /** text: the page's extracted text, kept encrypted for the owner's search and Ask (never put in an access link); page: shareable rendered page or image or text; chunk: a fixed-size slice of a file kept for the owner; original: the uploaded bytes, owner only. */
 export type SegmentRole = "page" | "chunk" | "original" | "text";
 
@@ -68,7 +68,7 @@ export function classify(name: string, mime: string): ItemKind {
 }
 
 /** Whether recipients can be given a view of this kind. Everything else is stored and downloadable by the owner only. */
-export const isShareable = (k: ItemKind) => k === "pdf" || k === "image" || k === "text";
+export const isShareable = (k: ItemKind) => k === "pdf" || k === "image" || k === "text" || k === "claim";
 
 export function chunkBytes(bytes: Uint8Array, size = CHUNK): Uint8Array[] {
   if (bytes.length === 0) return [new Uint8Array()];

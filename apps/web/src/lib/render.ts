@@ -32,7 +32,8 @@ export const browserRenderers: Renderers = {
     const out: string[] = [];
     for (let n = 1; n <= doc.numPages; n++) {
       const tc = await (await doc.getPage(n)).getTextContent();
-      out.push(tc.items.map((i) => ("str" in i ? i.str : "")).join(" ").replace(/\s+/g, " ").trim());
+      // keep line breaks: label patterns depend on them
+      out.push(tc.items.map((i) => ("str" in i ? i.str + (i.hasEOL ? "\n" : " ") : "")).join("").replace(/[ \t]+/g, " ").replace(/ ?\n ?/g, "\n").replace(/\n{3,}/g, "\n\n").trim());
     }
     return out;
   },

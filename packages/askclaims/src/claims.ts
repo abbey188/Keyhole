@@ -164,7 +164,7 @@ export function buildClaim(i: BuildClaimInput): Claim {
   let value: { value: string | number; currency?: string };
   let grade: ClaimGrade;
   if (i.review.typed !== undefined) {
-    const n = normalizeField(need.field, i.review.typed);
+    const n = normalizeField(need.field, i.review.typed, cc?.rules?.currency ?? i.crossCheck?.fields[need.field]?.model?.currency ?? "");
     if (!n) throw new Error("the typed value does not parse as " + need.field);
     value = n;
     const same = agreed && agreed.value === n.value && (agreed.currency ?? "") === (n.currency ?? "");

@@ -1,0 +1,22 @@
+Northgate Studio Ltd (fictional) - PAYSLIP SAMPLE - FICTIONAL
+Employee name Maria Santos Employee ID NS-00417
+Employer Northgate Studio Ltd Pay period October 2026 (01 Oct 2026 - 31 Oct 2026)
+Tax code 1257L (fictional) Pay date 2026-10-28
+NI number ZZ 99 99 99 Z (fictional) Currency GBP
+Earnings
+Description Amount (GBP)
+Basic monthly salary 3,850.00
+Gross pay 3,850.00
+Deductions
+Description Amount (GBP)
+Income tax (PAYE) 520.20
+National Insurance 241.40
+Employee pension contribution 120.00
+Total deductions 881.60
+Net pay
+Net pay (paid to account ending 0000, fictional) 2,968.40
+Gross pay 3,850.00 - deductions 881.60 = net pay 2,968.40 GBP.
+SAMPLE
+- FICTIONAL
+SAMPLE - FICTIONAL - generated demo data, not a real document
+

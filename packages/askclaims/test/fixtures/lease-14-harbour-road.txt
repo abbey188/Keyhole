@@ -1,0 +1,42 @@
+Residential Tenancy Agreement (fictional) - page 1 of 2 SAMPLE - FICTIONAL
+Landlord: Alder & Finch Lettings (fictional)
+Tenant: Maria Santos
+Property: 14 Harbour Road, Northvale (fictional)
+Monthly rent GBP 1,200.00
+Deposit GBP 1,800.00
+Start date 2026-12-01
+Term 12 months (ending 2027-11-30)
+1. Rent
+The Tenant shall pay rent of GBP 1,200.00 per month in advance on the first day of each month.
+2. Deposit
+The Tenant shall pay a deposit of GBP 1,800.00, to be held in a fictional protection scheme and returned at the end of the term
+less any agreed deductions.
+3. Use of the property
+The property is let as a private residence only. The Tenant shall keep it clean and in good repair and shall not sublet without
+written consent.
+4. Utilities
+The Tenant is responsible for electricity, gas, water and council tax during the term.
+5. Notice
+Either party may end the tenancy after the fixed term by giving two months written notice.
+This agreement is invented for software demonstration. It has no legal effect.
+SAMPLE
+- FICTIONAL
+SAMPLE - FICTIONAL - generated demo data, not a real lease - page 1 of 2
+Residential Tenancy Agreement (fictional) - page 2 of 2 SAMPLE - FICTIONAL
+6. Access and inspection
+The Landlord may inspect the property on 24 hours notice at reasonable times.
+7. Termination for breach
+If rent is more than 14 days overdue the Landlord may serve notice as provided in this fictional agreement.
+8. Guarantor
+Guarantor name Tomas Santos (fictional)
+Relationship to tenant Brother (fictional)
+Guarantor address 3 Example Lane, Northvale (fictional)
+The Guarantor guarantees payment of rent by the Tenant under this agreement up to GBP 14,400.00.
+Signatures
+Landlord (Alder & Finch Lettings, fictional) ____________________ Date: 2026-11-20
+Tenant (Maria Santos) ____________________ Date: 2026-11-20
+Guarantor ____________________ Date: 2026-11-20
+SAMPLE
+- FICTIONAL
+SAMPLE - FICTIONAL - generated demo data, not a real lease - page 2 of 2
+

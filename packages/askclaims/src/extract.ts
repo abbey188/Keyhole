@@ -88,10 +88,10 @@ export function parseDate(raw: string, pivotYY = 40): string | null {
 }
 
 const CUR: Record<string, string> = { "£": "GBP", GBP: "GBP", "$": "USD", USD: "USD", "€": "EUR", EUR: "EUR" };
-export function parseMoney(raw: string): { value: number; currency: string } | null {
+export function parseMoney(raw: string, defaultCurrency = ""): { value: number; currency: string } | null {
   const m = /^\s*(GBP|USD|EUR|£|\$|€)?\s*(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)\s*(GBP|USD|EUR)?\s*$/i.exec(raw);
   if (!m) return null;
-  const cur = CUR[(m[1] ?? m[3] ?? "").toUpperCase()] ?? CUR[m[1] ?? ""] ?? "";
+  const cur = CUR[(m[1] ?? m[3] ?? "").toUpperCase()] ?? CUR[m[1] ?? ""] ?? defaultCurrency;
   if (!cur) return null;
   return { value: Number(m[2]!.replace(/,/g, "")), currency: cur };
 }
@@ -99,12 +99,13 @@ export function parseMoney(raw: string): { value: number; currency: string } | n
 const collapse = (s: string) => s.replace(/\s+/g, " ").trim();
 
 /** Turns the raw text of a field into its normalised form; null if it does not parse. */
-export function normalizeField(field: string, raw: string): Pick<ExtractedField, "value" | "currency"> | null {
+/** `defaultCurrency` is the currency the document states once (for example in a table header) when an amount carries none. */
+export function normalizeField(field: string, raw: string, defaultCurrency = ""): Pick<ExtractedField, "value" | "currency"> | null {
   switch (field) {
     case "gross_monthly":
     case "net_pay":
     case "monthly_rent": {
-      const m = parseMoney(raw);
+      const m = parseMoney(raw, defaultCurrency);
       return m ? { value: m.value, currency: m.currency } : null;
     }
     case "date_of_birth":
@@ -145,9 +146,16 @@ function find(pages: PageText[], re: RegExp): { raw: string; page: number } | nu
   return null;
 }
 
-function put(out: Record<string, ExtractedField>, field: string, hit: { raw: string; page: number } | null) {
+/** The currency a document states once ("Currency GBP", "Amount (GBP)"), used for amounts that carry none. */
+export function documentCurrency(pages: PageText[]): string {
+  const t = pages.map((p) => p.text).join("\n");
+  const m = /\bCurrency\s*:?\s*(GBP|USD|EUR)\b/i.exec(t) ?? /\bAmount\s*\(\s*(GBP|USD|EUR)\s*\)/i.exec(t);
+  return m ? (m[1] as string).toUpperCase() : "";
+}
+
+function put(out: Record<string, ExtractedField>, field: string, hit: { raw: string; page: number } | null, defaultCurrency = "") {
   if (!hit) return;
-  const n = normalizeField(field, hit.raw);
+  const n = normalizeField(field, hit.raw, defaultCurrency);
   if (!n) return;
   out[field] = { field, ...n, raw: hit.raw, page: hit.page, source: "rules" };
 }
@@ -215,13 +223,19 @@ export function extractRules(docType: DocType, pages: PageText[], opts: { asOf?:
   const f: Record<string, ExtractedField> = {};
   const L = (re: string, flags = "") => new RegExp(re, flags + "u");
   switch (docType) {
-    case "payslip":
-      put(f, "employer", find(pages, L(label("employer", "company") + String.raw`\s*(?::|is)\s*` + TEXT)));
-      put(f, "employee_name", find(pages, L(label("employee name", "employee") + String.raw`\s*(?::|is)\s*` + NAME)));
-      put(f, "pay_period", find(pages, L(label("pay period", "period") + String.raw`\s*(?::|is)\s*` + TEXT)));
-      put(f, "gross_monthly", find(pages, L(label("gross monthly pay", "gross monthly", "gross pay", "monthly gross") + SEP + AMT)));
-      put(f, "net_pay", find(pages, L(label("net pay", "net monthly pay", "take home") + SEP + AMT)));
+    case "payslip": {
+      const cur = documentCurrency(pages);
+      // Table-style payslips often have no colons: "Employer Northgate Studio Ltd", "Pay period October 2026".
+      const COMPANY = String.raw`([A-Z][\p{L}&'\-]+(?:[ \t]+(?!Pay\b|Tax\b|NI\b|Employee\b|Employer\b)[A-Z][\p{L}&'\-]*){0,5})`;
+      const PERSON = String.raw`([A-Z][\p{L}'\-]+(?:[ \t]+(?!Employee\b|Employer\b|Pay\b|Tax\b|NI\b|ID\b)[A-Z][\p{L}'\-]+){0,3})`;
+      const OPT = String.raw`\s*(?::|is)?\s*`;
+      put(f, "employer", find(pages, L(label("employer", "company") + OPT + COMPANY)));
+      put(f, "employee_name", find(pages, L(label("employee name", "employee") + OPT + PERSON)));
+      put(f, "pay_period", find(pages, L(label("pay period", "period") + OPT + String.raw`([A-Za-z]{3,9}\s+\d{4})`)));
+      put(f, "gross_monthly", find(pages, L(label("gross monthly pay", "gross monthly", "gross pay", "monthly gross") + SEP + AMT)), cur);
+      put(f, "net_pay", find(pages, L(label("net pay", "net monthly pay", "take home") + SEP + AMT)), cur);
       return { docType, fields: f };
+    }
     case "id": {
       const mrz = pages.map((p) => parseMrz(p.text, opts.asOf)).find((x) => x) ?? null;
       put(f, "surname", find(pages, L(label("surname", "family name") + String.raw`\s*(?::|is)?\s*` + NAME)));
@@ -353,7 +367,7 @@ export function validateModelFields(docType: DocType, content: string, pages: Pa
     if (v === null) continue;
     if (typeof v !== "string") return { ok: false, reason: `field ${k} must be a string or null` };
     const hit = pages.find((pg) => normText(pg.text.replace(/</g, " ")).includes(normText(v.replace(/</g, " "))) && normText(v).length > 0);
-    const n = hit ? normalizeField(k, v) : null;
+    const n = hit ? normalizeField(k, v, documentCurrency(pages)) : null;
     if (!hit || !n) {
       rejected[k] = v;
       continue;

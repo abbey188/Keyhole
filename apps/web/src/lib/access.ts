@@ -91,7 +91,7 @@ export async function giveAccess(a: GiveInput): Promise<{ link: string; grantId:
   }
   const now = await a.reader.finalTimeMs();
   const tx = await a.writer.createGrant({
-    grantId, boxId: a.boxId, requester: { bearer: bytesToHex(sig.publicKey(reqSeed)) }, mode: "View", notBeforeMs: now,
+    grantId, boxId: a.boxId, requester: { bearer: bytesToHex(sig.publicKey(reqSeed)) }, mode: a.items.every((i) => i.kind === "claim") ? "Claims" : "View", notBeforeMs: now,
     notAfterMs: now + a.durationMs, maxSessions: a.maxSessions, scopeHash: rs.scopeHash(scope), policyHash: bytesToHex(new Uint8Array(32)),
   });
   const body = new TextEncoder().encode(JSON.stringify({ scope }));

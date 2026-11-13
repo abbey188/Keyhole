@@ -35,7 +35,7 @@ export function Recipient() {
     <div className="card">
       <h2 style={{ marginTop: 0 }}>{payload.l ? `${payload.l}, you've been given access` : "You've been given access"}</h2>
       <p>You can view {files.length === 1 ? <strong>{files[0]}</strong> : <><strong>{files.length} files</strong> ({files.join(", ")})</>} for {left > 0 ? `about ${Math.max(1, Math.round(left / 60000))} more minutes` : "a short time"}.</p>
-      <ul className="note"><li>It opens in your browser. There is no download button.</li><li>Your visit is recorded where nobody can edit it, including the time.</li><li>A watermark with your name is on every page. A photo of the screen can't be prevented.</li><li>The person who shared it can end your access at any time.</li></ul>
+      <ul className="note"><li>It opens in your browser. There is no download button.</li><li>If this is a claim, you can check its signature on the <a href="#verify" target="_blank" rel="noreferrer">Verify page</a>.</li><li>Your visit is recorded where nobody can edit it, including the time.</li><li>A watermark with your name is on every page. A photo of the screen can't be prevented.</li><li>The person who shared it can end your access at any time.</li></ul>
       <button onClick={open}>Open</button>
       {err && <p className="err">{err}</p>}
     </div>
