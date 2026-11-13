@@ -12,6 +12,7 @@ import { browserRenderers } from "../lib/render";
 import type { ItemRecord, Manifest } from "../lib/vault";
 import { AccessTab } from "./AccessTab";
 import { VisitorsTab } from "./VisitorsTab";
+import { HandoverTab } from "./HandoverTab";
 
 export type Tab = "files" | "access" | "visitors" | "handover";
 
@@ -27,7 +28,7 @@ export function SafePage({ id, boxId, serial, onBack }: { id: Identity; boxId: s
       id, reader, writer: writerFor(id), boxId, bmk: unwrapBmk(id, box), epoch: box.key_epoch,
       nodes: config.nodeUrls.map((u, i) => new HttpNodeApi(`node${i}`, u)),
     };
-  }, [box?.box_id, box?.key_epoch]);
+  }, [box?.box_id, box?.key_epoch, box?.wrapped_bmk]);
 
   const refresh = async () => {
     const b = await reader.box(boxId);
@@ -50,7 +51,8 @@ export function SafePage({ id, boxId, serial, onBack }: { id: Identity; boxId: s
       {tab === "files" && ctx && box && <Files ctx={ctx} box={box} man={man} afterAdd={async (t) => { setTxs(t); await refresh(); }} />}
       {tab === "access" && ctx && <AccessTab ctx={ctx} man={man} onChanged={() => void refresh()} />}
       {tab === "visitors" && ctx && <VisitorsTab ctx={ctx} refreshKey={box?.receipts_seq ?? 0} />}
-      {tab === "handover" && <p className="note">[NOT FINISHED] This tab is built next.</p>}
+      {tab === "handover" && ctx && box && <HandoverTab ctx={ctx} box={box} onChanged={() => void refresh()} />}
+      {false && <p className="note">[NOT FINISHED] This tab is built next.</p>}
       {txs.length > 0 && (
         <details className="card"><summary>Recorded on chain ({txs.length} transactions)</summary>
           <table><tbody>{txs.map((t) => <tr key={t.txHash}><td>{t.step}</td><td><a href={txLink(t.txHash)} target="_blank" rel="noreferrer">{t.txHash.slice(0, 10)}…</a></td></tr>)}</tbody></table>

@@ -8,6 +8,7 @@ import { config, txLink } from "./lib/config";
 import { bytesToHex, hexToBytes } from "@keyhole/crypto";
 import { SafePage } from "./ui/SafePage";
 import { Recipient } from "./ui/Recipient";
+import { Receive } from "./ui/Receive";
 
 const LS = { cred: "keyhole.credId", salt: "keyhole.salt", mode: "keyhole.mode" };
 const get = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -99,6 +100,7 @@ function Safes({ id, onLock }: { id: Identity; onLock: () => void }) {
         </div>
       ))}
       {cards?.length === 0 && <p className="note">No safes yet.</p>}
+      <Receive id={id} onDone={() => void refresh()} />
       <div className="row"><button disabled={!!status} onClick={create}>New safe</button>{status && <span className="note">{status}</span>}</div>
       {last && <p className="note">Recorded: <a href={txLink(last)} target="_blank" rel="noreferrer">transaction</a></p>}
       {err && <p className="err">{err}</p>}

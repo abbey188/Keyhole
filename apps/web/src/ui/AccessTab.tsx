@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Ctx } from "../lib/upload";
 import type { Manifest } from "../lib/vault";
 import { endAccess, giveAccess } from "../lib/access";
+import { relock } from "../lib/relock";
 import type { Services } from "../lib/access";
 import { config, txLink } from "../lib/config";
 import type { GrantView } from "@keyhole/chain";
@@ -43,6 +44,20 @@ export function AccessTab({ ctx, man, onChanged }: { ctx: Ctx; man: Manifest | n
     try { await endAccess({ id: ctx.id, reader: ctx.reader, writer: ctx.writer, svc, grantId: g.grantId }); await refresh(); onChanged(); } catch (e) { setErr((e as Error).message); }
     setBusy("");
   };
+  const [relocking, setRelocking] = useState("");
+  const [relocked, setRelocked] = useState(false);
+  const doRelock = async () => {
+    setErr(""); setRelocked(false);
+    try {
+      const box = await ctx.reader.box(ctx.boxId);
+      if (!box) throw new Error("Safe not found.");
+      await relock({ ...ctx, progress: setRelocking }, box, async () => {
+        for (const g of list) { const v = await ctx.reader.grant(g.grantId); if (v && !v.revoked_at && Date.now() <= v.not_after_ms) await endAccess({ id: ctx.id, reader: ctx.reader, writer: ctx.writer, svc, grantId: g.grantId }); }
+      });
+      setRelocked(true); await refresh(); onChanged();
+    } catch (e) { setErr(`Re-lock did not finish: ${(e as Error).message}`); }
+    setRelocking("");
+  };
   const state = (g: Saved) => { const v = status[g.grantId]; if (!v) return ["…", ""]; if (v.revoked_at) return ["ended by you", "bad"]; if (Date.now() > v.not_after_ms) return ["expired", "warn"]; return ["active", "ok"]; };
 
   return (
@@ -74,6 +89,11 @@ export function AccessTab({ ctx, man, onChanged }: { ctx: Ctx; man: Manifest | n
           <p className="note">{g.files.join(", ")} · {v ? `${v.sessions_used} visit${v.sessions_used === 1 ? "" : "s"} used of ${v.max_sessions}` : ""} · until {new Date(g.exp).toLocaleString()}</p>
           {t === "active" && <button className="danger" disabled={!!busy} onClick={() => end(g)}>End access</button>}
         </div>); })}
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>Re-lock this safe</h3>
+        <p className="note">Ends all open access, then re-encrypts every file under a new key and asks the storage node to erase the old copies. Anyone who kept an old key can open nothing that is still stored. What someone already saved or photographed stays theirs: nothing can undo that.</p>
+        <div className="row"><button className="danger" disabled={!!relocking || (man?.items.length ?? 0) === 0} onClick={doRelock}>Re-lock now</button>{relocking && <span className="note">{relocking}</span>}{relocked && <span className="pill ok">re-locked</span>}</div>
+      </div>
     </div>
   );
 }
