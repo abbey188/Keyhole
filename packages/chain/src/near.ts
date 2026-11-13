@@ -117,6 +117,8 @@ export class NearWriter implements ChainWriter, DealApi {
       deposit,
     );
   }
+  setWrappedBmk = (a: { boxId: string; wrappedBmk: Uint8Array }) =>
+    this.call("set_wrapped_bmk", { box_id: a.boxId, wrapped_bmk: toBase64(a.wrappedBmk) }, NEAR / 100n); // covers growth if any; the rest is refunded
   revokeGrant = (grantId: string) => this.call("revoke_grant", { grant_id: grantId });
   async registerBlob(a: { blobId: string; boxId: string; size: number; days: number }) {
     const cfg = await this.o.reader.config();

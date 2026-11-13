@@ -54,7 +54,7 @@ export async function readOwn(ctx: Ctx, blobId: string, root: string, leaves: nu
 }
 
 /** Finds a blob's root from the nodes and accepts it only if it hashes to the blob id recorded on chain. */
-async function trustedRoot(ctx: Ctx, blobId: string, size: number): Promise<string> {
+export async function trustedRoot(ctx: Ctx, blobId: string, size: number): Promise<string> {
   for (const n of ctx.nodes) {
     try {
       const root = await n.getRoot?.(blobId);

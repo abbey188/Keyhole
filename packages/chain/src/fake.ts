@@ -458,6 +458,15 @@ class FakeWriter implements ChainWriter, DealApi {
     });
   }
 
+  setWrappedBmk(a: { boxId: string; wrappedBmk: Uint8Array }) {
+    return this.c._exec(this.account, "set_wrapped_bmk", (w) => {
+      requireC(a.wrappedBmk.length <= 128, "wrapped_bmk too large");
+      const b = this.owned(w, a.boxId);
+      requireC(b.in_deal === null, "Box is in a deal");
+      b.wrapped_bmk = Buffer.from(a.wrappedBmk).toString("base64");
+    });
+  }
+
   retireBlob(blobId: string) {
     return this.c._exec(this.account, "retire_blob", (w, ev) => {
       const r = w.blobs.get(blobId);
