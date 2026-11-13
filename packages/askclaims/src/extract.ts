@@ -409,6 +409,7 @@ export async function crossCheck(docType: DocType, pages: PageText[], rules: Rul
     enclave_signing_address: res.attestation?.signing_address ?? "",
     chat_signature: res.signature?.status === "verified" ? (res.signature.signature ?? "") : "",
     chat_signature_status: res.signature?.status ?? "unavailable",
+    chat_signed_text: res.signature?.status === "verified" ? (res.signature.text ?? "") : "",
     e2ee: res.e2ee,
     attestation_ok: res.attestation?.ok === true,
     attestation_complete: res.attestation?.complete === true,

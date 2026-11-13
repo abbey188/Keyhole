@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { bytesToHex, hexToBytes, msgs, receipt, seal, sha256, sig } from "@keyhole/crypto";
+import { bytesToHex, hexToBytes, msgs, receipt, rs, seal, sha256, sig } from "@keyhole/crypto";
 import { ChainUnavailable, ContractError } from "@keyhole/chain";
 import type { ChainReader, ChainWriter, GrantView } from "@keyhole/chain";
 import { encodeTicket, signRsTicket } from "@keyhole/node";
@@ -61,11 +61,14 @@ interface Session {
   /** Receipt inputs the owner needs to recompute the commitment, and the close receipt once it is on chain. */
   requesterDigest: string;
   close: { seq: number; head: string; commitment: string; closedAt: number; logRoot: string; txHash: string } | null;
+  /** Questions and answers, sealed to the owner by the asking client; the service cannot read them. */
+  asks: { commit_q: string; sealed_q: string; commit_a: string | null; sealed_a: string | null; t: number }[];
   log: LogEntry[];
   logHead: Uint8Array;
 }
 
 export interface ReceiptRecord {
+  asks: { commit_q: string; sealed_q: string; commit_a: string | null; sealed_a: string | null; t: number }[];
   session_pk: string;
   requester_digest: string;
   close: { seq: number; head: string; commitment: string; closed_at: number; log_root: string; tx_hash: string } | null;
@@ -130,12 +133,15 @@ export class ReleaseService {
   async putScope(grantId: string, body: Uint8Array, auth: Auth): Promise<void> {
     if (!isHex(grantId, 16)) throw new ReleaseError(400, "bad_request");
     const scope = parseScope(body);
+    const policy = parsePolicy(body);
     const grant = await this.chain(() => this.o.reader.grant(grantId));
     const box = grant ? await this.chain(() => this.o.reader.box(grant.box_id)) : null;
     if (!grant || !box) throw deny();
     await this.checkAuth(box.owner, grantId, sha256(body), auth);
     if (scopeHash(scope) !== grant.scope_hash) throw deny("scope_hash");
-    this.o.store.put({ grantId, boxId: grant.box_id, scope });
+    // A policy (for example a question budget) is only accepted if it is the one committed on chain; without one there are no extra rules, so nothing can be granted that the owner did not commit to.
+    if (policy && rs.policyHash(policy) !== grant.policy_hash) throw deny("policy_hash");
+    this.o.store.put({ grantId, boxId: grant.box_id, scope, ...(policy ? { policy } : {}) });
   }
 
   /** `DELETE /v1/grants/{id}`: fast revoke path; deletes the S2 vector and ends live sessions here. */
@@ -218,7 +224,7 @@ export class ReleaseService {
       sessionId, grantId: grant.grant_id, boxId: grant.box_id, sessionPk: hexToBytes(sessionPkHex),
       leaseExp: Math.min(now + maxLease, grant.not_after_ms), openedAt: onChain.opened_at,
       seq: Number(ev.data.seq), head: String(ev.data.head), commitment: String(ev.data.commitment), txHash,
-      closed: false, requesterDigest: grant.requester.startsWith("account:") ? bytesToHex(receipt.requesterDigestAccount(grant.requester.slice(8))) : bytesToHex(receipt.requesterDigestBearer(hexToBytes(grant.requester.slice(7)))), close: null, log: [], logHead: LOG_GENESIS,
+      closed: false, asks: [], requesterDigest: grant.requester.startsWith("account:") ? bytesToHex(receipt.requesterDigestAccount(grant.requester.slice(8))) : bytesToHex(receipt.requesterDigestBearer(hexToBytes(grant.requester.slice(7)))), close: null, log: [], logHead: LOG_GENESIS,
     };
     this.sessions.set(s.sessionId, s);
     this.tokens.set(token, s.sessionId);
@@ -306,6 +312,37 @@ export class ReleaseService {
     });
   }
 
+  /**
+   * `POST /v1/sessions/{sid}/ask`: reserves one question from the grant's budget and logs the sealed question. Refused if the
+   * grant has no question policy or the budget is used up (counted across all of the grant's sessions).
+   */
+  async askStart(token: string, a: { commitQ: string; sealedQ: string }): Promise<{ n: number; left: number }> {
+    if (!isHex(a.commitQ, 32) || typeof a.sealedQ !== "string" || !/^[0-9a-f]{80,8192}$/.test(a.sealedQ)) throw new ReleaseError(400, "bad_request");
+    const { s, now } = await this.session(token);
+    await this.live(s, now);
+    const m = this.o.store.get(s.grantId);
+    const budget = m?.policy?.ask?.budget ?? 0;
+    if (budget <= 0) throw deny("no_questions");
+    const used = [...this.sessions.values()].filter((x) => x.grantId === s.grantId).reduce((n, x) => n + x.asks.length, 0);
+    if (used >= budget) throw new ReleaseError(429, "budget_used");
+    s.asks.push({ commit_q: a.commitQ, sealed_q: a.sealedQ, commit_a: null, sealed_a: null, t: now });
+    this.append(s, { t: now, session_id: s.sessionId, item_uid: a.commitQ.slice(0, 32), seg: s.asks.length - 1, action: "ask" });
+    return { n: s.asks.length - 1, left: budget - used - 1 };
+  }
+
+  /** `POST /v1/sessions/{sid}/ask/{n}/answer`: attaches the sealed answer to a question already counted. */
+  async askAnswer(token: string, n: number, a: { commitA: string; sealedA: string }): Promise<{ ok: true }> {
+    if (!Number.isInteger(n) || n < 0 || !isHex(a.commitA, 32) || typeof a.sealedA !== "string" || !/^[0-9a-f]{80,16384}$/.test(a.sealedA)) throw new ReleaseError(400, "bad_request");
+    const { s, now } = await this.session(token);
+    await this.live(s, now);
+    const q = s.asks[n];
+    if (!q || q.sealed_a !== null) throw deny();
+    q.commit_a = a.commitA;
+    q.sealed_a = a.sealedA;
+    this.append(s, { t: now, session_id: s.sessionId, item_uid: a.commitA.slice(0, 32), seg: n, action: "answer" });
+    return { ok: true };
+  }
+
   /** `POST /v1/sessions/{sid}/renew`. */
   async renew(token: string): Promise<{ lease_exp: number }> {
     const { s, now } = await this.session(token);
@@ -357,7 +394,7 @@ export class ReleaseService {
       .filter((s) => s.boxId === boxId)
       .sort((a, b) => a.seq - b.seq)
       .map((s) => ({
-        session_pk: bytesToHex(s.sessionPk), requester_digest: s.requesterDigest,
+        asks: s.asks, session_pk: bytesToHex(s.sessionPk), requester_digest: s.requesterDigest,
         close: s.close ? { seq: s.close.seq, head: s.close.head, commitment: s.close.commitment, closed_at: s.close.closedAt, log_root: s.close.logRoot, tx_hash: s.close.txHash } : null,
         seq: s.seq, grant_id: s.grantId, session_id: s.sessionId, commitment: s.commitment, head: s.head, opened_at: s.openedAt,
         tx_hash: s.txHash, closed: s.closed, log: s.log, log_head: bytesToHex(s.logHead),
@@ -435,6 +472,17 @@ export class ReleaseService {
   pubkeys(): { rs: string; rs_idx: number; relayer: string } {
     return { rs: bytesToHex(this.publicKey), rs_idx: this.o.rsIdx, relayer: this.o.relayer.account };
   }
+}
+
+function parsePolicy(body: Uint8Array): { v: 1; ask?: { budget: number } } | undefined {
+  let j: { policy?: { v?: unknown; ask?: { budget?: unknown } } };
+  try { j = JSON.parse(new TextDecoder().decode(body)); } catch { return undefined; }
+  const p = j?.policy;
+  if (p === undefined) return undefined;
+  if (p.v !== 1) throw new ReleaseError(400, "bad_request");
+  const b = p.ask?.budget;
+  if (p.ask !== undefined && (!Number.isInteger(b) || (b as number) < 1 || (b as number) > 50)) throw new ReleaseError(400, "bad_request");
+  return { v: 1, ...(p.ask ? { ask: { budget: b as number } } : {}) };
 }
 
 function parseScope(body: Uint8Array): Scope {

@@ -7,6 +7,8 @@ export interface GrantMaterial {
   grantId: string;
   boxId: string;
   scope: Scope; // includes S2 values
+  /** Rules the owner committed to in the grant's policy_hash (for example a question budget). */
+  policy?: { v: 1; ask?: { budget: number } };
 }
 
 export interface GrantStore {

@@ -103,6 +103,14 @@ export function createReleaseServer(svc: ReleaseService, o: HttpOptions = {}): S
         const segs = (url.searchParams.get("seg") ?? "").split(",").filter(Boolean).map(Number);
         return send(res, 200, { keys: await svc.release(bearer(req), url.searchParams.get("item") ?? "", segs) });
       }
+      if (m === "POST" && (x = p.match(/^\/v1\/sessions\/([0-9a-f]{32})\/ask$/))) {
+        const b = await json<{ commit_q: string; sealed_q: string }>(req);
+        return send(res, 200, await svc.askStart(bearer(req), { commitQ: b.commit_q, sealedQ: b.sealed_q }));
+      }
+      if (m === "POST" && (x = p.match(/^\/v1\/sessions\/([0-9a-f]{32})\/ask\/(\d{1,3})\/answer$/))) {
+        const b = await json<{ commit_a: string; sealed_a: string }>(req);
+        return send(res, 200, await svc.askAnswer(bearer(req), Number(x[2]), { commitA: b.commit_a, sealedA: b.sealed_a }));
+      }
       if (m === "POST" && (x = p.match(/^\/v1\/sessions\/([0-9a-f]{32})\/renew$/))) return send(res, 200, await svc.renew(bearer(req)));
       if (m === "POST" && (x = p.match(/^\/v1\/sessions\/([0-9a-f]{32})\/close$/))) return send(res, 200, await svc.close(bearer(req)));
       if (m === "POST" && p === "/v1/tickets") {

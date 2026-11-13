@@ -39,6 +39,8 @@ export interface AskEvidence {
   chat_signature: string;
   /** "verified" here is the NEAR AI response-signature check (see @keyhole/ai), not a claim about the answer */
   chat_signature_status: "verified" | "failed" | "unavailable";
+  /** The text the enclave signed (`model:sha256(request):sha256(response)`) so a later reader can re-check the signature. Empty if unavailable. */
+  chat_signed_text?: string;
   e2ee: boolean;
   attestation_ok: boolean;
   /** false until every attestation check (incl. TCB status) was performed */
@@ -269,6 +271,7 @@ export async function askSafe(question: string, pages: PageEntry[], opts: AskOpt
     enclave_signing_address: res.attestation?.signing_address ?? "",
     chat_signature: res.signature?.status === "verified" ? (res.signature.signature ?? "") : "",
     chat_signature_status: res.signature?.status ?? "unavailable",
+    chat_signed_text: res.signature?.status === "verified" ? (res.signature.text ?? "") : "",
     e2ee: res.e2ee,
     attestation_ok: res.attestation?.ok === true,
     attestation_complete: res.attestation?.complete === true,

@@ -25,6 +25,13 @@ export function canonicalScope(scope: Scope): Uint8Array {
 /** `scope_hash = SHA-256("keyhole/v1/scope" 0x00 || canonical(scope without S2))` (spec 05 section 2). */
 export const scopeHash = (scope: Scope): string => bytesToHex(sha256(concatBytes(tag("scope"), canonicalScope(scope))));
 
+/** Owner-committed access rules carried in a grant. Only a question budget so far (B6). */
+export interface Policy { v: 1; ask?: { budget: number } }
+
+/** `policy_hash = SHA-256("keyhole/v1/policy" 0x00 || canonical JSON)`; a grant without a policy keeps 32 zero bytes. */
+export const policyHash = (p: Policy): string =>
+  bytesToHex(sha256(concatBytes(tag("policy"), utf8(JSON.stringify(p.ask ? { v: 1, ask: { budget: p.ask.budget } } : { v: 1 })))));
+
 /** `s2_commit = SHA-256("keyhole/v1/dealS2" 0x00 || deal_id || B2)` (spec 06 section 5). */
 export const dealS2Commit = (dealId: string, b2: Uint8Array): string => bytesToHex(sha256(concatBytes(tag("dealS2"), hexToBytes(dealId), b2)));
 

@@ -1,4 +1,4 @@
-import { bytesToHex, hexToBytes, kdf, msgs, randomBytes, seal, sha256, sig, split } from "@keyhole/crypto";
+import { bytesToHex, hexToBytes, kdf, msgs, randomBytes, rs, seal, sha256, sig, split } from "@keyhole/crypto";
 import { FakeChain } from "@keyhole/chain";
 import type { ChainWriter } from "@keyhole/chain";
 import { MemoryGrantStore, ReleaseService, authBody, scopeHash } from "../src/index.js";
@@ -52,7 +52,7 @@ export interface Link {
 }
 
 /** What the owner's client does to give access: grant on chain, then S2 vector to RS. */
-export async function giveAccess(r: Rig, n = 1, o: { maxSessions?: number; segs?: number; durationMs?: number } = {}): Promise<Link> {
+export async function giveAccess(r: Rig, n = 1, o: { maxSessions?: number; segs?: number; durationMs?: number; policy?: { v: 1; ask?: { budget: number } } } = {}): Promise<Link> {
   const grantId = hexN(0xa0 + n, 16);
   const s1seed = randomBytes(32);
   const reqSeed = seed(60 + n);
@@ -67,9 +67,9 @@ export async function giveAccess(r: Rig, n = 1, o: { maxSessions?: number; segs?
   };
   await r.owner.createGrant({
     grantId, boxId: BOX, requester: { bearer: pkHex(60 + n) }, mode: "View", notBeforeMs: r.chain.now(),
-    notAfterMs: r.chain.now() + (o.durationMs ?? 1_800_000), maxSessions: o.maxSessions ?? 3, scopeHash: scopeHash(scope), policyHash: hexN(2, 32),
+    notAfterMs: r.chain.now() + (o.durationMs ?? 1_800_000), maxSessions: o.maxSessions ?? 3, scopeHash: scopeHash(scope), policyHash: o.policy ? rs.policyHash(o.policy) : hexN(2, 32),
   });
-  const body = new TextEncoder().encode(JSON.stringify({ scope }));
+  const body = new TextEncoder().encode(JSON.stringify(o.policy ? { scope, policy: o.policy } : { scope }));
   await r.svc.putScope(grantId, body, auth(OWNER_SEED, grantId, sha256(body), r.chain.now()));
   return { grantId, s1seed, reqSeed, segmentKeys, scope };
 }
