@@ -8,6 +8,11 @@ export const RELAY_HOSTS = ["cloud-api.near.ai", "nras.attestation.nvidia.com"] 
 const FORWARD_HEADERS = ["content-type", "accept", "x-signing-algo", "x-client-pub-key", "x-model-pub-key", "x-encryption-version", "x-no-aliasing"];
 const MAX_BODY = 512 * 1024;
 
+/** Requests allowed per minute across all callers (RS_RELAY_PER_MIN, default 90). Caps what a stranger can spend through the relay. */
+const hits: number[] = [];
+const perMin = () => Number(process.env.RS_RELAY_PER_MIN ?? 90);
+export const resetRelayLimit = () => { hits.length = 0; };
+
 export interface RelayOptions {
   /** Called instead of fetch in tests. */
   upstream?: typeof fetch;
@@ -30,6 +35,14 @@ export async function relay(req: IncomingMessage, res: ServerResponse, body: Uin
     res.end(JSON.stringify({ error: "too_large" }));
     return true;
   }
+  const now = Date.now();
+  while (hits.length && (hits[0] as number) < now - 60_000) hits.shift();
+  if (hits.length >= perMin()) {
+    res.writeHead(429, { ...cors, "content-type": "application/json", "retry-after": "30" });
+    res.end(JSON.stringify({ error: "rate_limited" }));
+    return true;
+  }
+  hits.push(now);
   const headers: Record<string, string> = {};
   for (const h of FORWARD_HEADERS) { const v = req.headers[h]; if (typeof v === "string") headers[h] = v; }
   if (host === "cloud-api.near.ai") headers.authorization = `Bearer ${(o.apiKey ?? (() => process.env.NEARAI_API_KEY))() ?? "placeholder"}`;

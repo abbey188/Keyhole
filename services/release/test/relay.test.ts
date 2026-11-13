@@ -2,9 +2,10 @@ import type { Server } from "node:http";
 import { afterEach, describe, expect, it } from "vitest";
 import { createServer } from "node:http";
 import { relay } from "../src/index.js";
+import { resetRelayLimit } from "../src/relay.js";
 
 const servers: Server[] = [];
-afterEach(async () => { await Promise.all(servers.splice(0).map((s) => new Promise((r) => s.close(() => r(null))))); });
+afterEach(async () => { resetRelayLimit(); delete process.env.RS_RELAY_PER_MIN; await Promise.all(servers.splice(0).map((s) => new Promise((r) => s.close(() => r(null))))); });
 
 async function start(upstream: typeof fetch, apiKey?: () => string | undefined) {
   const s = createServer(async (req, res) => {
@@ -47,5 +48,13 @@ describe("AI relay", () => {
     const bad = await fetch(`${base}/relay/cloud-api.near.ai/v1/models`);
     expect(bad.status).toBe(502);
     expect(await bad.text()).not.toContain("SECRET");
+  });
+
+  it("caps total requests per minute so a stranger cannot spend the credential", async () => {
+    process.env.RS_RELAY_PER_MIN = "3";
+    const base = await start((async () => new Response("{}", { status: 200 })) as never);
+    const codes: number[] = [];
+    for (let i = 0; i < 5; i++) codes.push((await fetch(`${base}/relay/cloud-api.near.ai/v1/models`)).status);
+    expect(codes).toEqual([200, 200, 200, 429, 429]);
   });
 });
