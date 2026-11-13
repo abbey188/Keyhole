@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { bytesToHex, randomBytes, rs } from "@keyhole/crypto";
-import { OWNER_SEED, auth, giveAccess, hexN, rig, sha256, visit } from "./helpers.js";
+import { bytesToHex, hexToBytes, randomBytes, rs } from "@keyhole/crypto";
+import { BOX, OWNER_SEED, auth, giveAccess, hexN, rig, seed, sha256, visit } from "./helpers.js";
 
 const code = async (p: Promise<unknown>) => p.then(() => "ok", (e) => `${e.status}:${e.message}`);
 const sealedHex = (n: number) => bytesToHex(randomBytes(n));
@@ -30,5 +30,25 @@ describe("B6 ask budget (owner policy committed in the grant)", () => {
     const body = new TextEncoder().encode(JSON.stringify({ scope: link3.scope, policy: { v: 1, ask: { budget: 50 } } }));
     expect(await code(r.svc.putScope(link3.grantId, body, auth(OWNER_SEED, link3.grantId, sha256(body), r.chain.now())))).toBe("403:policy_hash");
     expect(rs.policyHash({ v: 1, ask: { budget: 2 } })).not.toBe(rs.policyHash({ v: 1, ask: { budget: 3 } }));
+  });
+
+  it("the visitor log (with sealed questions) survives a restart of the service", async () => {
+    const { MemoryGrantStore } = await import("../src/index.js");
+    const store = new MemoryGrantStore();
+    const r = await rig({ store });
+    const link = await giveAccess(r, 4, { policy: { v: 1, ask: { budget: 2 } } });
+    const v = await visit(r, link);
+    await r.svc.askStart(v.token, { commitQ: hexN(1, 32), sealedQ: sealedHex(100) });
+    const owner = (feed: { box_id: string }[]) => feed.length;
+    const before = await r.svc.boxEvents(BOX, auth(OWNER_SEED, BOX, rs.authBody("box-events", hexToBytes(BOX)), r.chain.now()));
+    expect(owner(before)).toBe(1);
+    // a second service over the same store, as after a restart: the old session's token is gone, its record is not
+    const { ReleaseService } = await import("../src/index.js");
+    const again = new ReleaseService({ reader: r.chain, relayer: r.chain.writer("relayer.testnet"), store, rsSeed: seed(2), rsIdx: 0 });
+    const after = await again.boxEvents(BOX, auth(OWNER_SEED, BOX, rs.authBody("box-events", hexToBytes(BOX)), r.chain.now()));
+    expect(after.length).toBe(1);
+    expect(after[0]!.asks.length).toBe(1);
+    expect(after[0]!.session_id).toBe(v.sessionId);
+    expect(await code(again.askStart(v.token, { commitQ: hexN(2, 32), sealedQ: sealedHex(100) }))).toBe("403:denied");
   });
 });

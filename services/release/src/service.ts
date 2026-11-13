@@ -68,6 +68,7 @@ interface Session {
 }
 
 export interface ReceiptRecord {
+  box_id: string;
   asks: { commit_q: string; sealed_q: string; commit_a: string | null; sealed_a: string | null; t: number }[];
   session_pk: string;
   requester_digest: string;
@@ -88,6 +89,7 @@ export interface ReceiptRecord {
 export class ReleaseService {
   private readonly tokens = new Map<string, string>(); // token -> session id
   private readonly sessions = new Map<string, Session>();
+  private readonly archive = new Map<string, ReceiptRecord>();
   private readonly pending = new Set<string>(); // grant ids with an open in flight
   private readonly releases = new Map<string, number[]>(); // grant -> chain times of released segments
   private readonly backoff = new Map<string, { n: number; until: number }>();
@@ -96,6 +98,10 @@ export class ReleaseService {
 
   constructor(private readonly o: ReleaseOptions) {
     this.publicKey = sig.publicKey(o.rsSeed);
+    try {
+      const raw = o.store.getSecret("feed-v1");
+      if (raw) for (const r of JSON.parse(new TextDecoder().decode(raw)) as ReceiptRecord[]) this.archive.set(r.session_id, r);
+    } catch { /* an unreadable archive is ignored; the chain still holds every receipt */ }
   }
 
   private async chain<T>(f: () => Promise<T>): Promise<T> {
@@ -272,6 +278,7 @@ export class ReleaseService {
   private append(s: Session, e: LogEntry): void {
     s.log.push(e);
     s.logHead = logNext(s.logHead, e);
+    this.persist();
   }
 
   private async session(token: string, requireLease = true): Promise<{ s: Session; now: number }> {
@@ -374,6 +381,7 @@ export class ReleaseService {
       const tx = await this.o.relayer.closeSession({ sessionId: s.sessionId, logRoot: root, closedAtMs: now, rsIdx: this.o.rsIdx, rsSig: closeSig });
       const ev = tx.events.find((x) => x.event === "session_closed" && x.data.session_id === s.sessionId);
       if (ev) s.close = { seq: Number(ev.data.seq), head: String(ev.data.head), commitment: String(ev.data.commitment), closedAt: now, logRoot: root, txHash: tx.txHash };
+      this.persist();
       return { log_root: root, tx_hash: tx.txHash };
     } catch (e) {
       s.closed = false; // nothing was committed: the session stays open so the close can be retried
@@ -390,16 +398,30 @@ export class ReleaseService {
     const box = await this.chain(() => this.o.reader.box(boxId));
     if (!box) throw deny();
     await this.checkAuth(box.owner, boxId, authBody("box-events", hexToBytes(boxId)), auth);
-    return [...this.sessions.values()]
-      .filter((s) => s.boxId === boxId)
-      .sort((a, b) => a.seq - b.seq)
-      .map((s) => ({
-        asks: s.asks, session_pk: bytesToHex(s.sessionPk), requester_digest: s.requesterDigest,
-        close: s.close ? { seq: s.close.seq, head: s.close.head, commitment: s.close.commitment, closed_at: s.close.closedAt, log_root: s.close.logRoot, tx_hash: s.close.txHash } : null,
-        seq: s.seq, grant_id: s.grantId, session_id: s.sessionId, commitment: s.commitment, head: s.head, opened_at: s.openedAt,
-        tx_hash: s.txHash, closed: s.closed, log: s.log, log_head: bytesToHex(s.logHead),
-        log_sig: bytesToHex(sig.sign(this.o.rsSeed, logHeadMsg(s.sessionId, s.logHead, s.log.length))),
-      }));
+    const live = [...this.sessions.values()].filter((s) => s.boxId === boxId).map((s) => this.record(s));
+    const liveIds = new Set(live.map((r) => r.session_id));
+    // receipts kept from before a restart (the service holds no keys for those sessions any more)
+    const kept = [...this.archive.values()].filter((r) => r.box_id === boxId && !liveIds.has(r.session_id));
+    return [...kept, ...live].sort((a, b) => a.seq - b.seq);
+  }
+
+  private record(s: Session): ReceiptRecord {
+    return {
+      box_id: s.boxId, asks: s.asks, session_pk: bytesToHex(s.sessionPk), requester_digest: s.requesterDigest,
+      close: s.close ? { seq: s.close.seq, head: s.close.head, commitment: s.close.commitment, closed_at: s.close.closedAt, log_root: s.close.logRoot, tx_hash: s.close.txHash } : null,
+      seq: s.seq, grant_id: s.grantId, session_id: s.sessionId, commitment: s.commitment, head: s.head, opened_at: s.openedAt,
+      tx_hash: s.txHash, closed: s.closed, log: s.log, log_head: bytesToHex(s.logHead),
+      log_sig: bytesToHex(sig.sign(this.o.rsSeed, logHeadMsg(s.sessionId, s.logHead, s.log.length))),
+    };
+  }
+
+  /** Writes every receipt record (encrypted at rest by the store) so the owner's visitor log survives a restart. */
+  private persist(): void {
+    try {
+      const all = new Map(this.archive);
+      for (const s of this.sessions.values()) all.set(s.sessionId, this.record(s));
+      this.o.store.putSecret("feed-v1", new TextEncoder().encode(JSON.stringify([...all.values()])));
+    } catch { /* persistence must never break a visit; the in-memory log is still correct */ }
   }
 
   // ------------------------------------------------------------------ deals (spec 06 section 5)

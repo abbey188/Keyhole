@@ -23,7 +23,7 @@ A hostile read of the contract and services. Not an external audit. Fixed items 
 | S6 | Services trust one RPC endpoint for state, time and access keys (first answer wins) | Medium | Open: needs agreement between independent RPCs and block-height pinning |
 | S9 | The relayer's gas can be spent by an owner looping opens and closes | Medium on a paid network | Open: needs per-box relay budgets |
 | S10 | A read ticket covers a whole blob, so a recipient of one page can copy the ciphertext of the others | Low to medium | Open: tickets should carry a leaf range |
-| S11 | Page-level logs and the owner's receipt feed live in the release service's memory and are lost on restart | Medium for the product | Open |
+| S11 | Page-level logs and the owner's receipt feed were lost on restart | Medium for the product | Fixed 2026-11-13: records are saved encrypted by the service's store after every change and reloaded on start (`services/release/test/ask.test.ts`). Live visit sessions still end on restart |
 | S12 | Per-IP limiting uses the socket address (wrong behind a proxy) | Low | Open |
 | S15 | Someone who sees a relayed open can submit it first; the recipient is then refused | Low | Open |
 | S16 | Signature acceptance rules may differ between the services' library and the chain's host function | Low, unverified | Open: needs edge-case vectors |

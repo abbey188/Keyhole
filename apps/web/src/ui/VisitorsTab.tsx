@@ -60,7 +60,7 @@ export function VisitorsTab({ ctx, refreshKey }: { ctx: Ctx; refreshKey: number 
         <button className="ghost" onClick={load}>Check again</button>
         <button className="ghost" disabled={!feed || feed.length === 0} onClick={tamper}>Try a doctored copy</button>
       </div>
-      <p className="note">Pages viewed come from the release service's signed log; the receipts themselves come from the chain. The log does not show who a link holder really is, only the name you gave the link. Receipts are kept in memory by the release service in this build: a restart loses them (<code>[NOT FINISHED]</code>: persist).</p>
+      <p className="note">Pages viewed come from the release service's signed log; the receipts themselves come from the chain. The log does not show who a link holder really is, only the name you gave the link. The release service keeps this record on its own disk (encrypted); the contract's receipt chain does not depend on it, so a lost record shows as a gap, never as a clean log.</p>
       {err && <p className="err">{err}</p>}
     </div>
   );

@@ -21,7 +21,7 @@ export const CLAIMS: JudgeClaim[] = [
   { id: "RECEIPT", claim: "No key is released before the opening is final and recorded on chain (receipt first).", status: "proven",
     proof: ["services/release/test/release.test.ts A1", "apps/web/e2e/a3.mjs (opened in about 6 s on testnet)"] },
   { id: "LOG", claim: "Every opening is a receipt in a hash chain the contract keeps; the app recomputes it and shows Verified or Broken; a removed, altered or extra row is caught.", status: "proven",
-    proof: ["apps/web/test/visitors.test.ts", "apps/web/e2e/a4.mjs (testnet)", "deploy/smoke-testnet.json (chain recomputed equals the on-chain head)"], limit: "The release service keeps the page-level log in memory; a restart loses it." },
+    proof: ["apps/web/test/visitors.test.ts", "apps/web/e2e/a4.mjs (testnet)", "deploy/smoke-testnet.json (chain recomputed equals the on-chain head)"], limit: "The release service keeps the page-level log on its own disk, encrypted; the contract's receipts do not depend on it. Live visit sessions do not survive a restart." },
   { id: "REVOKE", claim: "Ending access makes the next open and the next key release fail, at the release service and at the storage node.", status: "proven",
     proof: ["tx:attack-lab:A4", "apps/web/e2e/a3.mjs", "services/release/test/release.test.ts A2"], limit: "What a recipient already saved or photographed stays theirs." },
   { id: "RELOCK", claim: "Re-lock re-encrypts everything under a new key and has the node erase the old copies; old keys open only what was already in hand.", status: "proven", proof: ["apps/web/test/relock.test.ts (R1)"], limit: "Erasure attestations are signed claims, not proof of physical erasure." },

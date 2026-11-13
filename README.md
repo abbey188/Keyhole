@@ -53,7 +53,7 @@ Claims use fixed wording: grade **B** "machine-read and owner-reviewed", grade *
 ## What is built
 Built and tested: the protocol and contract (boxes as NFTs with blocked transfers, grants, receipt chain, blobs, handover with escrow), storage node, release service, client store, the web app (passkey sign-in, files, give access with a watermarked viewer, visitor log with verification, re-lock, handover, Ask, Claims, Verify, judge page), the attestation client, and an attack lab. Mock components are labelled `MOCK` in code (the mock chain is compared with the real contract on a recorded scenario).
 
-`[NOT FINISHED]`: the AI relay is rate-capped (90 per minute in total, `RS_RELAY_PER_MIN`) but not tied to visit sessions (local demo only); the Verify page does not re-run the attestation or re-match quotes; real-device passkey test (a virtual authenticator is used); scanned-document search (no OCR); audio and video playback (stored, owner-download only); the visitor log lives in the release service's memory; persistent encrypted copy of access links.
+`[NOT FINISHED]`: the AI relay is rate-capped (90 per minute in total, `RS_RELAY_PER_MIN`) but not tied to visit sessions (local demo only); the Verify page does not re-run the attestation or re-match quotes; real-device passkey test (a virtual authenticator is used); scanned-document search (no OCR); audio and video playback (stored, owner-download only); persistent encrypted copy of access links.
 `[LATER]`: threshold release, release service in a hardware enclave, zero-knowledge proofs, auditor view, redaction, issuer-signed claims, multi-party rooms.
 
 ## Honest limits
