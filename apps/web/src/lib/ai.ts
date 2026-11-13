@@ -13,3 +13,6 @@ export const relayFetch = ((input: RequestInfo | URL, init?: RequestInit) => {
 }) as typeof fetch;
 
 export const aiClient = () => new NearAiClient({ fetch: relayFetch as never });
+
+/** Second Private model, tried when the first is unavailable. Both are owned by nearai (Private tier); the model id used is in the evidence. */
+export const FALLBACK_MODEL = "z-ai/glm-5.3-flash";

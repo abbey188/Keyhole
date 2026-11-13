@@ -74,19 +74,26 @@ function Viewer({ visit, onEnded }: { visit: Visit; onEnded: () => void }) {
 
 function Page({ visit, item, seg, onLoaded, onError }: { visit: Visit; item: Visit["payload"]["items"][number]; seg: Visit["payload"]["items"][number]["segs"][number]; onLoaded: () => void; onError: (e: Error) => void }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const [signed, setSigned] = useState<string | null>(null);
   useEffect(() => {
     let dead = false;
     (async () => {
       try {
         const bytes = await viewSegment(visit, item, seg, svc);
         if (dead || !ref.current) return;
+        if (seg.m.startsWith("text/")) { const t = new TextDecoder().decode(bytes); if (/"claim"\s*:/.test(t) && /"signature"\s*:/.test(t)) setSigned(t); }
         await draw(ref.current, bytes, seg.m, `${visit.payload.l || "visitor"} · ${new Date().toLocaleString()} · ${visit.tail}`);
         onLoaded();
       } catch (e) { onError(e as Error); }
     })();
     return () => { dead = true; };
   }, []);
-  return <canvas ref={ref} style={{ maxWidth: "100%", display: "block", margin: "10px 0", background: "#fff", borderRadius: 6 }} onContextMenu={(e) => e.preventDefault()} />;
+  return (
+    <div>
+      <canvas ref={ref} style={{ maxWidth: "100%", display: "block", margin: "10px 0", background: "#fff", borderRadius: 6 }} onContextMenu={(e) => e.preventDefault()} />
+      {signed && <p className="note"><button className="ghost" onClick={() => void navigator.clipboard?.writeText(signed)}>Copy the signed claim</button> then paste it on the <a href="#verify" target="_blank" rel="noreferrer">Verify page</a>. The check runs in your browser.</p>}
+    </div>
+  );
 }
 
 /** Draws a page (image or text) and bakes the watermark into the pixels, so it is part of any screenshot. */

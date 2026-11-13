@@ -25,3 +25,14 @@ describe("extractors on the demo documents", () => {
     expect(r.fields["gross_monthly"]).toBeUndefined();
   });
 });
+
+import { validateModelFields } from "../src/extract.js";
+describe("model values for amounts", () => {
+  it("accepts 'GBP 3,850.00' when the source prints 3,850.00 with the currency in a header, and still rejects invented numbers", () => {
+    const pages = page("payslip-maria-santos");
+    const ok = validateModelFields("payslip", JSON.stringify({ fields: { employer: null, employee_name: null, pay_period: null, gross_monthly: "GBP 3,850.00", net_pay: "GBP 9,999.00" } }), pages);
+    expect(ok.ok && ok.accepted["gross_monthly"]?.value).toBe(3850);
+    expect(ok.ok && ok.accepted["gross_monthly"]?.currency).toBe("GBP");
+    expect(ok.ok && ok.rejected["net_pay"]).toBe("GBP 9,999.00"); // not in the document: dropped
+  });
+});

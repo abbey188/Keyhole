@@ -6,7 +6,7 @@ import { buildIndex } from "../lib/index";
 import type { PageText } from "../lib/index";
 import { claimParts, crossCheck, describePredicate, draftFor, makeSignedClaim, statementText } from "../lib/claims";
 import type { CrossCheck, Draft, Predicate } from "../lib/claims";
-import { aiClient } from "../lib/ai";
+import { aiClient, FALLBACK_MODEL } from "../lib/ai";
 import type { BoxView } from "@keyhole/chain";
 import type { Receipt } from "../lib/upload";
 
@@ -42,7 +42,11 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
   };
   const runCross = async () => {
     if (!draft) return; setErr(""); setBusy("Checking with a private model (attested hardware)…");
-    try { setCross(await crossCheck(draft.docType, draft.pages as never, draft.rules, { client: aiClient() as never })); } catch (e) { setErr((e as Error).message); }
+    try {
+      let cc = await crossCheck(draft.docType, draft.pages as never, draft.rules, { client: aiClient() as never });
+      if (!cc.model_ran) { setBusy("The first private model is busy; trying another…"); cc = await crossCheck(draft.docType, draft.pages as never, draft.rules, { client: aiClient() as never, model: FALLBACK_MODEL }); }
+      setCross(cc);
+    } catch (e) { setErr((e as Error).message); }
     setBusy("");
   };
   const create = async () => {
