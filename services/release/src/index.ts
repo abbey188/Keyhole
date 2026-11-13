@@ -8,3 +8,4 @@ export type { ReleaseConfig } from "./config.js";
 export { MemoryGrantStore, FsGrantStore } from "./store.js";
 export type { GrantStore, GrantMaterial } from "./store.js";
 export * from "./formats.js";
+export { relay, RELAY_HOSTS } from "./relay.js";

@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { ReleaseError } from "./service.js";
+import { relay } from "./relay.js";
 import type { Auth, ReleaseService } from "./service.js";
 
 const MAX_BODY = 256 * 1024;
@@ -21,7 +22,7 @@ const ORIGIN = process.env.APP_ORIGIN ?? "*";
 const CORS = {
   "access-control-allow-origin": ORIGIN,
   "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS",
-  "access-control-allow-headers": "content-type,authorization,x-ts,x-pk,x-sig,x-ticket,x-reg-id,x-root,x-proof",
+  "access-control-allow-headers": "content-type,accept,authorization,x-ts,x-pk,x-sig,x-ticket,x-reg-id,x-root,x-proof,x-no-aliasing,x-signing-algo,x-client-pub-key,x-model-pub-key,x-encryption-version",
   "access-control-max-age": "600",
 };
 
@@ -68,6 +69,10 @@ export function createReleaseServer(svc: ReleaseService, o: HttpOptions = {}): S
       if (!e || nowMs - e.start > 60_000) hits.set(ip, { start: nowMs, n: 1 });
       else if (++e.n > limit) throw new ReleaseError(429, "rate_limited");
 
+      if ((req.url ?? "").startsWith("/relay/")) {
+        const b = req.method === "GET" ? undefined : await readBody(req);
+        if (await relay(req, res, b)) return;
+      }
       const url = new URL(req.url ?? "/", "http://x");
       const p = url.pathname;
       const m = req.method;

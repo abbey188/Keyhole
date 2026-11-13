@@ -13,8 +13,9 @@ import type { ItemRecord, Manifest } from "../lib/vault";
 import { AccessTab } from "./AccessTab";
 import { VisitorsTab } from "./VisitorsTab";
 import { HandoverTab } from "./HandoverTab";
+import { AskTab } from "./AskTab";
 
-export type Tab = "files" | "access" | "visitors" | "handover";
+export type Tab = "files" | "ask" | "access" | "visitors" | "handover";
 
 export function SafePage({ id, boxId, serial, onBack }: { id: Identity; boxId: string; serial: number; onBack: () => void }) {
   const [box, setBox] = useState<BoxView | null>(null);
@@ -43,12 +44,13 @@ export function SafePage({ id, boxId, serial, onBack }: { id: Identity; boxId: s
       <div className="row"><button className="ghost" onClick={onBack}>← Safes</button><h2 className="grow" style={{ margin: 0 }}>Safe #{serial}</h2></div>
       <p className="mono">{boxId}</p>
       <div className="tabs">
-        {(["files", "access", "visitors", "handover"] as Tab[]).map((t) => (
-          <button key={t} className={`tab ${tab === t ? "on" : ""}`} onClick={() => setTab(t)}>{{ files: "Files", access: "Access", visitors: "Visitors", handover: "Hand over" }[t]}</button>
+        {(["files", "ask", "access", "visitors", "handover"] as Tab[]).map((t) => (
+          <button key={t} className={`tab ${tab === t ? "on" : ""}`} onClick={() => setTab(t)}>{{ files: "Files", ask: "Ask", access: "Access", visitors: "Visitors", handover: "Hand over" }[t]}</button>
         ))}
       </div>
       {err && <p className="err">{err}</p>}
       {tab === "files" && ctx && box && <Files ctx={ctx} box={box} man={man} afterAdd={async (t) => { setTxs(t); await refresh(); }} />}
+      {tab === "ask" && ctx && <AskTab ctx={ctx} man={man} />}
       {tab === "access" && ctx && <AccessTab ctx={ctx} man={man} onChanged={() => void refresh()} />}
       {tab === "visitors" && ctx && <VisitorsTab ctx={ctx} refreshKey={box?.receipts_seq ?? 0} />}
       {tab === "handover" && ctx && box && <HandoverTab ctx={ctx} box={box} onChanged={() => void refresh()} />}
