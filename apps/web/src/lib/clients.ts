@@ -3,15 +3,24 @@ import type { ChainWriter } from "@keyhole/chain";
 import { config } from "./config";
 import type { Identity } from "./keys";
 
-export const reader = new RpcReader({ rpcUrls: [config.rpcUrl], contractId: config.contractId, chainId: config.chainId });
+export const reader = new RpcReader({ rpcUrls: config.rpcUrls, contractId: config.contractId, chainId: config.chainId });
 
 export const writerFor = (id: Identity, onTx?: (m: { method: string; txHash: string; ok: boolean; gasBurnt: number; submitToFinalMs: number }) => void): ChainWriter =>
   new NearWriter({ accountId: id.accountId, secretKey: id.secretKey, rpcUrl: config.rpcUrl, contractId: config.contractId, reader, ...(onTx ? { onTx } : {}) });
 
-async function rpc(method: string, params: unknown): Promise<{ result?: { amount?: string }; error?: unknown }> {
-  const r = await fetch(config.rpcUrl, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) });
-  return (await r.json()) as { result?: { amount?: string }; error?: unknown };
+/** One JSON-RPC call, trying each configured endpoint in turn (8 s each) so one slow endpoint cannot stall the app. */
+export async function rpcCall<T = unknown>(method: string, params: unknown): Promise<{ result?: T; error?: unknown }> {
+  let last: unknown;
+  for (const url of config.rpcUrls) {
+    try {
+      const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(8000) });
+      if (!r.ok) throw new Error(`http ${r.status}`);
+      return (await r.json()) as { result?: T; error?: unknown };
+    } catch (e) { last = e; }
+  }
+  throw last instanceof Error ? last : new Error("no RPC endpoint answered");
 }
+const rpc = (method: string, params: unknown) => rpcCall<{ amount?: string }>(method, params);
 
 /** Balance in yoctoNEAR, or null if the account does not exist yet. */
 export async function balanceOf(accountId: string): Promise<bigint | null> {

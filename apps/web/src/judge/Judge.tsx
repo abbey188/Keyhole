@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { config, txLink } from "../lib/config";
+import { rpcCall } from "../lib/clients";
 import { CLAIMS } from "./claims";
 import attack from "../../../../deploy/attack-lab-testnet.json";
 import smoke from "../../../../deploy/smoke-testnet.json";
@@ -23,8 +24,8 @@ const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); retu
 export function Judge() {
   const [keys, setKeys] = useState<string>("checking…");
   useEffect(() => {
-    fetch(config.rpcUrl, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "query", params: { request_type: "view_access_key_list", finality: "final", account_id: config.contractId } }) })
-      .then((r) => r.json()).then((j: { result?: { keys: unknown[] } }) => setKeys(j.result ? `${j.result.keys.length} access keys` : "could not read")).catch(() => setKeys("could not read"));
+    rpcCall<{ keys: unknown[] }>("query", { request_type: "view_access_key_list", finality: "final", account_id: config.contractId })
+      .then((j) => setKeys(j.result ? `${j.result.keys.length} access keys` : "could not read")).catch(() => setKeys("could not read"));
   }, []);
   const ok = ALL.filter((t) => t.ok);
   const byMethod = new Map<string, Tx[]>();

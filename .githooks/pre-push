@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Local stand-in for CI (GitHub's hosted runners are not available to this account). Before anything is pushed to main, run the
+# full verification; a failure stops the push. Feature branches are not gated, so work in progress can still be saved.
+# Enable once per clone:  make hooks
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "pre-push: pushing to main, running ./scripts/verify.sh first…" >&2
+    "$(git rev-parse --show-toplevel)/scripts/verify.sh" >/tmp/keyhole-prepush.log 2>&1 || { echo "pre-push: verification FAILED (see /tmp/keyhole-prepush.log). Push stopped." >&2; exit 1; }
+    echo "pre-push: verification passed." >&2
+  fi
+done
+exit 0
