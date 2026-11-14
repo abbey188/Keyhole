@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+target
+data
+.env
+.env.*
+!.env.example
+demo/out
+.git
+apps/web/dist
