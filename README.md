@@ -54,9 +54,9 @@ Private AI here means: the client checks a hardware attestation from NEAR AI Clo
 Claims use fixed wording: grade **B** "machine-read and owner-reviewed", grade **C** "self-declared". A claim is the owner's statement backed by a document, not a certificate. We never call a machine-read claim "verified". Grade A (issuer-signed) and zero-knowledge "Proved" are `[LATER]`.
 
 ## What is built
-Built and tested: the protocol and contract (boxes as NFTs with blocked transfers, grants, receipt chain, blobs, handover with escrow), storage node, release service, client store, the web app (passkey sign-in, files, give access with a watermarked viewer, visitor log with verification, re-lock, handover, Ask, Claims, Verify, Proof page), the attestation client, and an attack lab. Mock components are labelled `MOCK` in code (the mock chain is compared with the real contract on a recorded scenario).
+Built and tested: the protocol and contract (boxes as NFTs with blocked transfers, grants, receipt chain, blobs, handover with escrow), storage node, release service, client store, the site (landing page and docs pages: trust model, security notes, limits, developers, proof) and the web app (passkey sign-in, named and coloured safes, folders, files with an upload tray, give access with a QR link and a watermarked viewer, open and closed links, visitor log with verification, re-lock, handover, Ask, Claims, redaction, Verify), the attestation client, and an attack lab. Mock components are labelled `MOCK` in code (the mock chain is compared with the real contract on a recorded scenario).
 
-`[NOT FINISHED]`: the Verify page does not re-run the attestation or re-match quotes; real-device passkey test (a virtual authenticator is used); scanned-document search (no OCR); audio and video playback (stored, owner-download only); persistent encrypted copy of access links.
+`[NOT FINISHED]`: the Verify page does not re-run the attestation or re-match quotes; real-device passkey test (a virtual authenticator is used); scanned-document search (no OCR); audio and video playback (stored, owner-download only).
 `[LATER]`: threshold release, release service in a hardware enclave, zero-knowledge proofs, auditor view, redaction of scanned pages and images, issuer-signed claims, multi-party rooms.
 
 ## Honest limits

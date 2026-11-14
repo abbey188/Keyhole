@@ -40,7 +40,7 @@ git clone git@github.com:abbey188/Keyhole.git /srv/keyhole
 The script takes roughly 10 to 15 minutes (Rust is the slow part). It asks once for the NEAR AI key (hidden). At the end it prints two checks and the address to open.
 
 ## Prove the new deployment (about 10 minutes)
-The new contract needs its own evidence, and the judge page reads the records the setup wrote:
+The new contract needs its own evidence, and the Proof page reads the records the setup wrote:
 ```bash
 sudo -u keyhole -H bash -lc 'cd /srv/keyhole/tools/testnet && . ~/.cargo/env && npx tsx src/smoke.ts && npx tsx src/conformance.ts && npx tsx src/attack-lab.ts'
 ```
