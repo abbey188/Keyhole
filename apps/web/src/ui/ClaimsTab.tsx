@@ -212,7 +212,6 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
 
       {draft && fact && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
-          <div className="fl" style={{ margin: 0 }}>New claim</div>
           <div style={{ background: "var(--ink)", color: "#FFFFFF", borderRadius: 14, padding: 22, display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: 22 }}>
               <span className="lbl" style={{ color: "#A9C2EC", fontSize: 10 }}>Claim</span>
@@ -241,7 +240,7 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
             </div>
           </div>
           <button className="btn btn-s" style={{ justifyContent: "center" }} disabled={!!busy} onClick={runCross}>Cross-check with a private model</button>
-          {needTyped && <input className="input" style={{ fontSize: 14 }} placeholder="To self-declare (grade C), type the value as written in the document" value={typed} onChange={(e) => setTyped(e.target.value)} />}
+          {needTyped && <input className="input" aria-label="Value as written in the document" style={{ fontSize: 16, padding: "14px 16px", width: "100%", boxSizing: "border-box" }} placeholder="To self-declare (grade C), type the value as written in the document" value={typed} onChange={(e) => setTyped(e.target.value)} />}
           <Check on={reviewed} onChange={setReviewed} label="I checked this against the document myself"><span style={{ fontSize: 14 }}>I checked this against the document myself</span></Check>
           <button className="btn btn-p btn-lg" style={{ justifyContent: "space-between" }} disabled={!reviewed || !!busy} onClick={create}>Sign claim <span className="m" aria-hidden="true">→</span></button>
           <button className="btn btn-s" style={{ justifyContent: "center" }} disabled={!shareItem || !!busy} onClick={() => { setSharing(!sharing); setShared(null); }}>Share with someone</button>
