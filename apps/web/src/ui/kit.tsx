@@ -1,6 +1,23 @@
 // Shared pieces of the app screens (design A01 to A14): rail, top bar, safe icon, chips. Styles are docs/design/app.css + app-shell.css.
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import "./app-shell.css";
+
+/** Pop-up menus: while open, a tap or click anywhere outside the returned element, or Escape, closes it. */
+export function useDismiss<T extends HTMLElement>(open: boolean, close: () => void) {
+  const ref = useRef<T | null>(null);
+  const shut = useRef(close);
+  shut.current = close;
+  useEffect(() => {
+    if (!open) return;
+    const down = (e: PointerEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) shut.current(); };
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") shut.current(); };
+    document.addEventListener("pointerdown", down, true);
+    document.addEventListener("keydown", key);
+    return () => { document.removeEventListener("pointerdown", down, true); document.removeEventListener("keydown", key); };
+  }, [open]);
+  return ref;
+}
 
 export const Logo = ({ size = 22 }: { size?: number }) => (
   <svg width={size} height={Math.round(size * 30 / 24)} viewBox="0 0 24 30" aria-hidden="true"><rect width="24" height="30" rx="5" fill="#FFFFFF" /><circle cx="12" cy="11.5" r="4.6" fill="#0E1435" /><path d="M10.2 14.2L7.6 23.6Q7.4 24.6 8.4 24.6H15.6Q16.6 24.6 16.4 23.6L13.8 14.2Z" fill="#0E1435" /></svg>
