@@ -1,0 +1,18 @@
+{
+	auto_https off
+	admin off
+}
+:8080 {
+	encode gzip
+	handle_path /rs/* {
+		reverse_proxy 127.0.0.1:8788
+	}
+	handle_path /node/* {
+		reverse_proxy 127.0.0.1:8787
+	}
+	handle {
+		root * /data/web/dist
+		try_files {path} /index.html
+		file_server
+	}
+}

@@ -1,0 +1,28 @@
+# Fly.io config. Deploy with:  fly deploy   (from the repository root; the Dockerfile here is used, not the Rust workspace)
+# The app name is whatever `fly launch` chose; the machine reads it from FLY_APP_NAME.
+primary_region = "ams"
+
+[build]
+
+[env]
+  RS_PER_IP_PER_MINUTE = "3000"
+  RS_SPONSOR_MAX = "40"
+  RS_SPONSOR_NEAR = "1"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Stops when idle so the free trial credit lasts; the next visit starts it again (a few seconds).
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[mounts]]
+  source = "keyhole_data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
+
+swap_size_mb = 1024

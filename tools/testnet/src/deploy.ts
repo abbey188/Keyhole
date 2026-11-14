@@ -8,7 +8,8 @@ import { ROOT, account, failureOf, fmtNear, gasOf, need, readEnv, rpc, txHashOf,
 
 const env = readEnv();
 const contractId = need(env, "KEYHOLE_CONTRACT");
-const wasm = new Uint8Array(readFileSync(join(ROOT, "target", "keyhole_opt.wasm")));
+// KEYHOLE_WASM lets a machine without Rust deploy the prebuilt, hash-recorded file (deploy/keyhole_opt.wasm).
+const wasm = new Uint8Array(readFileSync(process.env.KEYHOLE_WASM ?? join(ROOT, "target", "keyhole_opt.wasm")));
 const sha = createHash("sha256").update(wasm).digest("hex");
 
 // DEMO configuration. Short waits and retention so a demo can show expiry; production values are in spec 04.
