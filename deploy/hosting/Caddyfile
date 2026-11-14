@@ -1,0 +1,22 @@
+# One hostname, three jobs: the web app (static), the release service under /rs, the storage node under /node.
+# Caddy gets and renews the HTTPS certificate by itself. DOMAIN comes from the environment (set by setup-vps.sh).
+{$DOMAIN} {
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+	handle_path /rs/* {
+		reverse_proxy 127.0.0.1:8788
+	}
+	handle_path /node/* {
+		reverse_proxy 127.0.0.1:8787
+	}
+	handle {
+		root * /srv/keyhole/apps/web/dist
+		try_files {path} /index.html
+		file_server
+	}
+}
