@@ -42,3 +42,10 @@ Scenes 2 and 3 are real waiting (uploads are chain transactions; the model takes
 
 ## Honest lines to say on camera
 "This is testnet, a demo configuration, not audited." "A photo of the screen can't be stopped." "The release service is a trusted party in this version." "The attestation shows genuine hardware ran measured software; it doesn't prove the model is right."
+
+## Real-device passkey check (owner, about 3 minutes)
+The tests use a virtual authenticator with the PRF extension. A real device is the one thing they cannot show. On the phone or laptop you will demo on, with the app open at its `localhost` or hosted HTTPS address:
+1. Create with passkey, make a safe, add a text file, lock the tab (close it), reopen, press the passkey button: the same safe and file must appear. This proves the passkey returns the same key material each time.
+2. If the browser says the passkey is not supported (some browsers and security keys lack the PRF extension), the app offers the **passphrase** fallback, labelled weaker. Use it once to confirm it works (create, add a file, reload, unlock with the same passphrase).
+3. Write down: device, browser and version, result. Add it to `docs/EVIDENCE.md` as row `PASSKEY-REAL`. Until then the README says `[NOT FINISHED]` for this.
+Known good: Chrome and Edge on recent macOS, Windows 11 and Android with a platform passkey; Safari 18+ with iCloud Keychain. Firefox and older security keys may fall back to the passphrase.
