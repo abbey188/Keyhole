@@ -11,6 +11,7 @@ import { Recipient } from "./ui/Recipient";
 import { Receive } from "./ui/Receive";
 import { Verify } from "./ui/Verify";
 import { Judge } from "./judge/Judge";
+import { Showcase } from "./ui/Showcase";
 
 const LS = { cred: "keyhole.credId", salt: "keyhole.salt", mode: "keyhole.mode" };
 const get = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -20,6 +21,7 @@ export function App() {
   const [id, setId] = useState<Identity | null>(null);
   if (location.hash.startsWith("#judge")) return <main><h1>Keyhole</h1><Judge /></main>;
   if (location.hash.startsWith("#verify")) return <main><h1>Keyhole</h1><Verify /></main>;
+  if (config.showcase && !location.hash.startsWith("#open=")) return <main><h1>Keyhole</h1><p className="sub">A safe for your files. You hold the keys; every visit is recorded.</p><Showcase /></main>;
   if (location.hash.startsWith("#open=")) return <main><h1>Keyhole</h1><Recipient /></main>;
   return (
     <main>

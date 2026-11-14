@@ -4,6 +4,10 @@ import record from "../../../../deploy/testnet.json";
 const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
 
 export const config = {
+  /** Static showcase build (VITE_SHOWCASE=1): no services are reachable, so the home page explains that and points at the proof pages. */
+  showcase: env.VITE_SHOWCASE === "1",
+  videoUrl: env.VITE_VIDEO_URL ?? "",
+  repoUrl: env.VITE_REPO_URL ?? "",
   chainId: "testnet" as const,
   contractId: (record as { contract: string }).contract,
   /** Testnet RPC endpoints, tried in order when one is slow or down (VITE_RPC_URL may hold a comma-separated list). */
