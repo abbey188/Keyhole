@@ -4,7 +4,16 @@ One server runs everything: the web app (static files), the release service, the
 
 **Why its own deployment:** the service keys of the contract we developed against live only in the development sandbox's `.env`, which is temporary, and secrets must not be pasted anywhere. So the server creates its own keyless testnet contract (same code, same Wasm hash, new keys that never leave the server). The setup script does this.
 
-## Accounts to create (you)
+## Free option, no card: a GitHub Codespace
+Checked against GitHub's documentation (2026-11-14): a free personal account gets 120 compute hours and 15 GB-month of storage a month and needs **no payment method** (usage simply stops when the quota is used up). A Codespace's disk survives stops, a forwarded port can be made **public** at `https://<codespace>-<port>.app.github.dev`, the idle stop is 30 minutes by default and can be raised to 240, and every Codespace has a **12-hour maximum lifetime**. A 2-core Codespace therefore gives about 60 hours of running time a month.
+Use it for a live link during a window you control, not for unattended judging: it stops when idle or after 12 hours, and you restart it by reopening it and running `./deploy/hosting/codespace-start.sh`.
+1. Repository page → **Code → Codespaces → Create codespace on main** (2-core machine). In your GitHub settings → Codespaces, set the idle timeout to 240 minutes.
+2. In its terminal: `./deploy/hosting/codespace-setup.sh` (about 10 to 15 minutes; asks once, hidden, for your NEAR AI key).
+3. It prints the app, judge-page and health links. Keep that terminal open.
+Not verified: whether your GitHub account's billing lock also blocks creating a Codespace. Try step 1 first; if it is refused, use the recorded demo plus local run.
+Facts checked: Render's free web service has an ephemeral disk and sleeps after 15 minutes (docs.render.com free tier); Hugging Face Docker Spaces need a paid plan; Oracle Always Free needs a card and its current allowance could not be confirmed.
+
+## Accounts to create for a paid server (you)
 1. **A server.** Hetzner Cloud (CX22, 4 GB) or DigitalOcean (4 GB droplet). Image: **Ubuntu 24.04**. Add your SSH public key when asked (or use the provider's console). Note the server's IP address.
 2. **A name for it.** Easiest: buy a cheap domain (Cloudflare Registrar, Namecheap, Porkbun) or take a free one at duckdns.org. Create one **A record** pointing at the server's IP, for example `keyhole.yourdomain.com`. Wait a few minutes.
 3. **A NEAR AI Cloud API key** from cloud.near.ai (sign in, create an API key). You will type it into the server later, hidden. Never paste it into chat or a file in the repo.
