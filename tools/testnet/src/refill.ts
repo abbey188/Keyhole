@@ -7,7 +7,7 @@ import { account, balance, fmtNear, need, readEnv } from "./lib.js";
 
 const HELPER = process.env.KEYHOLE_HELPER ?? "https://helper.testnet.near.org";
 const env = readEnv();
-const relayer = need(env, "RELAYER_ACCOUNT");
+const relayer = process.env.REFILL_TO ?? need(env, "RELAYER_ACCOUNT"); // REFILL_TO: another deployment's relayer (public account id)
 const rounds = Math.min(5, Math.max(1, Number(process.argv[2] ?? 2)));
 for (let i = 0; i < rounds; i++) {
   const id = `kh-refill-${randomBytes(4).toString("hex")}.testnet`;
