@@ -48,4 +48,4 @@ The tests use a virtual authenticator with the PRF extension. A real device is t
 1. Create with passkey, make a safe, add a text file, lock the tab (close it), reopen, press the passkey button: the same safe and file must appear. This proves the passkey returns the same key material each time.
 2. If the browser says the passkey is not supported (some browsers and security keys lack the PRF extension), the app offers the **passphrase** fallback, labelled weaker. Use it once to confirm it works (create, add a file, reload, unlock with the same passphrase).
 3. Write down: device, browser and version, result. Add it to `docs/EVIDENCE.md` as row `PASSKEY-REAL`. Until then the README says `[NOT FINISHED]` for this.
-Known good: Chrome and Edge on recent macOS, Windows 11 and Android with a platform passkey; Safari 18+ with iCloud Keychain. Firefox and older security keys may fall back to the passphrase.
+Browser support for the PRF extension varies by browser, version and authenticator, and we have not tested real devices. If a device does not support it, the app falls back to the passphrase option automatically; record what you saw either way.
