@@ -18,7 +18,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@noble/hashes": "^2.4.0",
-    "pdfjs-dist": "^5.4.0",
+    "pdfjs-dist": "^6.2.108",
     "@keyhole/ai": "workspace:*",
     "@keyhole/askclaims": "workspace:*"
   },
