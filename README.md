@@ -4,6 +4,8 @@
 
 > **Status: working on NEAR testnet, demo configuration, no external audit.** Everything below is backed by a test or a transaction (see [CLAIMS.md](CLAIMS.md), [docs/EVIDENCE.md](docs/EVIDENCE.md), and the judge page). Things not finished are marked `[NOT FINISHED]`; things deliberately left for later are marked `[LATER]`. Do not put real sensitive files in it.
 
+**Live demo (free trial, may be offline):** https://keyhole.fly.dev/ . It runs the same code on NEAR testnet with its own keyless contract; it can stop at any time (see `docs/HOSTING.md`). The proof does not depend on it: see below.
+
 ## See the proof in 2 minutes (no keys, no accounts)
 1. `git clone … && cd Keyhole && pnpm install`
 2. `./scripts/verify.sh` → you should see passing test summaries (Rust protocol and contract, TypeScript packages, services, app), the Wasm hash, and `C1 OK: … has 0 access keys`.

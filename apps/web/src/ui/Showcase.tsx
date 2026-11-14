@@ -10,6 +10,7 @@ export function Showcase() {
       <ul>
         <li><a href={link("#judge")} target="_blank" rel="noreferrer">The proof page</a>: every claim with its test or transaction, the attacks the contract refused, and a live check from the public testnet that the contract has no access keys.</li>
         <li><a href={link("#verify")} target="_blank" rel="noreferrer">The Verify page</a>: check a signed claim or an answer package in your browser, with no server.</li>
+        {config.demoUrl && <li><a href={config.demoUrl} target="_blank" rel="noreferrer">The live demo</a>: the interactive app on testnet. It runs on a free trial and may be offline.</li>}
         {config.videoUrl && <li><a href={config.videoUrl} target="_blank" rel="noreferrer">The recorded demo</a>: the full story on testnet.</li>}
         {config.repoUrl && <li><a href={config.repoUrl} target="_blank" rel="noreferrer">The code</a>: run the whole product yourself with <code>./scripts/testnet-setup.sh</code> and <code>./scripts/dev-services.sh</code> (about five minutes).</li>}
       </ul>

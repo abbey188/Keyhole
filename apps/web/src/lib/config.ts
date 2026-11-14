@@ -7,6 +7,7 @@ export const config = {
   /** Static showcase build (VITE_SHOWCASE=1): no services are reachable, so the home page explains that and points at the proof pages. */
   showcase: env.VITE_SHOWCASE === "1",
   videoUrl: env.VITE_VIDEO_URL ?? "",
+  demoUrl: env.VITE_DEMO_URL ?? "",
   repoUrl: env.VITE_REPO_URL ?? "",
   chainId: "testnet" as const,
   contractId: (record as { contract: string }).contract,
