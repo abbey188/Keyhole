@@ -1,0 +1,28 @@
+// The access link's QR code decodes to the link, and Copy says "Copied!".
+import { readFileSync } from "node:fs";
+import { APP, launch, newUser } from "./lib.mjs";
+const OUT = process.argv[2];
+const browser = await launch();
+const { page } = await newUser(browser);
+await page.context().grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
+const ok = (c, m) => { if (!c) { console.log("FAIL", m); process.exit(1); } console.log("ok", m); };
+await page.goto(APP);
+await page.getByRole("button", { name: "Create with a passkey" }).click();
+await page.getByRole("heading", { name: "Your safes" }).waitFor({ timeout: 20000 });
+await page.getByRole("button", { name: "New safe" }).first().click(); await page.getByRole("button", { name: "Create safe" }).click();
+await page.getByText("Safe 1", { exact: true }).first().waitFor({ timeout: 90000 });
+await page.getByText("Safe 1", { exact: true }).first().click();
+await page.getByText("This safe is empty").waitFor({ timeout: 30000 });
+await page.locator("input[type=file]").setInputFiles([{ name: "lease.pdf", mimeType: "application/pdf", buffer: readFileSync(new URL("../../../demo/files/lease-14-harbour-road.pdf", import.meta.url)) }]);
+await page.locator(".tray").waitFor({ state: "detached", timeout: 240000 });
+await page.getByRole("button", { name: "Give access" }).first().click();
+await page.getByLabel(/lease\.pdf/).check();
+await page.getByPlaceholder("Who is this for?").fill("Landlord");
+await page.getByRole("button", { name: "Create link" }).click();
+await page.getByText("Link ready").waitFor({ timeout: 120000 });
+const link = await page.locator("input[readonly]").inputValue();
+await page.getByRole("img", { name: "QR code of the link" }).screenshot({ path: OUT });
+await page.getByRole("button", { name: "Copy", exact: true }).click();
+ok(await page.getByRole("button", { name: "Copied!" }).isVisible(), "Copy shows Copied!");
+console.log("LINK", link.length, link);
+await browser.close();

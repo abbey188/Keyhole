@@ -249,7 +249,7 @@ function CopyButton({ text, label, small }: { text: string; label: string; small
   const [done, setDone] = useState(false);
   return (
     <button className="btn btn-s" style={small ? { padding: "5px 10px", fontSize: 12 } : { padding: "7px 14px", fontSize: 13 }}
-      onClick={() => { void navigator.clipboard?.writeText(text).then(() => { setDone(true); setTimeout(() => setDone(false), 2000); }); }}>{done ? "Copied" : label}</button>
+      onClick={() => { void navigator.clipboard?.writeText(text).then(() => { setDone(true); setTimeout(() => setDone(false), 2000); }); }}>{done ? "Copied!" : label}</button>
   );
 }
 

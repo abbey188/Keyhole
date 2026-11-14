@@ -1,7 +1,21 @@
 // Shared pieces of the app screens (design A01 to A14): rail, top bar, safe icon, chips. Styles are docs/design/app.css + app-shell.css.
-import { useEffect, useRef } from "react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import "./app-shell.css";
+
+/** Copy with a visible "Copied!" confirmation; falls back to selecting the text where the clipboard is blocked. */
+export function CopyButton({ text, label = "Copy", className = "btn btn-s", style }: { text: string; label?: string; className?: string; style?: CSSProperties }) {
+  const [done, setDone] = useState<"" | "ok" | "manual">("");
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(text); setDone("ok"); }
+    catch {
+      const t = document.createElement("textarea"); t.value = text; t.style.position = "fixed"; t.style.opacity = "0"; document.body.appendChild(t); t.select();
+      const ok = (() => { try { return document.execCommand("copy"); } catch { return false; } })(); t.remove(); setDone(ok ? "ok" : "manual");
+    }
+    setTimeout(() => setDone(""), 2000);
+  };
+  return <button className={className} style={style} onClick={() => void copy()} aria-live="polite">{done === "ok" ? "Copied!" : done === "manual" ? "Select and copy" : label}</button>;
+}
 
 /** Pop-up menus: while open, a tap or click anywhere outside the returned element, or Escape, closes it. */
 export function useDismiss<T extends HTMLElement>(open: boolean, close: () => void) {
