@@ -26,7 +26,7 @@ await owner.getByRole("button", { name: "Sign claim" }).click();
 await owner.getByText(/Grade [BC] claim saved|checked|Did not|no grade|rules and model/).first().waitFor({ timeout: 240000 }); console.log("after create:", (await owner.locator(".err").allTextContents()).join(" | ") || "no error", "|", (await owner.locator(".facts").first().innerText()).replace(/\s+/g," ").slice(0,300)); await owner.getByText(/Grade [BC] claim saved/).waitFor({ timeout: 240000 });
 console.log("claim:", await owner.getByText(/Grade [BC] claim saved/).textContent());
 await owner.getByRole("button", { name: "Give access" }).first().click();
-await owner.getByLabel(/Claim: Monthly gross pay/).check();
+await owner.getByLabel(/Claim: Gross monthly pay/).check();
 await owner.getByPlaceholder("Who is this for?").fill("Landlord");
 await owner.getByRole("button", { name: "Create link" }).click();
 await owner.getByText("Link ready").waitFor({ timeout: 120000 });

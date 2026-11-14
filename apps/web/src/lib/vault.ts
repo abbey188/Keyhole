@@ -74,7 +74,7 @@ export function classify(name: string, mime: string): ItemKind {
   const n = name.toLowerCase();
   if (mime === "application/pdf" || n.endsWith(".pdf")) return "pdf";
   if (mime.startsWith("image/")) return "image";
-  if (mime.startsWith("text/") || /\.(md|markdown|txt)$/.test(n)) return "text";
+  if (mime.startsWith("text/") || mime === "application/json" || /\.(md|markdown|txt|csv|tsv|json|html?)$/.test(n)) return "text";
   if (mime.startsWith("audio/")) return "audio";
   if (mime.startsWith("video/")) return "video";
   return "other";
