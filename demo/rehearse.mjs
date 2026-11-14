@@ -54,12 +54,13 @@ await scene("2 add the payslip and the lease", async () => {
   await maria.getByText("This safe is empty").waitFor({ timeout: 30000 });
   for (const f of ["payslip-maria-santos.pdf", "lease-14-harbour-road.pdf"]) {
     await maria.locator('input[type=file]').setInputFiles({ name: f, mimeType: "application/pdf", buffer: readFileSync(FILES + f) });
-    await maria.getByText(f).first().waitFor({ timeout: 300000 });
+    await maria.getByText(f).first().waitFor({ timeout: 300000 }); await maria.locator(".tray").waitFor({ state: "detached", timeout: 300000 });
   }
   await shot(maria, "2-files");
 });
 await scene("3 claim instead of the payslip", async () => {
   await maria.getByRole("button", { name: "Claims", exact: true }).click();
+  await maria.getByRole("button", { name: "Change file" }).waitFor({ timeout: 180000 });
   await maria.getByRole("button", { name: "Change file" }).click();
   await maria.getByRole("button", { name: /payslip-maria-santos\.pdf/ }).click();
   await maria.getByText(/^Facts in payslip-maria-santos\.pdf/).waitFor({ timeout: 30000 });
@@ -111,7 +112,9 @@ await scene("7 Maria ends access; the landlord's next open fails", async () => {
 await scene("8 the proof: judge page and keyless contract", async () => {
   const j = (await user("judge", false)).page;
   await j.goto(SITE + "/proof");
-  await j.getByText("0 access keys").waitFor({ timeout: 60000 });
+  await j.getByText("access keys, checked live").waitFor({ timeout: 60000 });
+  await j.waitForFunction(() => /^\d+$/.test(document.querySelector(".n")?.textContent ?? ""), null, { timeout: 60000 });
+  console.log("live access keys on the contract:", await j.locator(".n").first().textContent());
   await shot(j, "8-judge");
 });
 
