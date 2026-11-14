@@ -15,7 +15,7 @@ import { loadGrants, saveGrants } from "../lib/localvault";
 import type { SavedGrant } from "../lib/localvault";
 import type { BoxView } from "@keyhole/chain";
 import type { Receipt } from "../lib/upload";
-import { Check, Working, useDismiss } from "./kit";
+import { Check, CopyButton, Working, useDismiss } from "./kit";
 
 const svc: Services = { releaseUrl: config.releaseUrl, nodeUrls: config.nodeUrls, chainId: config.chainId, contractId: config.contractId };
 const SHARE_HOURS = 24;
@@ -240,7 +240,7 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
               <div style={{ fontSize: 14 }}>{shared.sentence}</div>
               <div style={{ display: "flex", gap: 10 }}>
                 <input className="input m" readOnly value={shared.link} style={{ flex: 1, fontSize: 12, padding: "10px 12px" }} onFocus={(e) => e.target.select()} />
-                <button className="btn btn-s" onClick={() => void navigator.clipboard?.writeText(shared.link)}>Copy</button>
+                <CopyButton text={shared.link} />
               </div>
             </div>
           )}

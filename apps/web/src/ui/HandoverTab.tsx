@@ -7,7 +7,7 @@ import type { Offer } from "../lib/handover";
 import { config, txLink } from "../lib/config";
 import type { Services } from "../lib/access";
 import type { BoxView } from "@keyhole/chain";
-import { SafeIcon, Working } from "./kit";
+import { CopyButton, SafeIcon, Working } from "./kit";
 
 // Design A11 (docs/design/A11HandOver.dc.html): the hand-over form on the left, the orange diagram card on the right.
 
@@ -127,7 +127,7 @@ export function HandoverTab({ ctx, box, onChanged }: { ctx: Ctx; box: BoxView; o
             <input className="input m" style={{ fontSize: 13 }} readOnly value={code} onFocus={(e) => e.target.select()} />
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-            <button className="btn btn-s btn-lg" onClick={() => void navigator.clipboard?.writeText(code)}>Copy code</button>
+            <CopyButton className="btn btn-s btn-lg" text={code} label="Copy code" />
             <button className="btn btn-o btn-lg" disabled={!!busy} onClick={cancel}>Cancel handover</button>
             {busy && <Working>{busy}</Working>}
           </div>

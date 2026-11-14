@@ -1,4 +1,4 @@
-import { Working } from "./kit";
+import { CopyButton, Working } from "./kit";
 import { useState } from "react";
 import type { ChainWriter, DealApi, DealView } from "@keyhole/chain";
 import { HttpNodeApi } from "@keyhole/store";
@@ -65,7 +65,7 @@ export function Receive({ id, onDone }: { id: Identity; onDone: () => void }) {
           <div className="fl">Your handover address</div>
           <div style={{ display: "flex", gap: 10 }}>
             <input className="input m" style={{ fontSize: 13 }} readOnly value={mine} onFocus={(e) => e.target.select()} />
-            <button className="btn btn-s" onClick={() => void navigator.clipboard?.writeText(mine)}>Copy my address</button>
+            <CopyButton text={mine} label="Copy my address" />
           </div>
         </div>
         <div>

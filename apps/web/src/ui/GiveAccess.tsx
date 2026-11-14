@@ -7,7 +7,7 @@ import type { ItemRecord, Manifest } from "../lib/vault";
 import { endAccess, giveAccess } from "../lib/access";
 import { loadGrants, saveGrants } from "../lib/localvault";
 import { svc } from "../lib/safemeta";
-import { Check, Steps, Working, fmtClock } from "./kit";
+import { Check, CopyButton, Steps, Working, fmtClock } from "./kit";
 
 const DURATIONS: [string, number][] = [["1H", 1], ["2H", 2], ["24H", 24]];
 
@@ -17,7 +17,9 @@ function Qr({ text }: { text: string }) {
   const n = m.getModuleCount();
   const cells: ReactElement[] = [];
   for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (m.isDark(r, c)) cells.push(<rect key={`${r}-${c}`} x={c} y={r} width="1.02" height="1.02" />);
-  return <svg width="104" height="104" viewBox={`-2 -2 ${n + 4} ${n + 4}`} role="img" aria-label="QR code of the link" style={{ background: "#FFFFFF", border: "1px solid var(--ink)", borderRadius: 8, flex: "none" }} shapeRendering="crispEdges"><g fill="#0E1435">{cells}</g></svg>;
+  // 4 modules of quiet zone and at least 3 px per module, or phone cameras cannot read a long link
+  const px = Math.max(160, (n + 8) * 3);
+  return <svg width={px} height={px} viewBox={`-4 -4 ${n + 8} ${n + 8}`} role="img" aria-label="QR code of the link" style={{ background: "#FFFFFF", border: "1px solid var(--ink)", borderRadius: 8, flex: "none" }} shapeRendering="crispEdges"><g fill="#000000">{cells}</g></svg>;
 }
 
 export function GiveAccessDrawer({ ctx, man, onClose, onChanged }: { ctx: Ctx; man: Manifest | null; onClose: () => void; onChanged: () => void }) {
@@ -95,8 +97,8 @@ export function GiveAccessDrawer({ ctx, man, onClose, onChanged }: { ctx: Ctx; m
         </> : <>
           <div className="dh"><div><div className="lbl" style={{ color: "var(--blue)" }}>[ Link ready ]</div><div className="h1" style={{ marginTop: 8, fontSize: 26, lineHeight: "30px" }}>Send this to {label.trim() || "them"}</div></div><button className="x" aria-label="Close" onClick={onClose}>×</button></div>
           <div className="db">
-            <div><div className="fl">Link</div><div style={{ display: "flex", gap: 8 }}><input className="input m" readOnly value={made.link} onFocus={(e) => e.target.select()} style={{ fontSize: 13 }} /><button className="btn btn-p" onClick={() => void navigator.clipboard?.writeText(made.link)}>Copy</button></div></div>
-            <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
+            <div><div className="fl">Link</div><div style={{ display: "flex", gap: 8 }}><input className="input m" readOnly value={made.link} onFocus={(e) => e.target.select()} style={{ fontSize: 13 }} /><CopyButton className="btn btn-p" text={made.link} /></div></div>
+            <div style={{ display: "flex", gap: 18, alignItems: "center", flexWrap: "wrap" }}>
               <Qr text={made.link} />
               <div>
                 <div className="lbl faint">{ended ? "Ended" : "Closes in"}</div>
