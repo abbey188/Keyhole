@@ -1,0 +1,61 @@
+// Walks the real app on testnet through the designed screens and saves a 1440-wide screenshot of each, for comparison with
+// docs/design/A01..A14. Usage: node apps/web/e2e/screens.mjs <outdir>
+import { readFileSync, mkdirSync } from "node:fs";
+import { APP, SITE, launch, newUser } from "./lib.mjs";
+const OUT = process.argv[2] ?? "/tmp/screens"; mkdirSync(OUT, { recursive: true });
+const LEASE = new URL("../../../demo/files/lease-14-harbour-road.pdf", import.meta.url).pathname;
+const PAY = new URL("../../../demo/files/payslip-maria-santos.pdf", import.meta.url).pathname;
+const browser = await launch();
+const { page, ctx } = await newUser(browser);
+await page.setViewportSize({ width: 1440, height: 900 });
+const shot = async (p, n) => { await p.waitForTimeout(400); await p.screenshot({ path: `${OUT}/${n}.png` }); console.log("shot", n); };
+const step = async (n, f) => { try { await f(); } catch (e) { console.log("FAILED", n, e.message.split("\n")[0]); } };
+
+await page.goto(APP);
+await shot(page, "A01");
+await page.getByRole("button", { name: "Create with a passkey" }).click();
+await page.getByRole("heading", { name: "Your safes" }).waitFor({ timeout: 30000 });
+await page.getByRole("button", { name: "New safe" }).first().click();
+await page.getByPlaceholder("Flat documents").fill("Flat documents");
+await shot(page, "A03");
+await page.getByRole("button", { name: "Create safe" }).click();
+await page.getByText("Flat documents", { exact: true }).first().waitFor({ timeout: 120000 });
+await page.waitForTimeout(3000);
+await shot(page, "A02");
+await page.getByText("Flat documents", { exact: true }).first().click();
+await page.getByText("This safe is empty").waitFor({ timeout: 30000 });
+await step("folder", async () => { await page.getByRole("button", { name: "New folder" }).click(); await page.getByPlaceholder("Folder name").fill("Lease"); await page.keyboard.press("Enter"); await page.locator(".fd.on", { hasText: "Lease" }).waitFor({ timeout: 120000 }); });
+await page.locator("input[type=file]").setInputFiles({ name: "lease.pdf", mimeType: "application/pdf", buffer: readFileSync(LEASE) });
+await page.locator(".tray").waitFor({ timeout: 30000 }); await page.waitForTimeout(1500);
+await shot(page, "A04-uploading");
+await page.locator(".tray").waitFor({ state: "detached", timeout: 240000 });
+await page.locator("input[type=file]").setInputFiles({ name: "payslip.pdf", mimeType: "application/pdf", buffer: readFileSync(PAY) });
+await page.locator(".tray").waitFor({ state: "detached", timeout: 240000 });
+await shot(page, "A04");
+await page.getByRole("button", { name: "Give access" }).first().click();
+await page.getByPlaceholder("Who is this for?").fill("Maria");
+await page.getByLabel("lease.pdf").check();
+for (let i = 0; i < 5; i++) await page.getByRole("button", { name: "More questions" }).click();
+await shot(page, "A05");
+await page.getByRole("button", { name: "Create link" }).click();
+await page.getByText("Link ready").waitFor({ timeout: 120000 });
+await shot(page, "A06");
+const link = await page.locator("input[readonly]").inputValue();
+await page.getByRole("button", { name: "Done" }).click();
+// recipient
+const rctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const rec = await rctx.newPage();
+await rec.goto(link);
+await step("recipient landing", async () => { await rec.waitForTimeout(1500); await shot(rec, "A12-landing"); });
+await rec.getByRole("button", { name: "Open" }).click();
+await step("recipient view", async () => { await rec.waitForTimeout(12000); await shot(rec, "A12"); });
+await step("recipient ask", async () => { await rec.getByPlaceholder(/Ask/).first().fill("How much is the monthly rent?"); await rec.getByRole("button", { name: "Ask", exact: true }).click(); await rec.waitForTimeout(45000); await shot(rec, "A12-ask"); });
+// owner tabs
+await step("access", async () => { await page.getByRole("button", { name: "Access", exact: true }).click(); await page.waitForTimeout(3000); await shot(page, "A07"); });
+await step("visitors", async () => { await page.getByRole("button", { name: "Visitors", exact: true }).click(); await page.getByText(/receipts?, checked/).waitFor({ timeout: 60000 }); await shot(page, "A08"); });
+await step("ask", async () => { await page.getByRole("button", { name: "Ask", exact: true }).click(); await page.waitForTimeout(3000); await page.getByPlaceholder("Ask about your files").fill("When is the rent due each month?"); await page.keyboard.press("Enter"); await page.getByText("How this was checked").first().waitFor({ timeout: 120000 }); await shot(page, "A09"); });
+await step("claims", async () => { await page.getByRole("button", { name: "Claims", exact: true }).click(); await page.waitForTimeout(1500); await page.getByRole("button", { name: "Change file" }).click(); await page.getByRole("button", { name: "payslip.pdf" }).click(); await page.waitForTimeout(3000); await shot(page, "A10"); });
+await step("handover", async () => { await page.getByRole("button", { name: "Hand over" }).click(); await page.waitForTimeout(1500); await shot(page, "A11"); await page.getByRole("button", { name: "Back to the safe" }).click(); });
+await step("end", async () => { await page.getByRole("button", { name: "Access", exact: true }).click(); await page.getByRole("button", { name: "End access" }).first().click(); await page.waitForTimeout(15000); await rec.reload(); await rec.getByRole("button", { name: "Open" }).click().catch(() => {}); await rec.getByText("This access has ended").waitFor({ timeout: 60000 }); await shot(rec, "A13"); });
+await step("verify", async () => { const v = await browser.newPage({ viewport: { width: 1440, height: 900 } }); await v.goto(SITE + "/verify"); await v.waitForTimeout(1500); await shot(v, "A14"); });
+await browser.close();

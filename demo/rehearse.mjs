@@ -44,7 +44,7 @@ let link = "";
 await scene("1 create the safe with a passkey", async () => {
   await maria.goto(APP);
   await maria.getByRole("button", { name: "Create with a passkey" }).click();
-  await maria.getByText("Your safes").waitFor({ timeout: 30000 });
+  await maria.getByRole("heading", { name: "Your safes" }).waitFor({ timeout: 30000 });
   await maria.getByRole("button", { name: "New safe" }).first().click(); await maria.getByRole("button", { name: "Create safe" }).click();
   await maria.getByText("Safe 1", { exact: true }).first().waitFor({ timeout: 120000 });
   await shot(maria, "1-safe");
@@ -60,13 +60,14 @@ await scene("2 add the payslip and the lease", async () => {
 });
 await scene("3 claim instead of the payslip", async () => {
   await maria.getByRole("button", { name: "Claims", exact: true }).click();
-  await maria.locator("select").selectOption({ label: "payslip-maria-santos.pdf" });
-  await maria.getByText("Found on this device: payslip").waitFor({ timeout: 30000 });
+  await maria.getByRole("button", { name: "Change file" }).click();
+  await maria.getByRole("button", { name: /payslip-maria-santos\.pdf/ }).click();
+  await maria.getByText(/^Facts in payslip-maria-santos\.pdf/).waitFor({ timeout: 30000 });
   await maria.getByRole("button", { name: "Cross-check with a private model" }).click();
   await maria.getByText(/The model read the same pages|could not be used/).waitFor({ timeout: 420000 });
-  if (/could not be used/.test((await maria.locator("p.note", { hasText: /model/ }).first().textContent()) ?? "")) { console.log("(model unavailable: grade C)"); await maria.getByPlaceholder(/To self-declare/).fill("3,850.00"); }
+  if (/could not be used/.test((await maria.locator(".cross-note").first().textContent()) ?? "")) { console.log("(model unavailable: grade C)"); await maria.getByPlaceholder(/To self-declare/).fill("3,850.00"); }
   await maria.getByLabel("I checked this against the document myself").check();
-  await maria.getByRole("button", { name: "Create signed claim" }).click();
+  await maria.getByRole("button", { name: "Sign claim" }).click();
   await maria.getByText(/Grade [BC] claim saved/).waitFor({ timeout: 300000 });
   await shot(maria, "3-claim");
 });
@@ -76,7 +77,7 @@ await scene("4 give the landlord the claim, not the file", async () => {
   await maria.getByPlaceholder("Who is this for?").fill("Landlord");
   await maria.getByRole("button", { name: "Create link" }).click();
   await maria.getByText("Link ready").waitFor({ timeout: 180000 });
-  link = await maria.locator("input[readonly]").inputValue();
+  link = await maria.locator("input[readonly]").inputValue(); await maria.getByRole("button", { name: "Done" }).click();
   await shot(maria, "4-link");
 });
 await scene("5 the landlord opens it; Maria sees the visit, verified", async () => {
@@ -84,23 +85,23 @@ await scene("5 the landlord opens it; Maria sees the visit, verified", async () 
   await landlord.goto(link);
   await landlord.getByText(/you've been given access/).waitFor({ timeout: 30000 });
   await landlord.getByRole("button", { name: "Open" }).click();
-  await landlord.getByText(/recorded · visit #1/).waitFor({ timeout: 180000 });
+  await landlord.getByText(/visit #1 is recorded/).waitFor({ timeout: 180000 });
   await landlord.getByText(/Loading \d+ of/).waitFor({ state: "detached", timeout: 180000 });
-  await maria.getByText(/Verified · \d+ receipts/).waitFor({ timeout: 90000 });
+  await maria.getByText(/^\d+ receipts?, checked/).waitFor({ timeout: 90000 });
   await shot(landlord, "5a-landlord"); await shot(maria, "5b-visitors");
 });
 await scene("6 Maria asks her safe a question (private AI)", async () => {
   await maria.getByRole("button", { name: "Ask", exact: true }).click();
   await maria.getByText(/searchable pages in this safe/).waitFor({ timeout: 90000 });
-  await maria.getByPlaceholder("e.g. How much is the monthly rent?").fill("How much is the monthly rent?");
+  await maria.getByPlaceholder("Ask about your files").fill("How much is the monthly rent?");
   await maria.keyboard.press("Enter");
-  await maria.getByText("Private · attested hardware").waitFor({ timeout: 300000 });
+  await maria.getByText("How this was checked").first().waitFor({ timeout: 300000 });
   await shot(maria, "6-ask");
 });
 await scene("7 Maria ends access; the landlord's next open fails", async () => {
-  await maria.getByRole("button", { name: "Give access" }).first().click();
+  await maria.getByRole("button", { name: "Access", exact: true }).click();
   await maria.getByRole("button", { name: "End access" }).first().click();
-  await maria.getByRole("button", { name: "Access ended" }).waitFor({ timeout: 120000 });
+  await maria.getByText("Ended by you").waitFor({ timeout: 120000 });
   const l2 = (await user("landlord2", false)).page;
   await l2.goto(link);
   await l2.getByRole("button", { name: "Open" }).click();

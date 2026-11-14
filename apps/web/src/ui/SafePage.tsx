@@ -219,7 +219,7 @@ function Files({ ctx, box, man, id, afterWrite }: { ctx: Ctx; box: BoxView; man:
                   <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{with_.length ? with_.map((g) => <span key={g.grantId} className="chip chip-a">{g.label}</span>) : <span className="faint" style={{ fontSize: 13 }}>{it.shareable ? "Not shared" : "Only you"}</span>}</span>
                   <span className="m mute" style={{ fontSize: 12 }}>{fmtSize(it.size)}</span>
                   <span className="mute" style={{ fontSize: 13 }}>{added(it.createdAt)}</span>
-                  <button className="x" aria-label={`More for ${it.name}`} onClick={() => setMenu(menu === it.uid ? null : it.uid)} style={{ fontSize: 18 }}>…</button>
+                  <button className="x" aria-label="File actions" onClick={() => setMenu(menu === it.uid ? null : it.uid)} style={{ fontSize: 18 }}>…</button>
                   {menu === it.uid && (
                     <div className="panel" style={{ position: "absolute", right: 12, top: 44, zIndex: 5, padding: 6, display: "flex", flexDirection: "column", minWidth: 170 }}>
                       {it.segments.some((s) => s.role === "page") && <button className="btn btn-g" style={{ justifyContent: "flex-start" }} onClick={() => open(it)}>Open</button>}

@@ -1,3 +1,4 @@
+import { Check } from "./kit";
 import { useEffect, useMemo, useState } from "react";
 import type { BoxView } from "@keyhole/chain";
 import { addItem, readSegment } from "../lib/upload";
@@ -54,18 +55,20 @@ export function RedactPanel({ ctx, box, man, item, onDone, onClose }: { ctx: Ctx
   };
 
   return (
-    <div className="card">
-      <div className="row"><strong className="grow">Hide details in {item.name}</strong><button className="ghost" onClick={onClose}>Close</button></div>
-      {text === null && !err && <p className="note">Reading the text…</p>}
+    <div className="panel" style={{ padding: 22, display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><div><div className="lbl" style={{ color: "var(--blue)" }}>[ Hide details ]</div><div className="h2" style={{ marginTop: 6 }}>{item.name}</div></div><button className="btn btn-s" onClick={onClose}>Close</button></div>
+      {text === null && !err && <p className="mute" style={{ margin: 0 }}>Reading the text…</p>}
       {text !== null && (
         <>
-          <p className="note">Tick what to hide. The copy is plain text with the hidden parts blocked out; the original stays in your safe. Pages that are only pictures can't be redacted in this version (no text recognition).</p>
-          {spans.length === 0 && <p className="note">Nothing that looks sensitive was found. You can still type a value to hide.</p>}
-          {spans.map((s, i) => <label key={i} className="row" style={{ margin: "4px 0" }}><input type="checkbox" style={{ width: "auto" }} checked={!off[i]} onChange={(e) => setOff({ ...off, [i]: !e.target.checked })} /> <span className="pill">{s.kind.replace("_", " ")}</span> <span className="mono">{s.value.length > 40 ? `${s.value.slice(0, 40)}…` : s.value}</span></label>)}
-          <input style={{ marginTop: 8 }} placeholder="Also hide this text (a name, an address line)" value={custom} onChange={(e) => setCustom(e.target.value)} />
-          <details style={{ marginTop: 8 }}><summary className="note">Preview of the copy</summary><pre style={{ whiteSpace: "pre-wrap" }}>{redacted}</pre></details>
-          <p style={{ marginTop: 8 }}><span className={`pill ${test?.ok ? "ok" : "bad"}`}>{test?.ok ? "Self-test passed" : "Self-test failed"}</span> <span className="note">{test?.ok ? `${chosen.length} part${chosen.length === 1 ? "" : "s"} hidden; no hidden value is readable in the copy and nothing else changed.` : test?.failures.join(" ")}</span></p>
-          <div className="row"><button disabled={!test?.ok || !!busy || chosen.length === 0} onClick={save}>Save redacted copy</button>{busy && <span className="note">{busy}</span>}</div>
+          <p className="mute" style={{ margin: 0, fontSize: 14 }}>Tick what to hide. The copy is plain text with the hidden parts blocked out. The original stays in your safe.</p>
+          {spans.length === 0 && <p className="mute" style={{ margin: 0, fontSize: 14 }}>Nothing that looks sensitive was found. You can still type a value to hide.</p>}
+          {spans.length > 0 && <div className="panel" style={{ overflow: "hidden" }}>
+            {spans.map((s, i) => <div key={i} className="tr redact-span" style={{ gridTemplateColumns: "1fr", padding: "10px 14px" }}><Check on={!off[i]} onChange={(v) => setOff({ ...off, [i]: !v })} label={`Hide ${s.value}`}><span className="chip chip-m">{s.kind.replace("_", " ")}</span> <span className="m" style={{ fontSize: 13 }}>{s.value.length > 40 ? `${s.value.slice(0, 40)}…` : s.value}</span></Check></div>)}
+          </div>}
+          <input className="input" placeholder="Also hide this text (a name, an address line)" value={custom} onChange={(e) => setCustom(e.target.value)} />
+          <details><summary className="lbl faint" style={{ cursor: "pointer" }}>Preview of the copy</summary><pre className="well" style={{ whiteSpace: "pre-wrap", padding: 14, fontFamily: "'Fragment Mono', monospace", fontSize: 13 }}>{redacted}</pre></details>
+          <p style={{ margin: 0, display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}><span className={`chip ${test?.ok ? "chip-b" : "chip-r"}`}>{test?.ok ? "Self-test passed" : "Self-test failed"}</span> <span className="mute" style={{ fontSize: 14 }}>{test?.ok ? `${chosen.length} part${chosen.length === 1 ? "" : "s"} hidden; no hidden value is readable in the copy and nothing else changed.` : test?.failures.join(" ")}</span></p>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}><button className="btn btn-p" disabled={!test?.ok || !!busy || chosen.length === 0} onClick={save}>Save redacted copy</button>{busy && <span className="mute" style={{ fontSize: 13 }}>{busy}</span>}</div>
         </>
       )}
       {err && <p className="err">{err}</p>}
