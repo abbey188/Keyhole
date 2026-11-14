@@ -5,7 +5,7 @@ import type { Ctx } from "../lib/upload";
 import type { Manifest } from "../lib/vault";
 import { buildIndex } from "../lib/index";
 import type { PageText } from "../lib/index";
-import { aiClient, FALLBACK_MODEL } from "../lib/ai";
+import { aiClient, ownerCredential, FALLBACK_MODEL } from "../lib/ai";
 
 /** Ask my safe: owner only. Search runs on the device; only the few pages needed go out, encrypted to an attested model. */
 export function AskTab({ ctx, man }: { ctx: Ctx; man: Manifest | null }) {
@@ -21,8 +21,8 @@ export function AskTab({ ctx, man }: { ctx: Ctx; man: Manifest | null }) {
     setErr(""); setRes(null); setBusy("Searching on this device…");
     try {
       const t = setTimeout(() => setBusy("Checking the private hardware's attestation, then sending the needed pages encrypted…"), 800);
-      let r = await askSafe(q.trim(), index, { client: aiClient() as never });
-      if (r.status === "no_answer" && r.reason === "model_error") { setBusy("The first private model is busy; trying another…"); r = await askSafe(q.trim(), index, { client: aiClient() as never, model: FALLBACK_MODEL }); }
+      let r = await askSafe(q.trim(), index, { client: aiClient(ownerCredential(ctx.id, ctx.reader)) as never });
+      if (r.status === "no_answer" && r.reason === "model_error") { setBusy("The first private model is busy; trying another…"); r = await askSafe(q.trim(), index, { client: aiClient(ownerCredential(ctx.id, ctx.reader)) as never, model: FALLBACK_MODEL }); }
       clearTimeout(t); setRes(r);
     } catch (e) { setErr(`The question could not be answered: ${(e as Error).message}`); }
     setBusy("");

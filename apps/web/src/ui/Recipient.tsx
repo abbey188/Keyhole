@@ -4,7 +4,7 @@ import { config } from "../lib/config";
 import { AccessEnded, askPages, closeVisit, decodeLink, logAnswer, openVisit, renew, reserveQuestion, viewSegment, REFUSAL } from "../lib/access";
 import { askSafe } from "@keyhole/askclaims";
 import type { AskResult } from "@keyhole/askclaims";
-import { aiClient, FALLBACK_MODEL } from "../lib/ai";
+import { aiClient, visitCredential, FALLBACK_MODEL } from "../lib/ai";
 import { buildAnswerPackage } from "../lib/verifyAnswer";
 import type { LinkPayload, Services, Visit } from "../lib/access";
 
@@ -90,8 +90,8 @@ function AskPanel({ visit }: { visit: Visit }) {
       const p = pages ?? await askPages(visit, svc); setPages(p);
       const r = await reserveQuestion(visit, svc, q.trim()); setLeft(r.left);
       setBusy("Checking the private hardware, then asking…");
-      let res: AskResult = await askSafe(q.trim(), p, { client: aiClient() as never });
-      if (res.status === "no_answer" && res.reason === "model_error") res = await askSafe(q.trim(), p, { client: aiClient() as never, model: FALLBACK_MODEL });
+      let res: AskResult = await askSafe(q.trim(), p, { client: aiClient(visitCredential(visit)) as never });
+      if (res.status === "no_answer" && res.reason === "model_error") res = await askSafe(q.trim(), p, { client: aiClient(visitCredential(visit)) as never, model: FALLBACK_MODEL });
       const text = res.status === "answer" ? res.answer : res.status === "no_answer" && res.tier === "device" ? REFUSAL : res.message;
       await logAnswer(visit, svc, r.n, { answer: text, status: res.status, ...(res.status === "answer" ? { citations: res.citations, evidence: res.evidence } : {}) });
       setOut({ text, note: res.status === "answer" ? `Private · ${res.evidence.model_id}. Quoted from the shared files.` : "", ...(res.status === "answer" ? { pkg: JSON.stringify(buildAnswerPackage(visit, q.trim(), res)) } : {}) });

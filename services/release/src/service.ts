@@ -90,6 +90,10 @@ export class ReleaseService {
   private readonly tokens = new Map<string, string>(); // token -> session id
   private readonly sessions = new Map<string, Session>();
   private readonly archive = new Map<string, ReceiptRecord>();
+  /** Short-lived AI relay credentials for box owners: token -> expiry and remaining calls. */
+  private readonly relayTokens = new Map<string, { exp: number; left: number }>();
+  /** AI relay calls used per visit session. */
+  private readonly relayUsed = new Map<string, number>();
   private readonly pending = new Set<string>(); // grant ids with an open in flight
   private readonly releases = new Map<string, number[]>(); // grant -> chain times of released segments
   private readonly backoff = new Map<string, { n: number; until: number }>();
@@ -131,6 +135,42 @@ export class ReleaseService {
     for (const [k, until] of this.usedSigs) if (until < now) this.usedSigs.delete(k);
     if (this.usedSigs.has(a.sig)) throw deny("replay");
     this.usedSigs.set(a.sig, a.ts + skew);
+  }
+
+  // ------------------------------------------------------------------ AI relay credentials
+
+  /** `POST /v1/relay/token`: an account that owns at least one box gets a 15-minute, 300-call credential for the AI relay. */
+  async relayToken(a: Auth): Promise<{ token: string; ttl_ms: number }> {
+    if (!isHex(a?.pk, 32)) throw deny();
+    await this.checkAuth(a.pk, a.pk, authBody("relay-token"), a);
+    const boxes = await this.chain(() => this.o.reader.boxesOf(a.pk));
+    if (boxes.length === 0) throw deny("no_box");
+    const now = Date.now();
+    for (const [k, v] of this.relayTokens) if (v.exp < now) this.relayTokens.delete(k);
+    const token = randomBytes(24).toString("hex");
+    this.relayTokens.set(token, { exp: now + 900_000, left: 300 });
+    return { token, ttl_ms: 900_000 };
+  }
+
+  /**
+   * Gate for every AI relay call. Passes for an owner credential (until it expires or its calls run out) or for a live visit session
+   * whose grant carries a question budget (at most 15 relay calls per budgeted question). Anything else is refused.
+   */
+  async authorizeRelay(credential: string | undefined): Promise<void> {
+    if (typeof credential !== "string" || !/^[0-9a-f]{48,64}$/.test(credential)) throw deny();
+    const t = this.relayTokens.get(credential);
+    if (t) {
+      if (t.exp < Date.now() || t.left <= 0) { this.relayTokens.delete(credential); throw deny("relay_credential"); }
+      t.left -= 1;
+      return;
+    }
+    const { s, now } = await this.session(credential);
+    await this.live(s, now); // grant still valid on chain (not revoked, not expired, current epoch)
+    const budget = this.o.store.get(s.grantId)?.policy?.ask?.budget ?? 0;
+    if (budget <= 0) throw deny("no_questions");
+    const used = (this.relayUsed.get(s.sessionId) ?? 0) + 1;
+    if (used > 15 * budget) throw new ReleaseError(429, "relay_budget");
+    this.relayUsed.set(s.sessionId, used);
   }
 
   // ------------------------------------------------------------------ grant material (owner)

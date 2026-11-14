@@ -22,7 +22,7 @@ const ORIGIN = process.env.APP_ORIGIN ?? "*";
 const CORS = {
   "access-control-allow-origin": ORIGIN,
   "access-control-allow-methods": "GET,POST,PUT,DELETE,OPTIONS",
-  "access-control-allow-headers": "content-type,accept,authorization,x-ts,x-pk,x-sig,x-ticket,x-reg-id,x-root,x-proof,x-no-aliasing,x-signing-algo,x-client-pub-key,x-model-pub-key,x-encryption-version",
+  "access-control-allow-headers": "content-type,accept,authorization,x-ts,x-pk,x-sig,x-ticket,x-reg-id,x-root,x-proof,x-no-aliasing,x-signing-algo,x-client-pub-key,x-model-pub-key,x-encryption-version,x-keyhole-relay",
   "access-control-max-age": "600",
 };
 
@@ -70,6 +70,7 @@ export function createReleaseServer(svc: ReleaseService, o: HttpOptions = {}): S
       else if (++e.n > limit) throw new ReleaseError(429, "rate_limited");
 
       if ((req.url ?? "").startsWith("/relay/")) {
+        await svc.authorizeRelay(typeof req.headers["x-keyhole-relay"] === "string" ? req.headers["x-keyhole-relay"] : undefined);
         const b = req.method === "GET" ? undefined : await readBody(req);
         if (await relay(req, res, b)) return;
       }
@@ -82,6 +83,7 @@ export function createReleaseServer(svc: ReleaseService, o: HttpOptions = {}): S
         const b = await json<{ account_id: string }>(req);
         return send(res, 200, await svc.sponsor(b.account_id));
       }
+      if (m === "POST" && p === "/v1/relay/token") return send(res, 200, await svc.relayToken(auth(req)));
       if (m === "GET" && p === "/v1/pubkeys") return send(res, 200, svc.pubkeys());
       if (m === "PUT" && (x = p.match(/^\/v1\/grants\/([0-9a-f]{32})\/scope$/))) {
         await svc.putScope(x[1] as string, await readBody(req), auth(req));
