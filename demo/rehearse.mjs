@@ -1,4 +1,4 @@
-// Autopilot rehearsal of the 3-minute story (docs/DEMO_SCRIPT.md) against testnet, with the local services running
+// Autopilot rehearsal of the 3-minute story (eight scenes, listed below) against testnet, with the local services running
 // (./scripts/dev-services.sh). Two browsers: Maria (owner, passkey) and the Landlord (link only). Prints a timing table, saves a
 // screenshot per scene and a video per browser to demo/out/<run>/. Usage: node demo/rehearse.mjs [run-name]
 import { mkdirSync, readFileSync } from "node:fs";
