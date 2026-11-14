@@ -2,20 +2,20 @@
 
 **A Keyhole safe is an NFT that holds your files.** They are encrypted on your device. You let someone in for a set time, every opening is written into a log nobody can edit, you can end access, and you can hand the whole safe to someone else, which kills every key you gave out. An AI that runs inside attested hardware can read the safe for you, and you can share a *claim* ("income is at least £3,000") instead of the document.
 
-> **Status: working on NEAR testnet, demo configuration, no external audit.** Everything below is backed by a test or a transaction (see [CLAIMS.md](CLAIMS.md), [docs/EVIDENCE.md](docs/EVIDENCE.md), and the judge page). Things not finished are marked `[NOT FINISHED]`; things deliberately left for later are marked `[LATER]`. Do not put real sensitive files in it.
+> **Status: working on NEAR testnet, demo configuration, no external audit.** Everything below is backed by a test or a transaction (see [CLAIMS.md](CLAIMS.md), [docs/EVIDENCE.md](docs/EVIDENCE.md), and the Proof page). Things not finished are marked `[NOT FINISHED]`; things deliberately left for later are marked `[LATER]`. Do not put real sensitive files in it.
 
 **Live demo (free trial, may be offline):** https://keyhole.fly.dev/ . It runs the same code on NEAR testnet with its own keyless contract; it can stop at any time (see `docs/HOSTING.md`). The proof does not depend on it: see below.
 
 ## See the proof in 2 minutes (no keys, no accounts)
 1. `git clone … && cd Keyhole && pnpm install`
 2. `./scripts/verify.sh` → you should see passing test summaries (Rust protocol and contract, TypeScript packages, services, app), the Wasm hash, and `C1 OK: … has 0 access keys`.
-3. `pnpm --filter @keyhole/web dev`, then open **http://localhost:5173/#judge**. You see the deployed contract with a *live* check that it has 0 access keys, every claim with its proof, nine real attacks against the contract that were refused (each with its transaction), and measured numbers.
+3. `pnpm --filter @keyhole/web dev`, then open **http://localhost:5173/proof**. You see the deployed contract with a *live* check that it has 0 access keys, every claim with its proof, nine real attacks against the contract that were refused (each with its transaction), and measured numbers.
 
 ## Run the whole product yourself (about 5 minutes, testnet only)
 The deployed contract's service keys are ours, so the full demo runs against **your own** keyless copy of the contract:
 1. `./scripts/testnet-setup.sh` builds the contract, creates funded testnet accounts through the public faucet, deploys, and deletes the contract's access keys. Secrets go to `./.env` (gitignored).
 2. `./scripts/dev-services.sh` starts the storage node, the release service and the web app.
-3. Open **http://localhost:5173/** (use `localhost`, not an IP: passkeys need it).
+3. Open **http://localhost:5173/** for the site and **http://localhost:5173/app** for the app (use `localhost`, not an IP: passkeys need it).
 
 For the AI features the local service relays encrypted traffic to NEAR AI; set `NEARAI_API_KEY` in your environment before step 2 (it never reaches the browser).
 
@@ -54,7 +54,7 @@ Private AI here means: the client checks a hardware attestation from NEAR AI Clo
 Claims use fixed wording: grade **B** "machine-read and owner-reviewed", grade **C** "self-declared". A claim is the owner's statement backed by a document, not a certificate. We never call a machine-read claim "verified". Grade A (issuer-signed) and zero-knowledge "Proved" are `[LATER]`.
 
 ## What is built
-Built and tested: the protocol and contract (boxes as NFTs with blocked transfers, grants, receipt chain, blobs, handover with escrow), storage node, release service, client store, the web app (passkey sign-in, files, give access with a watermarked viewer, visitor log with verification, re-lock, handover, Ask, Claims, Verify, judge page), the attestation client, and an attack lab. Mock components are labelled `MOCK` in code (the mock chain is compared with the real contract on a recorded scenario).
+Built and tested: the protocol and contract (boxes as NFTs with blocked transfers, grants, receipt chain, blobs, handover with escrow), storage node, release service, client store, the web app (passkey sign-in, files, give access with a watermarked viewer, visitor log with verification, re-lock, handover, Ask, Claims, Verify, Proof page), the attestation client, and an attack lab. Mock components are labelled `MOCK` in code (the mock chain is compared with the real contract on a recorded scenario).
 
 `[NOT FINISHED]`: the Verify page does not re-run the attestation or re-match quotes; real-device passkey test (a virtual authenticator is used); scanned-document search (no OCR); audio and video playback (stored, owner-download only); persistent encrypted copy of access links.
 `[LATER]`: threshold release, release service in a hardware enclave, zero-knowledge proofs, auditor view, redaction of scanned pages and images, issuer-signed claims, multi-party rooms.
@@ -63,7 +63,7 @@ Built and tested: the protocol and contract (boxes as NFTs with blocked transfer
 A photo of the screen cannot be prevented. A recipient keeps whatever they saw. A stolen passkey is a full compromise. The contract has no upgrade path by design. Testnet only; demo timings. No external audit (see [SECURITY.md](SECURITY.md) for the internal review and its open items).
 
 ## Build window and disclosure
-The NEAR contract, protocol crate and services were first written on **2026-11-10 and 11** (see the git history); the web app, browser flows, AI integration (attestation client, Ask, Claims), the relay, the judge page, the attack lab and the proof layer were built from **2026-11-13**. We state both so the build window can be judged accurately. Most of the code was written by AI assistants under the owner's direction; libraries and licences are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Design: `docs/spec/`; repository map: [AGENTS.md](AGENTS.md); plan: [docs/PLAN_2026-11-13.md](docs/PLAN_2026-11-13.md).
+The NEAR contract, protocol crate and services were first written on **2026-11-10 and 11** (see the git history); the web app, browser flows, AI integration (attestation client, Ask, Claims), the relay, the Proof page, the attack lab and the proof layer were built from **2026-11-13**. We state both so the build window can be judged accurately. Most of the code was written by AI assistants under the owner's direction; libraries and licences are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Design: `docs/spec/`; repository map: [AGENTS.md](AGENTS.md); plan: [docs/PLAN_2026-11-13.md](docs/PLAN_2026-11-13.md).
 
 ## Licence
 **MIT OR Apache-2.0**, at your option (`LICENSE-MIT`, `LICENSE-APACHE`). Apache-2.0 gives an explicit patent grant, which matters for a cryptographic protocol; MIT keeps reuse simple; the pair is the Rust and NEAR ecosystem norm (near-sdk uses it), so contract and client code can be reused with either. Libraries we depend on keep their own licences: see `THIRD_PARTY_NOTICES.md`.

@@ -41,7 +41,7 @@ console.log("buyer: received and re-locked in", Math.round((Date.now() - t0) / 1
 await buyer.getByText("Safe 1", { exact: true }).first().waitFor({ timeout: 60000 });
 await buyer.getByText("Safe 1", { exact: true }).first().click();
 await buyer.getByText("lease.pdf").first().waitFor({ timeout: 60000 }); await buyer.locator(".tray").waitFor({ state: "detached", timeout: 60000 });
-await buyer.locator(".card", { hasText: "lease.pdf" }).getByRole("button", { name: "Open" }).click();
+await buyer.getByRole("button", { name: "lease.pdf" }).click();
 await buyer.locator("img").first().waitFor({ timeout: 60000 });
 console.log("buyer opens the lease page under their own keys: yes");
 await buyer.screenshot({ path: SHOT });

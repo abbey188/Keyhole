@@ -6,7 +6,7 @@ Start here:
 - [README](README.md): what it is, how to verify in 2 minutes, do-this-see-that, trust model, AI trust model, limits.
 - [CLAIMS.md](CLAIMS.md): each claim and the test or transaction that proves it.
 - [docs/EVIDENCE.md](docs/EVIDENCE.md): evidence log with transaction links; `deploy/*.json` are the raw testnet records.
-- Judge page: run `pnpm --filter @keyhole/web dev` and open `/#judge` (live keyless check, attack lab with transactions).
+- Judge page: run `pnpm --filter @keyhole/web dev` and open `/proof` (live keyless check, attack lab with transactions). The landing page is `/`, the app is `/app`, docs pages are `/trust`, `/security`, `/limits`, `/developers`.
 - [SECURITY.md](SECURITY.md): internal review, fixed and open findings.
 - `./scripts/verify.sh`: one command that runs every test and the on-chain keyless check.
 

@@ -13,7 +13,7 @@ await owner.getByText("Safe 1", { exact: true }).first().click();
 await owner.getByText("This safe is empty").waitFor({ timeout: 30000 });
 await owner.locator("input[type=file]").setInputFiles({ name: "passport.pdf", mimeType: "application/pdf", buffer: readFileSync(PDF) });
 await owner.getByText("passport.pdf").first().waitFor({ timeout: 240000 }); await owner.locator(".tray").waitFor({ state: "detached", timeout: 240000 });
-await owner.getByRole("button", { name: "Hide details…" }).click();
+await owner.getByRole("button", { name: "File actions" }).first().click(); await owner.getByRole("button", { name: "Hide details…" }).click();
 await owner.getByText("Self-test passed").waitFor({ timeout: 60000 });
 console.log("detected:", JSON.stringify(await owner.locator(".redact-span").allTextContents()));
 console.log("self-test:", await owner.getByText("Self-test passed").textContent(), "|", await owner.locator("p", { hasText: "hidden; no hidden value" }).first().textContent());
