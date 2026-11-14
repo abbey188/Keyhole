@@ -3,7 +3,7 @@ import { useState } from "react";
 import { bytesToHex, hexToBytes } from "@keyhole/crypto";
 import { identityFromPassphrase, newSalt, passkeyCreate, passkeyUnlockWithId, PrfUnsupported } from "../lib/keys";
 import type { Identity } from "../lib/keys";
-import { Logo } from "./kit";
+import { Logo, Working } from "./kit";
 
 export const LS = { cred: "keyhole.credId", salt: "keyhole.salt", mode: "keyhole.mode" };
 const get = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
@@ -76,7 +76,7 @@ export function SignIn({ onIdentity }: { onIdentity: (i: Identity) => void }) {
             <button className="btn btn-p btn-lg" style={{ justifyContent: "space-between", width: "100%" }} disabled={!!busy || pass.length < 8} onClick={withPassphrase}>{get(LS.salt) ? "Unlock" : "Create"} <span className="m">→</span></button>
             <button className="btn btn-g" style={{ paddingLeft: 0, background: "transparent", border: 0, alignSelf: "flex-start", textDecoration: "underline", textUnderlineOffset: 4, fontWeight: 500 }} onClick={() => setFallback(false)}>Use a passkey instead</button>
           </>}
-          {busy && <p className="mute" style={{ margin: 0, fontSize: 14 }}>{busy}</p>}
+          {busy && <Working>{busy}</Working>}
           {err && <p className="err">{err}</p>}
         </div>
       </section>

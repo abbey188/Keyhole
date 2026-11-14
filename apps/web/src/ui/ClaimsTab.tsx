@@ -15,7 +15,7 @@ import { loadGrants, saveGrants } from "../lib/localvault";
 import type { SavedGrant } from "../lib/localvault";
 import type { BoxView } from "@keyhole/chain";
 import type { Receipt } from "../lib/upload";
-import { Check } from "./kit";
+import { Check, Working } from "./kit";
 
 const svc: Services = { releaseUrl: config.releaseUrl, nodeUrls: config.nodeUrls, chainId: config.chainId, contractId: config.contractId };
 const SHARE_HOURS = 24;
@@ -230,7 +230,7 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
               <button className="btn btn-p" disabled={!who.trim() || !!busy} onClick={share}>Share claim</button>
             </div>
           )}
-          {busy && <div className="mute" style={{ fontSize: 14 }}>{busy}</div>}
+          {busy && <div><Working>{busy}</Working></div>}
           {made && <div className="made" style={{ fontSize: 14 }}><span className="chip chip-s" style={{ marginRight: 8 }}>Saved</span>{made}</div>}
           {shared && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>

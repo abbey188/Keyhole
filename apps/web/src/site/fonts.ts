@@ -9,11 +9,12 @@ const faces: [string, string, FontFaceDescriptors][] = [
   ["Share Tech Mono", shareTechMono, { weight: "400", style: "normal", display: "swap" }],
 ];
 
-export function loadFonts(): void {
-  if (typeof FontFace === "undefined") return;
-  for (const [family, url, d] of faces) {
+/** Registers the fonts and resolves when they are loaded (or failed), so the first paint can use them. */
+export function loadFonts(): Promise<void> {
+  if (typeof FontFace === "undefined") return Promise.resolve();
+  return Promise.all(faces.map(([family, url, d]) => {
     const f = new FontFace(family, `url(${url}) format("woff2")`, d);
     document.fonts.add(f);
-    void f.load().catch(() => undefined);
-  }
+    return f.load().then(() => undefined, () => undefined);
+  })).then(() => undefined);
 }

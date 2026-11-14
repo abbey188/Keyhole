@@ -7,7 +7,7 @@ import type { Manifest } from "../lib/vault";
 import { buildIndex } from "../lib/index";
 import type { PageText } from "../lib/index";
 import { aiClient, ownerCredential, FALLBACK_MODEL } from "../lib/ai";
-import { Check } from "./kit";
+import { Check, Working } from "./kit";
 
 interface Turn { q: string; res?: AskResult; err?: string }
 
@@ -96,7 +96,7 @@ function TurnView({ t, names, busy }: { t: Turn; names: Record<string, string>; 
   return (
     <>
       <div style={bubbleQ}>{t.q}</div>
-      {busy && <div className="mute" style={{ ...bubbleA, background: "var(--paper2)", fontSize: 14 }}>{busy}</div>}
+      {busy && <div style={{ ...bubbleA, background: "var(--paper2)" }}><Working>{busy}</Working></div>}
       {t.err && <p className="err" style={{ margin: 0 }}>{t.err}</p>}
       {r?.status === "answer" && (
         <div style={bubbleA}>

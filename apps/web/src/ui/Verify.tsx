@@ -6,7 +6,7 @@ import type { SignedClaim } from "../lib/claims";
 import { verifyAnswerPackage } from "../lib/verifyAnswer";
 import type { AnswerPackage, Step, StepStatus } from "../lib/verifyAnswer";
 import { reader } from "../lib/clients";
-import { AppShell } from "./kit";
+import { AppShell, Working } from "./kit";
 
 // Design A14 (docs/design/A14Verify.dc.html). Both checks run here, in the browser: a signed claim offline (signature, structure,
 // source commitment, grade basis, expiry), an answer package in the fixed order of verifyAnswerPackage (with the chain for steps 2 and 5).
@@ -138,7 +138,7 @@ export function Verify() {
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <button className="btn btn-p btn-lg" disabled={!value.trim() || busy} onClick={() => void run()}>Verify <span className="m">→</span></button>
             {mode === "claim" && <button className="btn btn-s btn-lg" onClick={() => { setText({ ...text, claim: sampleClaim() }); setPk(""); setSteps(null); setErr(""); }}>Use a sample</button>}
-            {busy && <span className="mute" style={{ fontSize: 14 }}>Reading the chain…</span>}
+            {busy && <Working>Reading the chain…</Working>}
           </div>
           {err && <p className="err">{err}</p>}
         </div>

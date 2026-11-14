@@ -10,7 +10,7 @@ import type { SavedGrant } from "../lib/localvault";
 import { fetchFeed } from "../lib/visitors";
 import type { FeedRecord } from "../lib/visitors";
 import { svc } from "../lib/safemeta";
-import { fmtClock } from "./kit";
+import { fmtClock, Working } from "./kit";
 
 const WEEK = 7 * 86_400_000;
 const day = (t: number) => new Date(t).toLocaleDateString(undefined, { weekday: "short", day: "numeric" }) + " " + new Date(t).toTimeString().slice(0, 5);
@@ -87,7 +87,7 @@ export function AccessTab({ ctx, man, onChanged }: { ctx: Ctx; man: Manifest | n
       {err && <p className="err">{err}</p>}
       <div className="well" style={{ padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, marginTop: 10 }}>
         <div><div style={{ fontWeight: 700, fontSize: 15 }}>Re-lock this safe</div><div className="mute" style={{ fontSize: 14, marginTop: 2 }}>Ends every open link and changes the keys of every file.</div></div>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>{relocking && <span className="mute" style={{ fontSize: 13 }}>{relocking}</span>}{relocked && <span className="chip chip-b">Re-locked</span>}<button className="btn btn-o" disabled={!!relocking || (man?.items.length ?? 0) === 0} onClick={doRelock}>Re-lock now</button></div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>{relocking && <Working>{relocking}</Working>}{relocked && <span className="chip chip-b">Re-locked</span>}<button className="btn btn-o" disabled={!!relocking || (man?.items.length ?? 0) === 0} onClick={doRelock}>Re-lock now</button></div>
       </div>
     </div>
   );

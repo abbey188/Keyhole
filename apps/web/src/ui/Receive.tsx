@@ -1,3 +1,4 @@
+import { Working } from "./kit";
 import { useState } from "react";
 import type { ChainWriter, DealApi, DealView } from "@keyhole/chain";
 import { HttpNodeApi } from "@keyhole/store";
@@ -77,8 +78,8 @@ export function Receive({ id, onDone }: { id: Identity; onDone: () => void }) {
         {deal && !done && (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={{ fontSize: 17, lineHeight: "24px" }}>A safe is being handed to you for <b>{fmt(deal.price)}</b>.</div>
-            {deal.state === "Ready" && <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}><button className="btn btn-of btn-lg" disabled={!!busy} onClick={accept}>Accept the safe <span className="m">→</span></button>{busy && <span className="mute" style={{ fontSize: 14 }}>{busy}</span>}</div>}
-            {deal.state !== "Ready" && busy && <span className="mute" style={{ fontSize: 14 }}>{busy}</span>}
+            {deal.state === "Ready" && <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}><button className="btn btn-of btn-lg" disabled={!!busy} onClick={accept}>Accept the safe <span className="m">→</span></button>{busy && <Working>{busy}</Working>}</div>}
+            {deal.state !== "Ready" && busy && <Working>{busy}</Working>}
             {deal.state !== "Ready" && !busy && <span className="chip chip-m" style={{ alignSelf: "flex-start" }}>This handover is {deal.state.toLowerCase()}</span>}
           </div>
         )}

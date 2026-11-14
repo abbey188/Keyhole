@@ -85,3 +85,23 @@ export function Check({ on, onChange, label, children }: { on: boolean; onChange
 }
 
 export const fmtClock = (ms: number) => { const s = Math.max(0, Math.floor(ms / 1000)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return h ? `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(x).padStart(2, "0")}` : `${String(m).padStart(2, "0")}:${String(x).padStart(2, "0")}`; };
+
+/** A small spinner in ink (no shadows). */
+export const Spinner = () => <span className="spin" aria-hidden="true" />;
+
+/** Long operations shown as steps: done steps ticked, the current one spinning, later ones faint. */
+export function Steps({ steps, current }: { steps: string[]; current: number }) {
+  return (
+    <ol className="steps" aria-live="polite">
+      {steps.map((s, i) => (
+        <li key={s} className={i < current ? "done" : i === current ? "now" : "next"}>
+          <span className="mark">{i < current ? <svg width="11" height="11" viewBox="0 0 12 12"><path d="M2 6.3l2.5 2.5L10 3.3" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg> : i === current ? <Spinner /> : null}</span>
+          <span>{s}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** One-line busy state in ink, with a spinner. */
+export const Working = ({ children }: { children: ReactNode }) => <span className="working"><Spinner />{children}</span>;

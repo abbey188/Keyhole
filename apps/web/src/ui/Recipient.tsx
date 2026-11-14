@@ -8,7 +8,7 @@ import type { AskResult } from "@keyhole/askclaims";
 import { aiClient, visitCredential, FALLBACK_MODEL } from "../lib/ai";
 import { buildAnswerPackage } from "../lib/verifyAnswer";
 import type { LinkPayload, Services, Visit } from "../lib/access";
-import { Logo, SafeIcon, fmtClock } from "./kit";
+import { Logo, SafeIcon, fmtClock, Working } from "./kit";
 
 const svc: Services = { releaseUrl: config.releaseUrl, nodeUrls: config.nodeUrls, chainId: config.chainId, contractId: config.contractId };
 
@@ -311,7 +311,7 @@ function AskPanel({ visit, onAsked }: { visit: Visit; onAsked: (n: number) => vo
           </div>
         ))}
         {pending && <div style={mine}>{pending}</div>}
-        {busy && <div className="mute" style={{ fontSize: 13 }}>{busy}</div>}
+        {busy && <div><Working>{busy}</Working></div>}
         <div ref={end} />
       </div>
       <form style={{ borderTop: "1px solid var(--line)", padding: 12, display: "flex", gap: 10 }} onSubmit={(e) => { e.preventDefault(); void go(); }}>

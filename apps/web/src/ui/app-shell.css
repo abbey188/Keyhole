@@ -40,3 +40,14 @@
 .app .drop:hover, .app .drop.on { border-color: var(--blue); background: var(--sky2); }
 .app .file-name:hover span { text-decoration: underline; text-underline-offset: 3px; }
 .app .crumb a:hover { color: var(--ink); }
+.spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ink); display: inline-block; flex: none; animation: kh-spin .8s linear infinite; }
+@keyframes kh-spin { to { transform: rotate(360deg); } }
+.app .working { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); font-size: 14px; font-weight: 600; }
+.app .steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.app .steps li { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--ink); }
+.app .steps li.next { color: var(--faint); }
+.app .steps li.now { font-weight: 700; }
+.app .steps .mark { width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--line2); flex: none; }
+.app .steps li.done .mark { background: var(--blue); border-color: var(--blue); }
+.app .steps li.now .mark { border: 0; }
+.app button:disabled { opacity: .55; }

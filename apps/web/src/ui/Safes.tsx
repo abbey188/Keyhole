@@ -10,7 +10,7 @@ import { emptyManifest, SAFE_COLOURS } from "../lib/vault";
 import { txLink } from "../lib/config";
 import { ctxFor, safeColour, safeName } from "../lib/safemeta";
 import type { SafeInfo } from "../lib/safemeta";
-import { AppShell, SafeIcon, fmtClock, serialLabel } from "./kit";
+import { AppShell, SafeIcon, Steps, fmtClock, serialLabel } from "./kit";
 import type { RailSafe } from "./kit";
 import { Receive } from "./Receive";
 
@@ -92,21 +92,21 @@ function NewSafe({ id, nextSerial, onClose, onCreated }: { id: Identity; nextSer
   const [name, setName] = useState("");
   const [color, setColor] = useState<string>(SAFE_COLOURS[0]);
   const [busy, setBusy] = useState("");
+  const [step, setStep] = useState(-1);
   const [err, setErr] = useState("");
-  const [tx, setTx] = useState("");
   const create = async () => {
-    setErr(""); setBusy("Setting up…");
+    setErr(""); setBusy("working"); setStep(0);
     try {
-      await ensureFunded(id, setBusy);
-      setBusy("Creating your safe…");
+      await ensureFunded(id, () => undefined);
+      setStep(1);
       const r = await createSafe(id, writerFor(id));
-      setTx(r.txHash);
-      setBusy("Saving the name…");
+      setStep(2);
       const box = (await reader.box(r.boxId)) as BoxView;
       const ctx = ctxFor(id, reader, box);
       await saveManifest(ctx, box, { ...emptyManifest(r.boxId, box.key_epoch), seq: 1, meta: { name: name.trim() || `Safe ${nextSerial}`, color } });
+      setStep(3);
       await onCreated(r.boxId);
-    } catch (e) { setErr((e as Error).message); setBusy(""); }
+    } catch (e) { setErr((e as Error).message); setBusy(""); setStep(-1); }
   };
   return (
     <>
@@ -127,10 +127,11 @@ function NewSafe({ id, nextSerial, onClose, onCreated }: { id: Identity; nextSer
               {SAFE_COLOURS.map((c) => <button key={c} aria-label={`Colour ${c}`} onClick={() => setColor(c)} style={{ width: 36, height: 36, borderRadius: 10, background: c, border: 0, outline: c === color ? "2px solid #0E1435" : "none", outlineOffset: 2 }} />)}
             </div>
           </div>
+          {step >= 0 && <div className="well" style={{ padding: "14px 16px" }}><Steps current={step} steps={["Setting up your account on NEAR", "Creating your safe", "Sealing its name inside the safe", "Opening your safe"]} /></div>}
           {err && <p className="err" style={{ margin: 0 }}>{err}</p>}
         </div>
         <div style={{ padding: "18px 28px", borderTop: "1px solid var(--line)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
-          <span className="lbl faint">{busy || (tx ? "" : "")}</span>
+          <span />
           <div style={{ display: "flex", gap: 10 }}>
             <button className="btn btn-s" onClick={onClose} disabled={!!busy}>Cancel</button>
             <button className="btn btn-p" onClick={create} disabled={!!busy}>Create safe <span className="m">→</span></button>

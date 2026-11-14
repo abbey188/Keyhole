@@ -7,7 +7,7 @@ import type { ItemRecord, Manifest } from "../lib/vault";
 import { endAccess, giveAccess } from "../lib/access";
 import { loadGrants, saveGrants } from "../lib/localvault";
 import { svc } from "../lib/safemeta";
-import { Check, fmtClock } from "./kit";
+import { Check, Steps, Working, fmtClock } from "./kit";
 
 const DURATIONS: [string, number][] = [["1H", 1], ["2H", 2], ["24H", 24]];
 
@@ -84,10 +84,11 @@ export function GiveAccessDrawer({ ctx, man, onClose, onChanged }: { ctx: Ctx; m
               </div></div>
             </div>
             {chosen.length > 0 && <div style={{ background: "var(--amber2)", borderRadius: 10, padding: "14px 16px", fontSize: 14, lineHeight: "21px" }}>{sentence}</div>}
+            {busy === "Creating the link…" && <div className="well" style={{ padding: "14px 16px" }}><Steps current={0} steps={["Recording the access on NEAR and handing the key half to the release service", "Your link"]} /></div>}
             {err && <p className="err" style={{ margin: 0 }}>{err}</p>}
           </div>
           <div className="df" style={{ justifyContent: "flex-end", alignItems: "center" }}>
-            {busy && <span className="mute" style={{ fontSize: 13, marginRight: "auto" }}>{busy}</span>}
+            {busy && busy !== "Creating the link…" && <span style={{ marginRight: "auto" }}><Working>{busy}</Working></span>}
             <button className="btn btn-s" onClick={onClose} disabled={!!busy}>Cancel</button>
             <button className="btn btn-p" onClick={create} disabled={!!busy || chosen.length === 0 || !label.trim()}>Create link <span className="m">→</span></button>
           </div>
@@ -113,7 +114,7 @@ export function GiveAccessDrawer({ ctx, man, onClose, onChanged }: { ctx: Ctx; m
           </div>
           <div className="df" style={{ justifyContent: "space-between", alignItems: "center" }}>
             <button className="btn btn-o" onClick={end} disabled={!!busy || ended}>{ended ? "Access ended" : "End access"}</button>
-            {busy && <span className="mute" style={{ fontSize: 13 }}>{busy}</span>}
+            {busy && <Working>{busy}</Working>}
             <button className="btn btn-p" onClick={onClose}>Done</button>
           </div>
         </>}
