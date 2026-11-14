@@ -13,7 +13,7 @@ import { emptyManifest } from "../lib/vault";
 import { loadGrants } from "../lib/localvault";
 import { ctxFor, safeColour, safeName } from "../lib/safemeta";
 import type { SafeInfo } from "../lib/safemeta";
-import { AppShell, SafeIcon, fmtClock, serialLabel } from "./kit";
+import { AppShell, SafeIcon, fmtClock, serialLabel, useDismiss } from "./kit";
 import type { RailSafe } from "./kit";
 import { RedactPanel } from "./RedactPanel";
 import { AccessTab } from "./AccessTab";
@@ -125,6 +125,7 @@ function Files({ ctx, box, man, id, afterWrite }: { ctx: Ctx; box: BoxView; man:
   const [err, setErr] = useState("");
   const [notes, setNotes] = useState<string[]>([]);
   const [menu, setMenu] = useState<string | null>(null);
+  const menuRef = useDismiss<HTMLSpanElement>(menu !== null, () => setMenu(null));
   const [redact, setRedact] = useState<ItemRecord | null>(null);
   const [newFolder, setNewFolder] = useState<string | null>(null);
   const [preview, setPreview] = useState<{ item: ItemRecord; urls: { kind: string; src: string }[] } | null>(null);
@@ -221,14 +222,16 @@ function Files({ ctx, box, man, id, afterWrite }: { ctx: Ctx; box: BoxView; man:
                   <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>{with_.length ? with_.map((g) => <span key={g.grantId} className="chip chip-a">{g.label}</span>) : <span className="faint" style={{ fontSize: 13 }}>{it.shareable ? "Not shared" : "Only you"}</span>}</span>
                   <span className="m mute" style={{ fontSize: 12 }}>{fmtSize(it.size)}</span>
                   <span className="mute" style={{ fontSize: 13 }}>{added(it.createdAt)}</span>
-                  <button className="x" aria-label="File actions" onClick={() => setMenu(menu === it.uid ? null : it.uid)} style={{ fontSize: 18 }}>…</button>
+                  <span ref={menu === it.uid ? menuRef : undefined} style={{ display: "contents" }}>
+                  <button className="x" aria-label="File actions" aria-haspopup="menu" aria-expanded={menu === it.uid} onClick={() => setMenu(menu === it.uid ? null : it.uid)} style={{ fontSize: 18 }}>…</button>
                   {menu === it.uid && (
                     <div className="panel" style={{ position: "absolute", right: 12, top: 44, zIndex: 5, padding: 6, display: "flex", flexDirection: "column", minWidth: 170 }}>
-                      {it.segments.some((s) => s.role === "page") && <button className="btn btn-g" style={{ justifyContent: "flex-start" }} onClick={() => open(it)}>Open</button>}
+                      {it.segments.some((s) => s.role === "page") && <button className="btn btn-g" style={{ justifyContent: "flex-start" }} onClick={() => { setMenu(null); void open(it); }}>Open</button>}
                       {(it.kind === "text" || it.segments.some((s) => s.role === "text")) && <button className="btn btn-g" style={{ justifyContent: "flex-start" }} onClick={() => { setMenu(null); setRedact(it); }}>Hide details…</button>}
-                      <button className="btn btn-g" style={{ justifyContent: "flex-start" }} onClick={() => download(it)}>Download</button>
+                      <button className="btn btn-g" style={{ justifyContent: "flex-start" }} onClick={() => { setMenu(null); void download(it); }}>Download</button>
                     </div>
                   )}
+                  </span>
                 </div>
               );
             })}

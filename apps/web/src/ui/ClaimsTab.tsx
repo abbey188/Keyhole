@@ -15,7 +15,7 @@ import { loadGrants, saveGrants } from "../lib/localvault";
 import type { SavedGrant } from "../lib/localvault";
 import type { BoxView } from "@keyhole/chain";
 import type { Receipt } from "../lib/upload";
-import { Check, Working } from "./kit";
+import { Check, Working, useDismiss } from "./kit";
 
 const svc: Services = { releaseUrl: config.releaseUrl, nodeUrls: config.nodeUrls, chainId: config.chainId, contractId: config.contractId };
 const SHARE_HOURS = 24;
@@ -39,6 +39,7 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
   const [index, setIndex] = useState<PageText[] | null>(null);
   const [pick, setPick] = useState("");
   const [picking, setPicking] = useState(false);
+  const pickRef = useDismiss<HTMLDivElement>(picking, () => setPicking(false));
   const [draft, setDraft] = useState<Draft | null>(null);
   const [cross, setCross] = useState<FactCrossCheck | null>(null);
   const [sel, setSel] = useState("");
@@ -150,6 +151,7 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
         {index === null && <div className="mute" style={{ fontSize: 14 }}>Reading your files…</div>}
         {index && docs.length === 0 && <div className="mute" style={{ fontSize: 14 }}>Add a document with text first: a PDF, or a text, Markdown, CSV, HTML or JSON file.</div>}
         {index && unread > 0 && <div className="faint" style={{ fontSize: 13 }}>Photos and scanned PDFs can't be read yet.</div>}
+        <div ref={pickRef} style={{ display: "contents" }}>
         {docs.length > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <span className="h2" style={{ minWidth: 0, overflowWrap: "anywhere" }}>Facts in {pickedName || "a file"}</span>
@@ -166,6 +168,7 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
             ))}
           </div>
         )}
+        </div>
         {draft && facts.length === 0 && <div className="mute" style={{ fontSize: 14 }}>No facts found on this device. Cross-check with a private model to look for more.</div>}
         {draft && facts.length > 0 && (
           <div className="panel facts" style={{ overflow: "hidden" }}>
