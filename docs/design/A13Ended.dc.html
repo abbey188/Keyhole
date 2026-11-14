@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Keyhole access ended</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..800&family=Fragment+Mono&family=Share+Tech+Mono&display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" style="flex-direction:column">
+<header style="height:66px;flex:none;background:var(--ink);color:#FFFFFF;display:flex;align-items:center;justify-content:space-between;padding:0 36px">
+<div style="display:flex;align-items:center;gap:14px"><svg width="22" height="28" viewBox="0 0 24 30" aria-hidden="true"><rect width="24" height="30" rx="5" fill="#FFFFFF"/><circle cx="12" cy="11.5" r="4.6" fill="#0E1435"/><path d="M10.2 14.2L7.6 23.6Q7.4 24.6 8.4 24.6H15.6Q16.6 24.6 16.4 23.6L13.8 14.2Z" fill="#0E1435"/></svg><span style="font-weight:700;font-size:16px">Shared with you</span><span style="font-size:14px;color:#C3C9E0">Flat documents</span></div>
+<span class="n" style="border:1px solid #5B6596;color:#C3C9E0;border-radius:8px;padding:6px 12px;font-size:20px">00:00:00</span>
+</header>
+<div style="flex:1;display:flex;align-items:center;justify-content:center">
+<div style="display:flex;flex-direction:column;align-items:center;gap:26px;text-align:center;width:520px">
+<svg width="132" height="164" viewBox="0 0 132 164" role="img" aria-label="A locked safe door">
+<rect x="0.75" y="0.75" width="130.5" height="162.5" rx="22" fill="#FFFFFF" stroke="#0E1435" stroke-width="1.5"/>
+<circle cx="66" cy="70" r="40" fill="none" stroke="#0E1435" stroke-width="1.5"/>
+<circle cx="66" cy="70" r="33" fill="none" stroke="#0E1435" stroke-width="3.2" stroke-dasharray="0.9 4.2"/>
+<circle cx="66" cy="70" r="24" fill="#0E1435"/>
+<circle cx="66" cy="64" r="6.6" fill="#FFFFFF"/>
+<path d="M63.2 69L59.8 83Q59.4 85 61.4 85H70.6Q72.6 85 72.2 83L68.8 69Z" fill="#FFFFFF"/>
+<rect x="38" y="128" width="56" height="16" rx="4" fill="#E2603A"/>
+<text x="66" y="139.5" text-anchor="middle" font-family="Fragment Mono, monospace" font-size="9.5" letter-spacing="1.4" fill="#FFFFFF">LOCKED</text>
+</svg>
+<div><h1 class="h1" style="font-size:36px;line-height:40px">This access has ended</h1>
+<p style="margin:12px 0 0;font-size:17px;line-height:26px" class="mute">The owner ended it at 14:20. Nothing from this safe can be opened with this link.</p></div>
+<div class="panel" style="width:100%;border-radius:12px;text-align:left">
+<div style="display:flex;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);font-size:14px"><span class="mute">Your visits</span><span>2</span></div>
+<div style="display:flex;justify-content:space-between;padding:12px 16px;font-size:14px"><span class="mute">Questions asked</span><span>2</span></div>
+</div>
+<a class="btn btn-g" style="font-size:14px;text-decoration:underline;text-underline-offset:4px">What is Keyhole?</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

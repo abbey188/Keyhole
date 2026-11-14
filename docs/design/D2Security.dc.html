@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Keyhole security notes</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..800&amp;family=Fragment+Mono&amp;family=Share+Tech+Mono&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="doc">
+<header class="dtop"><div class="dtop-in">
+<a class="dlogo" href="#home"><svg width="22" height="28" viewBox="0 0 24 30" aria-hidden="true"><rect width="24" height="30" rx="5" fill="#FFFFFF"></rect><circle cx="12" cy="11.5" r="4.6" fill="#0E1435"></circle><path d="M10.2 14.2L7.6 23.6Q7.4 24.6 8.4 24.6H15.6Q16.6 24.6 16.4 23.6L13.8 14.2Z" fill="#0E1435"></path></svg>Keyhole</a>
+<nav class="dnav"><a href="#how">How it works</a><a class="on" href="#trust">Trust</a><a href="#developers">Developers</a><a href="#proof">Proof</a></nav>
+<a class="btn btn-a" href="#open-app">Open the app <span class="m">→</span></a>
+</div></header>
+
+<div class="dwrap">
+<nav class="dside">
+<span class="sec">Trust</span>
+<a href="#trust">Trust model</a>
+<a class="on" href="#security">Security notes</a>
+<a href="#limits">What it does and does not do</a>
+<span class="sec">Build</span>
+<a href="#developers">Developers</a>
+<a href="#proof">Proof</a>
+</nav>
+
+<main class="dmain">
+<div class="lbl" style="color:var(--blue)">[ Security notes ]</div>
+<h1>How Keyhole is checked</h1>
+<p class="lead">What we test, what a hostile review found and fixed, and what is still on the list.</p>
+
+<h2 id="keys">Keys</h2>
+<ul>
+<li>Your keys are derived from your passkey each time you unlock. They are never written to disk.</li>
+<li>Each shared key is split in two. One half travels in the link; the other is released after the visit is recorded.</li>
+<li>Ending access stops a link at once. Handing over the safe changes its keys, so every old link stops working.</li>
+</ul>
+
+<h2 id="tests">What runs on every change</h2>
+<div class="dtable">
+<div class="r" style="grid-template-columns:120px 1fr"><span class="n" style="font-size:24px;color:var(--blue)">159</span><span>Contract tests: who may do what, time limits, the visitor log, hand over and payment.</span></div>
+<div class="r" style="grid-template-columns:120px 1fr"><span class="n" style="font-size:24px;color:var(--blue)">9 / 9</span><span>Attacks tried against the live testnet contract and refused, each with its transaction. See Proof.</span></div>
+<div class="r" style="grid-template-columns:120px 1fr"><span class="n" style="font-size:24px;color:var(--blue)">1 cmd</span><span><span class="m" style="font-size:14px">./scripts/verify.sh</span> runs every test and checks the contract has no keys.</span></div>
+</div>
+
+<h2 id="fixed">Found and fixed</h2>
+<p>An internal review read the contract and services as an attacker would. Each fix has a test.</p>
+<div class="dtable">
+<div class="h" style="grid-template-columns:1fr 100px"><span>Finding</span><span>Status</span></div>
+<div class="r" style="grid-template-columns:1fr 100px"><span>Deleting a grant could refund storage that was still in use</span><span class="chip chip-b" style="justify-self:start">Fixed</span></div>
+<div class="r" style="grid-template-columns:1fr 100px"><span>A sale could start before the key half was held safely</span><span class="chip chip-b" style="justify-self:start">Fixed</span></div>
+<div class="r" style="grid-template-columns:1fr 100px"><span>Storage could erase data after one wrong answer from the network</span><span class="chip chip-b" style="justify-self:start">Fixed</span></div>
+<div class="r" style="grid-template-columns:1fr 100px"><span>Bad opens from strangers could lock a visitor out</span><span class="chip chip-b" style="justify-self:start">Fixed</span></div>
+<div class="r" style="grid-template-columns:1fr 100px"><span>A signed owner request could be replayed for two minutes</span><span class="chip chip-b" style="justify-self:start">Fixed</span></div>
+<div class="r" style="grid-template-columns:1fr 100px"><span>The visitor log of a service was lost on restart</span><span class="chip chip-b" style="justify-self:start">Fixed</span></div>
+</div>
+
+<h2 id="next">On the list</h2>
+<div class="dtable">
+<div class="h" style="grid-template-columns:1fr 1fr"><span>Item</span><span>Plan</span></div>
+<div class="r" style="grid-template-columns:1fr 1fr"><span>The release service and storage keys are fixed at launch</span><span class="mute">Key rotation with a move path for existing safes</span></div>
+<div class="r" style="grid-template-columns:1fr 1fr"><span>Services read the chain through one network provider</span><span class="mute">Agreement between independent providers</span></div>
+<div class="r" style="grid-template-columns:1fr 1fr"><span>A read ticket covers a whole file, not one page</span><span class="mute">Page-range tickets</span></div>
+<div class="r" style="grid-template-columns:1fr 1fr"><span>An external audit</span><span class="mute">Next, before Mainnet</span></div>
+</div>
+
+<div class="pager"><a href="#trust"><span class="k">Back</span><b>Trust model</b></a><a href="#limits" style="text-align:right"><span class="k">Next</span><b>What it does and does not do</b></a></div>
+</main>
+
+<aside class="dtoc"><span class="t">On this page</span><a href="#keys">Keys</a><a href="#tests">What runs on every change</a><a href="#fixed">Found and fixed</a><a href="#next">On the list</a></aside>
+</div>
+<footer class="dfoot"><div class="dfoot-in"><span>Keyhole</span><span>Runs on NEAR testnet</span></div></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2200}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

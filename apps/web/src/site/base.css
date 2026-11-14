@@ -1,0 +1,6 @@
+/* Page-wide base for the new site. */
+html, body { margin: 0; background: #F3F2EE; color: #0E1435; }
+body { font-family: 'Public Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+/* The landing design does not load app.css, so it uses the browser's default box sizing; keep it that way there. */
+.pg-landing, .pg-landing *, .pg-landing *::before, .pg-landing *::after { box-sizing: content-box; }

@@ -1,0 +1,4 @@
+/* Generated from A04Files.dc.html (scoped to .scr-ref). */
+.scr-ref{margin:0}
+.scr-ref .fd{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:14px}
+.scr-ref .fd.on{background:var(--sky2);color:var(--blue-d);font-weight:600}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Keyhole recipient viewer</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..800&family=Fragment+Mono&family=Share+Tech+Mono&display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr" style="flex-direction:column">
+<header style="height:66px;flex:none;background:var(--blue);color:#FFFFFF;display:flex;align-items:center;justify-content:space-between;padding:0 36px">
+<div style="display:flex;align-items:center;gap:14px"><svg width="22" height="28" viewBox="0 0 24 30" aria-hidden="true"><rect width="24" height="30" rx="5" fill="#FFFFFF"/><circle cx="12" cy="11.5" r="4.6" fill="#0E1435"/><path d="M10.2 14.2L7.6 23.6Q7.4 24.6 8.4 24.6H15.6Q16.6 24.6 16.4 23.6L13.8 14.2Z" fill="#0E1435"/></svg><span style="font-weight:700;font-size:16px">Shared with you</span><span style="font-size:14px;color:#DDE4FA">Flat documents</span></div>
+<div style="display:flex;align-items:center;gap:16px"><span class="lbl" style="color:#DDE4FA;font-size:10.5px">Closes in</span><span class="n" style="background:var(--amber);color:var(--ink);border-radius:8px;padding:6px 12px;font-size:20px">01:42:08</span></div>
+</header>
+<div style="flex:1;min-height:0;display:grid;grid-template-columns:240px minmax(0,1fr) 400px;gap:0">
+<aside style="border-right:1px solid var(--line);padding:22px 18px;display:flex;flex-direction:column;gap:6px">
+<div class="fl">Shared files</div>
+<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;background:var(--sky2);color:var(--blue-d);font-weight:600;font-size:14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="#FFFFFF" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/></svg>Lease</div>
+<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;font-size:14px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/></svg>Payslip</div>
+<div style="margin-top:auto;font-size:13px;line-height:20px" class="mute">View only. Your visit is recorded.</div>
+</aside>
+<section style="padding:22px 28px;display:flex;flex-direction:column;gap:12px;min-width:0;background:var(--paper2)">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:15px;font-weight:700">Lease, 14 Harbour Road</span><div style="display:flex;align-items:center;gap:10px"><a class="btn btn-s" style="padding:6px 12px;font-size:13px">&larr;</a><span class="m" style="font-size:12px">2 / 4</span><a class="btn btn-s" style="padding:6px 12px;font-size:13px">&rarr;</a></div></div>
+<div style="flex:1;min-height:0;background:#FFFFFF;border:1px solid var(--line2);border-radius:6px;position:relative;overflow:hidden;padding:46px 54px">
+<div class="lbl faint" style="font-size:10px">Assured shorthold tenancy</div>
+<div style="font-size:20px;font-weight:700;margin-top:14px">3. Rent and payment</div>
+<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px"><div style="height:8px;background:var(--paper3);width:100%"></div><div style="height:8px;background:var(--paper3);width:94%"></div>
+<div style="font-size:15px;line-height:22px;background:var(--amber2);padding:3px 6px;width:90%"><b>The monthly rent is &pound;1,450,</b> paid in advance on the first day of each month.</div>
+<div style="height:8px;background:var(--paper3);width:97%"></div><div style="height:8px;background:var(--paper3);width:88%"></div><div style="height:8px;background:var(--paper3);width:92%"></div></div>
+<div style="font-size:20px;font-weight:700;margin-top:30px">4. Deposit</div>
+<div style="margin-top:16px;display:flex;flex-direction:column;gap:10px"><div style="height:8px;background:var(--paper3);width:100%"></div><div style="height:8px;background:var(--paper3);width:90%"></div><div style="height:8px;background:var(--paper3);width:76%"></div></div>
+<div class="m" style="position:absolute;left:-140px;top:30px;width:1100px;transform:rotate(-24deg);font-size:14px;line-height:76px;letter-spacing:3px;color:var(--blue);opacity:0.1;white-space:nowrap">MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21<br>MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21<br>MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21<br>MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21<br>MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21<br>MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21<br>MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21 &nbsp;&nbsp;&nbsp;&nbsp; MARIA 14:02 9F3A21</div>
+</div>
+</section>
+<aside style="border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)"><span class="h2" style="font-size:17px">Ask</span><span class="lbl faint" style="font-size:10px">3 of 5 left</span></div>
+<div style="flex:1;padding:18px 20px;display:flex;flex-direction:column;gap:12px">
+<div style="align-self:flex-end;background:var(--ink);color:#FFFFFF;border-radius:12px 12px 3px 12px;padding:9px 13px;font-size:14px">How much is the monthly rent?</div>
+<div style="background:var(--sky2);border-radius:12px 12px 12px 3px;padding:12px 14px;font-size:14px;line-height:21px;max-width:90%"><b>&pound;1,450 a month.</b><div style="margin-top:8px;display:flex;gap:8px;align-items:center"><span class="chip chip-s" style="background:#FFFFFF;border-color:#FFFFFF">Lease, page 2</span></div></div>
+<div style="align-self:flex-end;background:var(--ink);color:#FFFFFF;border-radius:12px 12px 3px 12px;padding:9px 13px;font-size:14px">What is the passport number?</div>
+<div style="border:1px dashed var(--faint);border-radius:12px 12px 12px 3px;padding:11px 14px;font-size:14px;max-width:90%" class="mute">This access does not cover that.</div>
+</div>
+<div style="border-top:1px solid var(--line);padding:12px;display:flex;gap:10px"><div class="input" style="flex:1;color:var(--faint);font-size:14px;padding:10px 12px">Ask about the shared files</div><a class="btn btn-p">Ask</a></div>
+</aside>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

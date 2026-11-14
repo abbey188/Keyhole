@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Keyhole access</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..800&family=Fragment+Mono&family=Share+Tech+Mono&display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr">
+<aside class="rail">
+<div class="logo"><svg width="22" height="28" viewBox="0 0 24 30" aria-hidden="true"><rect width="24" height="30" rx="5" fill="#FFFFFF"/><circle cx="12" cy="11.5" r="4.6" fill="#0E1435"/><path d="M10.2 14.2L7.6 23.6Q7.4 24.6 8.4 24.6H15.6Q16.6 24.6 16.4 23.6L13.8 14.2Z" fill="#0E1435"/></svg>Keyhole</div>
+<a class="ri on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="4"/><circle cx="12" cy="12" r="4"/></svg>Safes</a>
+<a class="ri"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"/></svg>Shared links</a>
+<a class="ri"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3ZM9 12l2 2 4-4"/></svg>Verify</a>
+<a class="ri"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="7" height="6" rx="1.5"/><rect x="14" y="9" width="7" height="6" rx="1.5"/><path d="M10 12h4"/></svg>Proof</a>
+<div class="rsec">Your safes</div>
+<div class="rsafe on"><span>Flat documents</span><span class="m" style="font-size:11px;color:#8F98BF">#12</span></div>
+<div class="rsafe"><span>Job application</span><span class="m" style="font-size:11px;color:#8F98BF">#07</span></div>
+<div class="rsafe"><span>Medical</span><span class="m" style="font-size:11px;color:#8F98BF">#03</span></div>
+<div class="rfoot"><span class="chip" style="border-color:#F2A72E;color:#F2A72E;align-self:flex-start">Testnet</span><span class="m" style="font-size:11px;color:#8F98BF">kh-owner-964348.testnet</span></div>
+</aside>
+<main class="main">
+<div class="top"><div class="crumb">Safes / <b>Flat documents</b></div><div style="display:flex;gap:10px"><a class="btn btn-s">Hand over</a><a class="btn btn-p">Give access <span class="m">&rarr;</span></a></div></div>
+<div class="body" style="display:flex;flex-direction:column;gap:18px;padding-top:22px">
+<div style="display:flex;align-items:center;justify-content:space-between">
+<div style="display:flex;align-items:center;gap:16px">
+<svg width="52" height="52" viewBox="0 0 64 64" role="img" aria-label="Safe, open"><rect x="1.5" y="1.5" width="61" height="61" rx="14" fill="#FFFFFF" stroke="#0E1435" stroke-width="1.5"/><circle cx="32" cy="32" r="21" fill="none" stroke="#0E1435" stroke-width="1.5"/><circle cx="32" cy="32" r="17" fill="none" stroke="#0E1435" stroke-width="2.6" stroke-dasharray="0.8 3.6"/><circle cx="32" cy="32" r="11.5" fill="#2546C2"/><circle cx="32" cy="29.6" r="3.2" fill="#FFFFFF"/><path d="M30.6 31.6L29 38.2Q28.8 39 29.6 39H34.4Q35.2 39 35 38.2L33.4 31.6Z" fill="#FFFFFF"/></svg>
+<div><h1 class="h1">Flat documents</h1><div class="m faint" style="font-size:12px;margin-top:4px">#12</div></div>
+</div>
+<div style="display:flex;align-items:center;gap:12px"><span class="chip chip-a">Open</span><span style="font-size:14px">Maria is in</span><span class="n" style="font-size:22px">01:42</span></div>
+</div>
+<nav class="tabs"><span class="tab">Files</span><span class="tab on">Access</span><span class="tab">Visitors</span><span class="tab">Ask</span><span class="tab">Claims</span></nav>
+
+<div style="display:flex;justify-content:space-between;align-items:center"><span class="h2">Open links</span><span class="lbl faint">2 open</span></div>
+<div class="panel" style="overflow:hidden">
+<div class="th" style="grid-template-columns:200px 1fr 120px 100px 110px 130px"><span>Who</span><span>What</span><span>Time left</span><span>Opens</span><span>Questions</span><span></span></div>
+<div class="tr" style="grid-template-columns:200px 1fr 120px 100px 110px 130px"><span style="font-weight:700">Maria</span><span class="mute">Lease, Payslip</span><span class="n" style="font-size:18px">01:42</span><span class="m" style="font-size:13px">2</span><span class="m" style="font-size:13px">0 of 5</span><span style="text-align:right"><a class="btn btn-o" style="padding:7px 12px;font-size:13px">End access</a></span></div>
+<div class="tr" style="grid-template-columns:200px 1fr 120px 100px 110px 130px"><span style="font-weight:700">The landlord</span><span class="mute">Income claim</span><span class="n" style="font-size:18px">22:10</span><span class="m" style="font-size:13px">1</span><span class="m" style="font-size:13px">2 of 5</span><span style="text-align:right"><a class="btn btn-o" style="padding:7px 12px;font-size:13px">End access</a></span></div>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span class="h2">Closed</span><span class="lbl faint">Last 7 days</span></div>
+<div class="panel" style="overflow:hidden;border-color:var(--line2)">
+<div class="tr" style="grid-template-columns:200px 1fr 120px 100px 110px 130px;color:var(--mute)"><span style="font-weight:600">Letting agent</span><span>Lease</span><span class="lbl" style="font-size:10px">Expired</span><span class="m" style="font-size:13px">3</span><span class="m" style="font-size:13px">&mdash;</span><span style="text-align:right" class="m faint">Mon 10:05</span></div>
+<div class="tr" style="grid-template-columns:200px 1fr 120px 100px 110px 130px;color:var(--mute)"><span style="font-weight:600">Bank</span><span>Payslip</span><span class="lbl" style="font-size:10px;color:var(--orange)">Ended by you</span><span class="m" style="font-size:13px">1</span><span class="m" style="font-size:13px">&mdash;</span><span style="text-align:right" class="m faint">Sun 18:40</span></div>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

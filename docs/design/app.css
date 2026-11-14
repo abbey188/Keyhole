@@ -1,0 +1,93 @@
+/* Keyhole app: shared styles for every app artboard. Flat, drawn, no shadows. */
+:root{
+  --paper:#F3F2EE; --paper2:#E8E7E1; --paper3:#DDDCD5; --line:#CFCDC5; --line2:#B8B6AE;
+  --ink:#0E1435; --mute:#4B5068; --faint:#7A7F95;
+  --blue:#2546C2; --blue-d:#1B3596; --sky:#A9C2EC; --sky2:#DFE7F6;
+  --amber:#F2A72E; --amber2:#FBE7C2; --orange:#E2603A; --orange2:#FADFD5; --red:#C0392B;
+  --white:#FFFFFF;
+}
+*{box-sizing:border-box}
+.scr{width:1440px;height:900px;display:flex;background:var(--paper);color:var(--ink);font-family:'Public Sans',system-ui,sans-serif;overflow:hidden;position:relative;-webkit-font-smoothing:antialiased}
+.m{font-family:'Fragment Mono',ui-monospace,monospace}
+.n{font-family:'Share Tech Mono',ui-monospace,monospace}
+.lbl{font-family:'Fragment Mono',ui-monospace,monospace;font-size:11px;letter-spacing:1.1px;text-transform:uppercase}
+.mute{color:var(--mute)}
+.faint{color:var(--faint)}
+
+/* rail */
+.rail{width:236px;flex:none;background:var(--ink);color:#C3C9E0;display:flex;flex-direction:column;padding:22px 14px 18px}
+.logo{display:flex;align-items:center;gap:11px;padding:0 8px 26px;color:#FFFFFF;font-weight:700;font-size:19px;letter-spacing:-0.3px}
+.ri{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:8px;font-size:14px;font-weight:500;color:#C3C9E0}
+.ri svg{flex:none}
+.ri.on{background:var(--blue);color:#FFFFFF}
+.rsec{font-family:'Fragment Mono',monospace;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#7C84A6;padding:22px 12px 8px}
+.rsafe{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:8px;font-size:13px;color:#C3C9E0}
+.rsafe.on{background:#1B2350;color:#FFFFFF}
+.rfoot{margin-top:auto;border-top:1px solid #2A3260;padding:14px 8px 0;display:flex;flex-direction:column;gap:8px}
+
+/* main */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{height:66px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 36px;border-bottom:1px solid var(--line)}
+.crumb{font-family:'Fragment Mono',monospace;font-size:12px;color:var(--faint)}
+.crumb b{color:var(--ink);font-weight:400}
+.body{flex:1;min-height:0;padding:28px 36px 28px}
+.h1{font-size:30px;line-height:34px;font-weight:700;letter-spacing:-1px;margin:0}
+.h2{font-size:20px;line-height:26px;font-weight:700;letter-spacing:-0.4px;margin:0}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:'Public Sans',sans-serif;font-weight:600;font-size:14px;line-height:18px;padding:10px 16px;border-radius:8px;border:1px solid transparent;white-space:nowrap}
+.btn-p{background:var(--blue);color:#FFFFFF}
+.btn-s{border-color:var(--ink);color:var(--ink);background:transparent}
+.btn-a{background:var(--amber);color:var(--ink)}
+.btn-o{border-color:var(--orange);color:var(--orange);background:transparent}
+.btn-of{background:var(--orange);color:#FFFFFF}
+.btn-g{color:var(--ink);padding-left:6px;padding-right:6px}
+.btn-lg{font-size:15px;padding:13px 20px}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:'Fragment Mono',monospace;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;padding:4px 9px;border-radius:999px;border:1px solid var(--ink);white-space:nowrap}
+.chip-b{background:var(--blue);border-color:var(--blue);color:#FFFFFF}
+.chip-a{background:var(--amber);border-color:var(--amber);color:var(--ink)}
+.chip-o{background:var(--orange);border-color:var(--orange);color:#FFFFFF}
+.chip-r{background:var(--red);border-color:var(--red);color:#FFFFFF}
+.chip-s{background:var(--sky2);border-color:var(--sky2);color:var(--blue-d)}
+.chip-m{border-color:var(--line2);color:var(--mute)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;align-items:flex-end;border-bottom:1px solid var(--ink)}
+.tab{font-size:14px;font-weight:600;padding:9px 16px;border:1px solid var(--line2);border-bottom:none;border-radius:8px 8px 0 0;color:var(--mute);background:var(--paper2)}
+.tab.on{background:var(--ink);border-color:var(--ink);color:#FFFFFF}
+
+/* surfaces */
+.panel{background:var(--white);border:1px solid var(--ink);border-radius:14px}
+.well{background:var(--paper2);border-radius:10px}
+.hr{height:1px;background:var(--line)}
+
+/* tables */
+.th{font-family:'Fragment Mono',monospace;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);padding:11px 18px;border-bottom:1px solid var(--ink);display:grid;align-items:center;gap:12px}
+.tr{padding:13px 18px;border-bottom:1px solid var(--line);display:grid;align-items:center;gap:12px;font-size:14px}
+.tr:last-child{border-bottom:none}
+.tr.sel{background:var(--sky2)}
+
+/* fields */
+.fl{font-family:'Fragment Mono',monospace;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);margin-bottom:7px}
+.input{background:var(--white);border:1px solid var(--ink);border-radius:8px;padding:11px 13px;font-size:15px;line-height:20px}
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:8px;overflow:hidden}
+.seg span{font-family:'Fragment Mono',monospace;font-size:12px;padding:9px 16px;border-right:1px solid var(--ink)}
+.seg span:last-child{border-right:none}
+.seg span.on{background:var(--ink);color:#FFFFFF}
+
+/* overlays */
+.scrim{position:absolute;left:0;top:0;right:0;bottom:0;background:rgba(14,20,53,0.5)}
+.drawer{position:absolute;right:0;top:0;bottom:0;width:480px;background:var(--paper);border-left:1px solid var(--ink);display:flex;flex-direction:column}
+.dh{padding:24px 28px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start}
+.db{padding:22px 28px;display:flex;flex-direction:column;gap:20px;flex:1;min-height:0}
+.df{padding:18px 28px;border-top:1px solid var(--line);display:flex;gap:10px}
+.modal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:520px;background:var(--paper);border:1px solid var(--ink);border-radius:16px}
+
+/* hover detail (works in Play) */
+.btn,.ri,.tr,.tab{transition:background-color .14s ease-out,color .14s ease-out,border-color .14s ease-out}
+.btn-p:hover{background:var(--blue-d)}
+.btn-s:hover{background:var(--ink);color:#FFFFFF}
+.ri:not(.on):hover{background:#1B2350;color:#FFFFFF}
+.tr:not(.sel):hover{background:var(--paper2)}

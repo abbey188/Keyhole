@@ -10,7 +10,6 @@ import { SafePage } from "./ui/SafePage";
 import { Recipient } from "./ui/Recipient";
 import { Receive } from "./ui/Receive";
 import { Verify } from "./ui/Verify";
-import { Judge } from "./judge/Judge";
 import { Showcase } from "./ui/Showcase";
 
 const LS = { cred: "keyhole.credId", salt: "keyhole.salt", mode: "keyhole.mode" };
@@ -19,16 +18,15 @@ const put = (k: string, v: string) => { try { localStorage.setItem(k, v); } catc
 
 export function App() {
   const [id, setId] = useState<Identity | null>(null);
-  if (location.hash.startsWith("#judge")) return <main><h1>Keyhole</h1><Judge /></main>;
-  if (location.hash.startsWith("#verify")) return <main><h1>Keyhole</h1><Verify /></main>;
-  if (config.showcase && !location.hash.startsWith("#open=")) return <main><h1>Keyhole</h1><p className="sub">A safe for your files. You hold the keys; every visit is recorded.</p><Showcase /></main>;
-  if (location.hash.startsWith("#open=")) return <main><h1>Keyhole</h1><Recipient /></main>;
+  if (location.hash.startsWith("#verify") || location.pathname.startsWith("/verify")) return <div className="legacy"><main><h1>Keyhole</h1><Verify /></main></div>;
+  if (config.showcase && !location.hash.startsWith("#open=")) return <div className="legacy"><main><h1>Keyhole</h1><p className="sub">A safe for your files. You hold the keys; every visit is recorded.</p><Showcase /></main></div>;
+  if (location.hash.startsWith("#open=")) return <div className="legacy"><main><h1>Keyhole</h1><Recipient /></main></div>;
   return (
-    <main>
+    <div className="legacy"><main>
       <h1>Keyhole</h1>
       <p className="sub">A safe for your files. You hold the keys; every visit is recorded.</p>
       {id ? <Safes id={id} onLock={() => setId(null)} /> : <SignIn onIdentity={setId} />}
-    </main>
+    </main></div>
   );
 }
 

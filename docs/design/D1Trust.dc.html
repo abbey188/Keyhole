@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Keyhole trust model</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..800&family=Fragment+Mono&family=Share+Tech+Mono&display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="doc">
+<header class="dtop"><div class="dtop-in">
+<a class="dlogo" href="#home"><svg width="22" height="28" viewBox="0 0 24 30" aria-hidden="true"><rect width="24" height="30" rx="5" fill="#FFFFFF"/><circle cx="12" cy="11.5" r="4.6" fill="#0E1435"/><path d="M10.2 14.2L7.6 23.6Q7.4 24.6 8.4 24.6H15.6Q16.6 24.6 16.4 23.6L13.8 14.2Z" fill="#0E1435"/></svg>Keyhole</a>
+<nav class="dnav"><a href="#how">How it works</a><a class="on" href="#trust">Trust</a><a href="#developers">Developers</a><a href="#proof">Proof</a></nav>
+<a class="btn btn-a" href="#open-app">Open the app <span class="m">&rarr;</span></a>
+</div></header>
+
+<div class="dwrap">
+<nav class="dside">
+<span class="sec">Trust</span>
+<a class="on" href="#trust">Trust model</a>
+<a href="#security">Security notes</a>
+<a href="#limits">What it does and does not do</a>
+<span class="sec">Build</span>
+<a href="#developers">Developers</a>
+<a href="#proof">Proof</a>
+</nav>
+
+<main class="dmain">
+<div class="lbl" style="color:var(--blue)">[ Trust model ]</div>
+<h1>Who can see what</h1>
+<p class="lead">Keyhole is built so that the people who run it cannot read what you keep in it. Here is every part of the system and what it can see.</p>
+
+<h2 id="parts">The parts</h2>
+<div class="dtable">
+<div class="h" style="grid-template-columns:170px 150px 1fr"><span>Part</span><span>Sees your files</span><span>What keeps it in check</span></div>
+<div class="r" style="grid-template-columns:170px 150px 1fr"><b>Your device</b><span class="chip chip-b" style="justify-self:start">Yes</span><span>The only place your files are readable. Keys come from your passkey and are never stored.</span></div>
+<div class="r" style="grid-template-columns:170px 150px 1fr"><b>Storage</b><span class="chip" style="justify-self:start">No</span><span>Holds sealed pieces only. Every read is checked against the record on the chain.</span></div>
+<div class="r" style="grid-template-columns:170px 150px 1fr"><b>The contract</b><span class="chip" style="justify-self:start">No</span><span>Has no keys after launch, so nobody can change its rules or move a safe.</span></div>
+<div class="r" style="grid-template-columns:170px 150px 1fr"><b>Release service</b><span class="chip" style="justify-self:start">No</span><span>Holds half of each shared key and hands it out only after the visit is recorded on the chain.</span></div>
+<div class="r" style="grid-template-columns:170px 150px 1fr"><b>Private AI</b><span class="chip chip-a" style="justify-self:start">What you choose</span><span>Gets only the lines you pick, encrypted to hardware that proves what it runs.</span></div>
+</div>
+
+<h2 id="receipt">Recorded before opened</h2>
+<p>A link never opens anything on its own. Each visit follows the same order.</p>
+<div class="dtable">
+<div class="r" style="grid-template-columns:44px 1fr"><span class="n" style="font-size:22px;color:var(--blue)">01</span><span>The visitor opens the link. Half of the key is in the link itself.</span></div>
+<div class="r" style="grid-template-columns:44px 1fr"><span class="n" style="font-size:22px;color:var(--blue)">02</span><span>The visit is written to the chain and becomes final.</span></div>
+<div class="r" style="grid-template-columns:44px 1fr"><span class="n" style="font-size:22px;color:var(--blue)">03</span><span>The release service reads the chain itself and checks the access is still open, in time and in scope.</span></div>
+<div class="r" style="grid-template-columns:44px 1fr"><span class="n" style="font-size:22px;color:var(--blue)">04</span><span>Only then does it send the other half of the key.</span></div>
+<div class="r" style="grid-template-columns:44px 1fr"><span class="n" style="font-size:22px;color:var(--blue)">05</span><span>The page is decrypted on the visitor's screen, with their name across it.</span></div>
+</div>
+
+<h2 id="public">Public and private</h2>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px">
+<div class="callout sky" style="margin:0"><div class="lbl" style="color:var(--blue-d);margin-bottom:8px">On the chain</div>The safe's number and owner. When access was given and used. The result of a hand over.</div>
+<div class="callout amber" style="margin:0"><div class="lbl" style="margin-bottom:8px">Only you</div>File contents, names and sizes. What a visitor looked at. Your claims until you share them.</div>
+</div>
+<p>Keyhole keeps contents confidential and access accountable. It does not hide who owns a safe.</p>
+
+<h2 id="ai">Private AI</h2>
+<p>Before any text leaves your device, the app checks the model's hardware report. It confirms the report is fresh, the signing key sits inside genuine Intel hardware, debug mode is off, and the GPU passes NVIDIA's check. Then it encrypts the text to that key.</p>
+<p>The report proves where the model runs. It does not prove the answer is right, so every answer links back to the page it came from.</p>
+
+<div class="pager"><a href="#how"><span class="k">Back</span><b>How it works</b></a><a href="#security" style="text-align:right"><span class="k">Next</span><b>Security notes</b></a></div>
+</main>
+
+<aside class="dtoc"><span class="t">On this page</span><a href="#parts">The parts</a><a href="#receipt">Recorded before opened</a><a href="#public">Public and private</a><a href="#ai">Private AI</a></aside>
+</div>
+<footer class="dfoot"><div class="dfoot-in"><span>Keyhole</span><span>Runs on NEAR testnet</span></div></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2200}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

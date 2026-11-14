@@ -1,0 +1,9 @@
+/* Generated from D3Limits.dc.html (scoped to .pg-d3). */
+.pg-d3{margin:0}
+.pg-d3 .lim{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--ink);margin-top:28px}
+.pg-d3 .lim>div{padding:22px 0 26px}
+.pg-d3 .lim>div:first-child{padding-right:28px;border-right:1px solid var(--line)}
+.pg-d3 .lim>div:last-child{padding-left:28px}
+.pg-d3 .lim .k{font-family:'Fragment Mono',monospace;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px}
+.pg-d3 .lim b{font-size:18px;line-height:24px;display:block}
+.pg-d3 .lim p{margin:6px 0 0;font-size:16px;line-height:25px}

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Keyhole new safe</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..800&family=Fragment+Mono&family=Share+Tech+Mono&display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="scr">
+<aside class="rail">
+<div class="logo"><svg width="22" height="28" viewBox="0 0 24 30" aria-hidden="true"><rect width="24" height="30" rx="5" fill="#FFFFFF"/><circle cx="12" cy="11.5" r="4.6" fill="#0E1435"/><path d="M10.2 14.2L7.6 23.6Q7.4 24.6 8.4 24.6H15.6Q16.6 24.6 16.4 23.6L13.8 14.2Z" fill="#0E1435"/></svg>Keyhole</div>
+<a class="ri on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="4"/><circle cx="12" cy="12" r="4"/></svg>Safes</a>
+<a class="ri"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"/></svg>Shared links</a>
+<a class="ri"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3ZM9 12l2 2 4-4"/></svg>Verify</a>
+<a class="ri"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="7" height="6" rx="1.5"/><rect x="14" y="9" width="7" height="6" rx="1.5"/><path d="M10 12h4"/></svg>Proof</a>
+<div class="rsec">Your safes</div>
+<div class="rsafe"><span>Flat documents</span><span class="m" style="font-size:11px;color:#8F98BF">#12</span></div>
+<div class="rsafe"><span>Job application</span><span class="m" style="font-size:11px;color:#8F98BF">#07</span></div>
+<div class="rsafe"><span>Medical</span><span class="m" style="font-size:11px;color:#8F98BF">#03</span></div>
+<div class="rfoot"><span class="chip" style="border-color:#F2A72E;color:#F2A72E;align-self:flex-start">Testnet</span><span class="m" style="font-size:11px;color:#8F98BF">kh-owner-964348.testnet</span></div>
+</aside>
+<main class="main">
+<div class="top"><div class="crumb"><b>Safes</b></div><a class="btn btn-p">New safe <span class="m">+</span></a></div>
+<div class="body" style="display:flex;flex-direction:column;gap:24px">
+<h1 class="h1">Your safes</h1>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px">
+<div class="panel" style="height:322px"></div><div class="panel" style="height:322px"></div><div class="panel" style="height:322px"></div>
+</div>
+</div>
+</main>
+<div class="scrim"></div>
+<div class="modal">
+<div style="padding:26px 28px 6px;display:flex;justify-content:space-between;align-items:flex-start">
+<div><div class="lbl" style="color:var(--blue)">[ New safe ]</div><div class="h1" style="margin-top:8px;font-size:26px;line-height:30px">Name your safe</div></div>
+<a class="btn btn-g" aria-label="Close" style="font-size:20px;line-height:20px;padding:4px 6px">&times;</a>
+</div>
+<div style="padding:18px 28px 24px;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;gap:18px;align-items:center">
+<svg width="72" height="72" viewBox="0 0 64 64" role="img" aria-label="Preview of the safe"><rect x="1.5" y="1.5" width="61" height="61" rx="14" fill="#FFFFFF" stroke="#0E1435" stroke-width="1.5"/><circle cx="32" cy="32" r="21" fill="none" stroke="#0E1435" stroke-width="1.5"/><circle cx="32" cy="32" r="17" fill="none" stroke="#0E1435" stroke-width="2.6" stroke-dasharray="0.8 3.6"/><circle cx="32" cy="32" r="11.5" fill="#2546C2"/><circle cx="32" cy="29.6" r="3.2" fill="#FFFFFF"/><path d="M30.6 31.6L29 38.2Q28.8 39 29.6 39H34.4Q35.2 39 35 38.2L33.4 31.6Z" fill="#FFFFFF"/></svg>
+<div style="flex:1"><div class="fl">Name</div><div class="input" style="border:2px solid var(--blue);padding:10px 12px">Flat documents</div></div>
+</div>
+<div><div class="fl">Colour</div>
+<div style="display:flex;gap:10px">
+<span style="width:36px;height:36px;border-radius:10px;background:#2546C2;outline:2px solid #0E1435;outline-offset:2px"></span>
+<span style="width:36px;height:36px;border-radius:10px;background:#0E1435"></span>
+<span style="width:36px;height:36px;border-radius:10px;background:#E2603A"></span>
+<span style="width:36px;height:36px;border-radius:10px;background:#F2A72E"></span>
+<span style="width:36px;height:36px;border-radius:10px;background:#A9C2EC"></span>
+</div></div>
+</div>
+<div style="padding:18px 28px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+<span class="lbl faint">Ready in about 4 s</span>
+<div style="display:flex;gap:10px"><a class="btn btn-s">Cancel</a><a class="btn btn-p">Create safe <span class="m">&rarr;</span></a></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Keyhole what it does and does not do</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..800&family=Fragment+Mono&family=Share+Tech+Mono&display=swap">
+<style>body{margin:0}.lim{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--ink);margin-top:28px}.lim>div{padding:22px 0 26px}.lim>div:first-child{padding-right:28px;border-right:1px solid var(--line)}.lim>div:last-child{padding-left:28px}.lim .k{font-family:'Fragment Mono',monospace;font-size:10.5px;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px}.lim b{font-size:18px;line-height:24px;display:block}.lim p{margin:6px 0 0;font-size:16px;line-height:25px}</style>
+</helmet>
+<div class="doc">
+<header class="dtop"><div class="dtop-in">
+<a class="dlogo" href="#home"><svg width="22" height="28" viewBox="0 0 24 30" aria-hidden="true"><rect width="24" height="30" rx="5" fill="#FFFFFF"/><circle cx="12" cy="11.5" r="4.6" fill="#0E1435"/><path d="M10.2 14.2L7.6 23.6Q7.4 24.6 8.4 24.6H15.6Q16.6 24.6 16.4 23.6L13.8 14.2Z" fill="#0E1435"/></svg>Keyhole</a>
+<nav class="dnav"><a href="#how">How it works</a><a class="on" href="#trust">Trust</a><a href="#developers">Developers</a><a href="#proof">Proof</a></nav>
+<a class="btn btn-a" href="#open-app">Open the app <span class="m">&rarr;</span></a>
+</div></header>
+
+<div class="dwrap">
+<nav class="dside">
+<span class="sec">Trust</span>
+<a href="#trust">Trust model</a>
+<a href="#security">Security notes</a>
+<a class="on" href="#limits">What it does and does not do</a>
+<span class="sec">Build</span>
+<a href="#developers">Developers</a>
+<a href="#proof">Proof</a>
+</nav>
+
+<main class="dmain">
+<div class="lbl" style="color:var(--blue)">[ Clear limits ]</div>
+<h1>What Keyhole does, and what it does not</h1>
+<p class="lead">Every tool for sharing has edges. Here are ours, and what Keyhole does about each one.</p>
+
+<div class="lim"><div><div class="k mute">The edge</div><b>A screen can be photographed</b><p class="mute">No app can stop a camera pointed at a screen.</p></div><div><div class="k" style="color:var(--blue)">What Keyhole does</div><b>Names the viewer on every page</b><p>Their name and visit time sit across the page, and the visit is in the log. A photo carries their name.</p></div></div>
+
+<div class="lim"><div><div class="k mute">The edge</div><b>What someone read, they know</b><p class="mute">Ending access cannot make a person forget.</p></div><div><div class="k" style="color:var(--blue)">What Keyhole does</div><b>Stops the next look, at once</b><p>The next open fails. Re-locking the safe changes its keys and erases the stored copy.</p></div></div>
+
+<div class="lim"><div><div class="k mute">The edge</div><b>Your passkey is your key</b><p class="mute">Whoever holds your unlocked device holds your safe.</p></div><div><div class="k" style="color:var(--blue)">What Keyhole does</div><b>Uses the lock you already trust</b><p>Your face, fingerprint or device PIN. Passkeys sync across your own devices through your platform.</p></div></div>
+
+<div class="lim"><div><div class="k mute">The edge</div><b>A claim is your statement</b><p class="mute">A machine reading your payslip is not your employer signing it.</p></div><div><div class="k" style="color:var(--blue)">What Keyhole does</div><b>Shows how each claim was made</b><p>Read on your device, reviewed and signed by you, and graded. Claims signed by the issuer are next.</p></div></div>
+
+<div class="lim"><div><div class="k mute">The edge</div><b>AI can be wrong</b><p class="mute">The hardware report proves where the model ran, not that it is right.</p></div><div><div class="k" style="color:var(--blue)">What Keyhole does</div><b>Cites the page behind every answer</b><p>Anyone with access can check the answer against the page. The hardware's current patch level is the next check we add.</p></div></div>
+
+<div class="lim"><div><div class="k mute">The edge</div><b>One release service today</b><p class="mute">It cannot read files, but it decides when to hand out a key half.</p></div><div><div class="k" style="color:var(--blue)">What Keyhole does</div><b>Checks the chain before every release</b><p>It refuses anything the chain does not show as open. Splitting it across independent services is next.</p></div></div>
+
+<div class="callout sky" style="margin-top:36px"><b>Where it runs.</b> Keyhole runs on NEAR testnet. The contract has no keys and its code is public, so anyone can check what it does. An external audit is the next step.</div>
+
+<div class="pager"><a href="#security"><span class="k">Back</span><b>Security notes</b></a><a href="#developers" style="text-align:right"><span class="k">Next</span><b>Developers</b></a></div>
+</main>
+
+<aside class="dtoc"><span class="t">On this page</span><span>Screens</span><span>What was read</span><span>Passkeys</span><span>Claims</span><span>AI</span><span>Release service</span><span>Where it runs</span></aside>
+</div>
+<footer class="dfoot"><div class="dfoot-in"><span>Keyhole</span><span>Runs on NEAR testnet</span></div></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2200}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

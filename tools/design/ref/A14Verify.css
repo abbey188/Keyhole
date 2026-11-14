@@ -1,0 +1,5 @@
+/* Generated from A14Verify.dc.html (scoped to .scr-ref). */
+.scr-ref{margin:0}
+.scr-ref .step{display:grid;grid-template-columns:34px 1fr auto;gap:14px;align-items:center;padding:15px 18px;border-bottom:1px solid var(--line)}
+.scr-ref .step:last-child{border-bottom:none}
+.scr-ref .dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center}

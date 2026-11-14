@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Keyhole safes</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400..800&family=Fragment+Mono&family=Share+Tech+Mono&display=swap">
+<style>body{margin:0}.card{transition:border-color .15s ease-out,background-color .15s ease-out}.card:hover{background:#FFFFFF;border-color:#2546C2}</style>
+</helmet>
+<div class="scr">
+<aside class="rail">
+<div class="logo"><svg width="22" height="28" viewBox="0 0 24 30" aria-hidden="true"><rect width="24" height="30" rx="5" fill="#FFFFFF"/><circle cx="12" cy="11.5" r="4.6" fill="#0E1435"/><path d="M10.2 14.2L7.6 23.6Q7.4 24.6 8.4 24.6H15.6Q16.6 24.6 16.4 23.6L13.8 14.2Z" fill="#0E1435"/></svg>Keyhole</div>
+<a class="ri on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="4"/><circle cx="12" cy="12" r="4"/></svg>Safes</a>
+<a class="ri"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1 1M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1-1"/></svg>Shared links</a>
+<a class="ri"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6l7-3ZM9 12l2 2 4-4"/></svg>Verify</a>
+<a class="ri"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="9" width="7" height="6" rx="1.5"/><rect x="14" y="9" width="7" height="6" rx="1.5"/><path d="M10 12h4"/></svg>Proof</a>
+<div class="rsec">Your safes</div>
+<div class="rsafe"><span>Flat documents</span><span class="m" style="font-size:11px;color:#8F98BF">#12</span></div>
+<div class="rsafe"><span>Job application</span><span class="m" style="font-size:11px;color:#8F98BF">#07</span></div>
+<div class="rsafe"><span>Medical</span><span class="m" style="font-size:11px;color:#8F98BF">#03</span></div>
+<div class="rfoot"><span class="chip" style="border-color:#F2A72E;color:#F2A72E;align-self:flex-start">Testnet</span><span class="m" style="font-size:11px;color:#8F98BF">kh-owner-964348.testnet</span></div>
+</aside>
+<main class="main">
+<div class="top"><div class="crumb"><b>Safes</b></div><a class="btn btn-p">New safe <span class="m">+</span></a></div>
+<div class="body" style="display:flex;flex-direction:column;gap:24px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end"><h1 class="h1">Your safes</h1><span class="lbl faint">3 safes</span></div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px">
+
+<div class="card panel" style="padding:22px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start">
+<svg width="56" height="56" viewBox="0 0 64 64" role="img" aria-label="Safe, open"><rect x="1.5" y="1.5" width="61" height="61" rx="14" fill="#FFFFFF" stroke="#0E1435" stroke-width="1.5"/><circle cx="32" cy="32" r="21" fill="none" stroke="#0E1435" stroke-width="1.5"/><circle cx="32" cy="32" r="17" fill="none" stroke="#0E1435" stroke-width="2.6" stroke-dasharray="0.8 3.6"/><circle cx="32" cy="32" r="11.5" fill="#2546C2"/><circle cx="32" cy="29.6" r="3.2" fill="#FFFFFF"/><path d="M30.6 31.6L29 38.2Q28.8 39 29.6 39H34.4Q35.2 39 35 38.2L33.4 31.6Z" fill="#FFFFFF"/></svg>
+<span class="chip chip-a">Open</span></div>
+<div><div style="font-size:22px;line-height:28px;font-weight:700;letter-spacing:-0.5px">Flat documents</div><div class="m faint" style="font-size:12px;margin-top:4px">#12</div></div>
+<div style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:9px;font-size:14px;line-height:20px">
+<div style="display:flex;justify-content:space-between"><span class="mute">Inside now</span><span>Maria</span></div>
+<div style="display:flex;justify-content:space-between"><span class="mute">Time left</span><span class="n" style="font-size:15px;line-height:20px">01:42</span></div>
+<div style="display:flex;justify-content:space-between"><span class="mute">Files</span><span>6</span></div>
+</div>
+<a class="btn btn-p" style="justify-content:space-between">Give access <span class="m">&rarr;</span></a>
+</div>
+
+<div class="card panel" style="padding:22px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start">
+<svg width="56" height="56" viewBox="0 0 64 64" role="img" aria-label="Safe, locked"><rect x="1.5" y="1.5" width="61" height="61" rx="14" fill="#FFFFFF" stroke="#0E1435" stroke-width="1.5"/><circle cx="32" cy="32" r="21" fill="none" stroke="#0E1435" stroke-width="1.5"/><circle cx="32" cy="32" r="17" fill="none" stroke="#0E1435" stroke-width="2.6" stroke-dasharray="0.8 3.6"/><circle cx="32" cy="32" r="11.5" fill="#0E1435"/><circle cx="32" cy="29.6" r="3.2" fill="#FFFFFF"/><path d="M30.6 31.6L29 38.2Q28.8 39 29.6 39H34.4Q35.2 39 35 38.2L33.4 31.6Z" fill="#FFFFFF"/></svg>
+<span class="chip">Locked</span></div>
+<div><div style="font-size:22px;line-height:28px;font-weight:700;letter-spacing:-0.5px">Job application</div><div class="m faint" style="font-size:12px;margin-top:4px">#07</div></div>
+<div style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:9px;font-size:14px;line-height:20px">
+<div style="display:flex;justify-content:space-between"><span class="mute">Inside now</span><span class="faint">Nobody</span></div>
+<div style="display:flex;justify-content:space-between"><span class="mute">Last visit</span><span>2 days ago</span></div>
+<div style="display:flex;justify-content:space-between"><span class="mute">Files</span><span>3</span></div>
+</div>
+<a class="btn btn-p" style="justify-content:space-between">Give access <span class="m">&rarr;</span></a>
+</div>
+
+<div class="card panel" style="padding:22px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start">
+<svg width="56" height="56" viewBox="0 0 64 64" role="img" aria-label="Safe, locked"><rect x="1.5" y="1.5" width="61" height="61" rx="14" fill="#FFFFFF" stroke="#0E1435" stroke-width="1.5"/><circle cx="32" cy="32" r="21" fill="none" stroke="#0E1435" stroke-width="1.5"/><circle cx="32" cy="32" r="17" fill="none" stroke="#0E1435" stroke-width="2.6" stroke-dasharray="0.8 3.6"/><circle cx="32" cy="32" r="11.5" fill="#E2603A"/><circle cx="32" cy="29.6" r="3.2" fill="#FFFFFF"/><path d="M30.6 31.6L29 38.2Q28.8 39 29.6 39H34.4Q35.2 39 35 38.2L33.4 31.6Z" fill="#FFFFFF"/></svg>
+<span class="chip">Locked</span></div>
+<div><div style="font-size:22px;line-height:28px;font-weight:700;letter-spacing:-0.5px">Medical</div><div class="m faint" style="font-size:12px;margin-top:4px">#03</div></div>
+<div style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:9px;font-size:14px;line-height:20px">
+<div style="display:flex;justify-content:space-between"><span class="mute">Inside now</span><span class="faint">Nobody</span></div>
+<div style="display:flex;justify-content:space-between"><span class="mute">Last visit</span><span class="faint">Never</span></div>
+<div style="display:flex;justify-content:space-between"><span class="mute">Files</span><span>2</span></div>
+</div>
+<a class="btn btn-p" style="justify-content:space-between">Give access <span class="m">&rarr;</span></a>
+</div>
+
+</div>
+
+<div style="border:1px dashed var(--line2);border-radius:14px;padding:22px 24px;display:flex;align-items:center;justify-content:space-between">
+<div style="display:flex;align-items:center;gap:18px"><svg width="44" height="44" viewBox="0 0 64 64" aria-hidden="true"><rect x="1.5" y="1.5" width="61" height="61" rx="14" fill="none" stroke="#7A7F95" stroke-width="1.5" stroke-dasharray="4 4"/><path d="M32 22v20M22 32h20" stroke="#7A7F95" stroke-width="1.8" stroke-linecap="round"/></svg>
+<div><div style="font-size:17px;font-weight:700">New safe</div><div class="mute" style="font-size:14px;margin-top:2px">Give it a name. It takes a minute.</div></div></div>
+<a class="btn btn-s">New safe <span class="m">+</span></a>
+</div>
+<div class="panel" style="overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--ink)"><span class="h2" style="font-size:17px">Recent activity</span><a class="btn btn-g" style="font-size:13px">All visitors <span class="m">&rarr;</span></a></div>
+<div class="th" style="grid-template-columns:90px 200px 1fr 160px 120px;border-bottom:1px solid var(--line)"><span>Time</span><span>Who</span><span>What</span><span>Safe</span><span>Proof</span></div>
+<div class="tr" style="grid-template-columns:90px 200px 1fr 160px 120px"><span class="n" style="font-size:15px">14:11</span><span style="font-weight:600">The landlord</span><span>Asked a question</span><span class="mute">Flat documents</span><a class="m" style="font-size:12px;color:var(--blue)">e4120f7b &nearr;</a></div>
+<div class="tr" style="grid-template-columns:90px 200px 1fr 160px 120px"><span class="n" style="font-size:15px">14:09</span><span style="font-weight:600">Maria</span><span>Closed the lease</span><span class="mute">Flat documents</span><a class="m" style="font-size:12px;color:var(--blue)">c07d88a2 &nearr;</a></div>
+<div class="tr" style="grid-template-columns:90px 200px 1fr 160px 120px"><span class="n" style="font-size:15px">14:02</span><span style="font-weight:600">Maria</span><span>Opened the lease</span><span class="mute">Flat documents</span><a class="m" style="font-size:12px;color:var(--blue)">9f3a21c0 &nearr;</a></div>
+</div>
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
