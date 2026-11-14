@@ -1,0 +1,33 @@
+/* The live app on top of the design's app.css: the fixed 1440x900 artboard (.scr) becomes a full-height, scrolling layout. */
+.app { display: flex; min-height: 100vh; background: var(--paper); color: var(--ink); font-family: 'Public Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; position: relative; }
+.app .rail { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.app .main { min-height: 100vh; }
+.app .body { overflow: visible; }
+.app a { color: inherit; text-decoration: none; }
+.app .ri, .app .rsafe { cursor: pointer; border: 0; background: transparent; width: 100%; text-align: left; font-family: inherit; }
+.app .rsafe:not(.on):hover { background: #1B2350; color: #FFFFFF; }
+.app button { font-family: inherit; cursor: pointer; }
+.app button:disabled { opacity: .5; cursor: default; }
+.app button.btn { font-size: 14px; }
+.app button.btn-lg { font-size: 15px; }
+.app .btn-a:hover { background: #F6B94F; }
+.app .btn-of:hover { background: #C9512E; }
+.app .btn-o:hover { background: var(--orange); color: #FFFFFF; }
+.app .btn-g:hover { text-decoration: underline; }
+.app .tab { cursor: pointer; font-family: inherit; }
+.app .tab:not(.on):hover { background: var(--paper3); color: var(--ink); }
+.app input.input, .app textarea.input, .app select.input { width: 100%; font-family: inherit; color: var(--ink); outline: none; }
+.app input.input:focus, .app textarea.input:focus { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+.app .seg button { font-family: 'Fragment Mono', monospace; font-size: 12px; padding: 9px 16px; border: 0; border-right: 1px solid var(--ink); background: transparent; color: var(--ink); }
+.app .seg button:last-child { border-right: none; }
+.app .seg button.on { background: var(--ink); color: #FFFFFF; }
+.app .err { color: var(--red); font-size: 14px; margin: 8px 0 0; }
+.app .scrim, .app .drawer, .app .modal { position: fixed; }
+.app .drawer { z-index: 20; } .app .scrim { z-index: 19; } .app .modal { z-index: 21; }
+.app .drawer .db { overflow-y: auto; }
+.app .x { border: 0; background: transparent; font-size: 22px; line-height: 22px; color: var(--ink); padding: 2px 6px; }
+.app .tbl { overflow: hidden; }
+.app .tbl .tr { cursor: default; }
+.app .check { width: 18px; height: 18px; border: 1.5px solid var(--ink); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; flex: none; background: #FFFFFF; }
+.app .check.on { background: var(--blue); border-color: var(--blue); }
+.app .muted-row { color: var(--faint); }

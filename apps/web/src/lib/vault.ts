@@ -35,7 +35,19 @@ export interface ItemRecord {
   /** Whether a recipient can be shown this item (pages or text). Audio, video and unknown files are owner-only. */
   shareable: boolean;
   dekCommit: string;
+  /** folder name inside the safe (one level); absent means the top level */
+  folder?: string;
 }
+
+/** Owner-chosen labels. They live only inside the encrypted manifest, so the chain and the services never see them. */
+export interface SafeMeta {
+  name?: string;
+  /** one of SAFE_COLOURS */
+  color?: string;
+  /** folder names (one level) */
+  folders?: string[];
+}
+export const SAFE_COLOURS = ["#2546C2", "#0E1435", "#E2603A", "#F2A72E", "#A9C2EC"] as const;
 
 export interface Manifest {
   version: 1;
@@ -43,6 +55,7 @@ export interface Manifest {
   epoch: number;
   seq: number;
   items: ItemRecord[];
+  meta?: SafeMeta;
 }
 
 export interface Part {

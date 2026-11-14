@@ -79,17 +79,25 @@ export interface AddResult {
   txs: Receipt[];
 }
 
-/** Encrypts an item, stores it, then replaces the index (manifest) and retires the old index. */
-export async function addItem(ctx: Ctx, current: Manifest, box: Pick<BoxView, "manifest_blob">, f: { name: string; mime: string; kind: ItemKind; size: number; parts: Part[] }): Promise<AddResult> {
-  const enc = encryptItem({ bmk: ctx.bmk, epoch: ctx.epoch, boxId: ctx.boxId, ...f });
-  const txs = await putBlob(ctx, enc.blob, "file");
-  const next: Manifest = { ...current, seq: current.seq + 1, items: [...current.items, enc.record] };
+/** Replaces the index (manifest) with `next` (seq must be current + 1): stores it, commits it on chain, retires the old one. */
+export async function saveManifest(ctx: Ctx, box: Pick<BoxView, "manifest_blob">, next: Manifest): Promise<Receipt[]> {
   const m = encryptManifest(ctx.bmk, next);
-  txs.push(...(await putBlob(ctx, m.blob, "index")));
+  const txs = await putBlob(ctx, m.blob, "index");
   ctx.progress?.("index: switching");
   txs.push({ step: "index: commit", txHash: (await ctx.writer.commitManifest({ boxId: ctx.boxId, manifestBlob: m.blob.blobId, seq: next.seq })).txHash });
   if (box.manifest_blob) txs.push({ step: "old index: retire", txHash: (await ctx.writer.retireBlob(box.manifest_blob)).txHash });
-  return { manifest: next, record: enc.record, txs };
+  return txs;
+}
+
+/** Encrypts an item, stores it, then replaces the index (manifest) and retires the old index. */
+export async function addItem(ctx: Ctx, current: Manifest, box: Pick<BoxView, "manifest_blob">, f: { name: string; mime: string; kind: ItemKind; size: number; parts: Part[]; folder?: string }): Promise<AddResult> {
+  const { folder, ...item } = f;
+  const enc = encryptItem({ bmk: ctx.bmk, epoch: ctx.epoch, boxId: ctx.boxId, ...item });
+  const record = folder ? { ...enc.record, folder } : enc.record;
+  const txs = await putBlob(ctx, enc.blob, "file");
+  const next: Manifest = { ...current, seq: current.seq + 1, items: [...current.items, record] };
+  txs.push(...(await saveManifest(ctx, box, next)));
+  return { manifest: next, record, txs };
 }
 
 /** Reads and decrypts one segment of one of the owner's items. */

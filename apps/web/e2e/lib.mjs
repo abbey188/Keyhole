@@ -3,7 +3,9 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
 
-export const APP = process.env.APP_URL ?? "http://localhost:5173/";
+export const APP = process.env.APP_URL ?? "http://localhost:5173/app";
+/** The site root (landing, docs, proof). */
+export const SITE = APP.replace(/\/app\/?$/, "");
 
 /** A fresh browser context with a virtual passkey authenticator that supports the PRF extension. */
 export async function newUser(browser) {

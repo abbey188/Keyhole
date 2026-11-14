@@ -6,7 +6,8 @@ import { createRequire } from "node:module";
 import { join } from "node:path";
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright");
-const APP = process.env.APP_URL ?? "http://localhost:5173/";
+const APP = process.env.APP_URL ?? "http://localhost:5173/app";
+const SITE = APP.replace(/\/app\/?$/, "");
 const RUN = process.argv[2] ?? `run-${Date.now()}`;
 const OUT = join(new URL("./out", import.meta.url).pathname, RUN);
 mkdirSync(OUT, { recursive: true });
@@ -108,7 +109,7 @@ await scene("7 Maria ends access; the landlord's next open fails", async () => {
 });
 await scene("8 the proof: judge page and keyless contract", async () => {
   const j = (await user("judge", false)).page;
-  await j.goto(APP + "#judge");
+  await j.goto(SITE + "/proof");
   await j.getByText("0 access keys").waitFor({ timeout: 60000 });
   await shot(j, "8-judge");
 });
