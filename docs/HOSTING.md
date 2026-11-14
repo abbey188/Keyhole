@@ -4,6 +4,13 @@ One server runs everything: the web app (static files), the release service, the
 
 **Why its own deployment:** the service keys of the contract we developed against live only in the development sandbox's `.env`, which is temporary, and secrets must not be pasted anywhere. So the server creates its own keyless testnet contract (same code, same Wasm hash, new keys that never leave the server). The setup script does this.
 
+## Fly.io: your own domain for the app
+The app is served at `https://<app>.fly.dev`. To use your own domain, e.g. `app.yourdomain.com`:
+1. Fly dashboard → your app → **Certificates** → add `app.yourdomain.com`. Fly shows the DNS record to create (a CNAME to `<app>.fly.dev`; it may also show an `_acme-challenge` record). Add it at the registrar and wait until the certificate shows as issued.
+2. Fly dashboard → your app → **Settings** (or `fly.toml` `[env]`): set `PUBLIC_ORIGIN=https://app.yourdomain.com`, then **Deploy app** / restart. On start the machine notices the address changed, rebuilds the web app once (about a minute) and allows that origin in CORS and CSP.
+3. **Choose the address before anyone creates a safe.** Passkeys belong to the exact address they were created on: safes made on another address will not open on the new one.
+A landing page (for example from v0) can live on Vercel at the root domain or `www`, with an "Open app" button linking to the app address. Nothing from this repository needs to go to Vercel.
+
 ## Free option, no card, no server: a static showcase
 Checked against the providers' documentation (2026-11-14): Cloudflare Pages accepts a drag-and-drop zip or folder (up to 1,000 files, 25 MiB each; the page does not say whether a payment method is needed) and Netlify Drop publishes a dropped folder with no Git repository (no account needed for an anonymous temporary deploy; free-plan limits not stated on that page).
 It serves the proof pages only: the live "0 access keys" check, every claim with its proof, the attack results, the Verify page (runs in the browser), and the recorded demo. The interactive product is **not** running there, and the home page says so. Build it with:

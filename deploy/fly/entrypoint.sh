@@ -3,7 +3,10 @@
 # the services' data). The machine's own filesystem is rebuilt from the image on every start, so nothing else is relied on.
 set -euo pipefail
 cd /app
-ORIGIN="https://${FLY_APP_NAME:?FLY_APP_NAME is set by Fly}.fly.dev"
+# The public address of the app. Default: the Fly address. To serve from your own domain set PUBLIC_ORIGIN (for example https://app.example.org)
+# in the Fly app settings. Passkeys are tied to this exact address, so choose it once and keep it.
+ORIGIN="${PUBLIC_ORIGIN:-https://${FLY_APP_NAME:?FLY_APP_NAME is set by Fly}.fly.dev}"
+ORIGIN="${ORIGIN%/}"
 mkdir -p /data/release /data/node /data/web
 touch /data/.env && chmod 600 /data/.env && ln -sf /data/.env /app/.env
 export APP_ORIGIN="$ORIGIN"
@@ -18,10 +21,13 @@ if ! grep -q '^KEYHOLE_CONTRACT=' /data/.env; then
 fi
 [ -d /data/records ] && cp /data/records/*.json deploy/
 
+# the built web app bakes in the address; rebuild if the address changed since it was built
+[ "$(cat /data/web/.origin 2>/dev/null || true)" = "$ORIGIN" ] || rm -rf /data/web/dist
 if [ ! -d /data/web/dist ]; then
   echo "[boot] building the web app for $ORIGIN"
   VITE_RELEASE_URL="$ORIGIN/rs" VITE_NODE_URL="$ORIGIN/node" pnpm --filter @keyhole/web build
   cp -r apps/web/dist /data/web/dist
+  echo "$ORIGIN" > /data/web/.origin
 fi
 
 set -a; . /data/.env; set +a
