@@ -12,7 +12,7 @@ import type { Span } from "../lib/redact";
 const SEP = "\n\n";
 
 /** Hide sensitive values in a file's text and save a redacted copy that can be shared instead. Runs on this device. */
-export function RedactPanel({ ctx, box, man, item, onDone, onClose }: { ctx: Ctx; box: BoxView; man: Manifest; item: ItemRecord; onDone: (txs: Awaited<ReturnType<typeof addItem>>["txs"]) => Promise<void>; onClose: () => void }) {
+export function RedactPanel({ ctx, box, man, item, onDone, onClose }: { ctx: Ctx; box: BoxView; man: Manifest; item: ItemRecord; onDone: (txs: Awaited<ReturnType<typeof addItem>>["txs"], next?: Manifest) => Promise<void>; onClose: () => void }) {
   const [text, setText] = useState<string | null>(null);
   const [off, setOff] = useState<Record<number, boolean>>({});
   const [custom, setCustom] = useState("");
@@ -49,7 +49,7 @@ export function RedactPanel({ ctx, box, man, item, onDone, onClose }: { ctx: Ctx
       const name = `${item.name.replace(/\.[^.]+$/, "")} (redacted).txt`;
       const plan = await planItem({ name, mime: "text/plain", bytes }, browserRenderers);
       const res = await addItem({ ...ctx, progress: setBusy }, man, box, { name, mime: "text/plain", kind: plan.kind, size: bytes.length, parts: plan.parts });
-      await onDone(res.txs); onClose();
+      await onDone(res.txs, res.manifest); onClose();
     } catch (e) { setErr(`Could not save it: ${(e as Error).message}`); }
     setBusy("");
   };

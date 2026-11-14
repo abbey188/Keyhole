@@ -5,10 +5,14 @@ One server runs everything: the web app (static files), the release service, the
 **Why its own deployment:** the service keys of the contract we developed against live only in the development sandbox's `.env`, which is temporary, and secrets must not be pasted anywhere. So the server creates its own keyless testnet contract (same code, same Wasm hash, new keys that never leave the server). The setup script does this.
 
 ## Frontend on Vercel, services on Fly (recommended)
-Then the web app does not depend on Fly: if Fly stops, the app still loads and the proof pages (judge, Verify) still work; only the actions that need the services fail. In Vercel, import the repository as a project and set:
-- **Root Directory:** the repository root. **Install Command:** `pnpm install --frozen-lockfile`. **Build Command:** `pnpm --filter @keyhole/web build`. **Output Directory:** `apps/web/dist`. **Node.js version:** 22.
-- **Environment variables:** `VITE_RELEASE_URL=https://<fly app>.fly.dev/rs`, `VITE_NODE_URL=https://<fly app>.fly.dev/node`, `VITE_DEPLOY_RECORD=fly` (use the hosted contract's record). Optional: `VITE_REPO_URL`.
-In Fly set `FRONTEND_ORIGIN=https://<your Vercel address>` (Secrets or `[env]`), then redeploy or restart: the machine then allows only that origin in CORS and stops serving the web app. **Choose the frontend address first** (a custom domain added in Vercel before anyone creates a safe): passkeys belong to the exact address they were created on.
+One Vercel project serves the whole site from `apps/web`: the landing page at `/`, the docs pages (`/trust`, `/security`, `/limits`, `/developers`, `/proof`), the app at `/app`, `/verify`, and access links (`#open=`). One origin, so the passkey domain is the same everywhere. If Fly stops, the site and the proof pages still load; only actions that need the services fail.
+**Vercel:** Add New → Project → import `abbey188/Keyhole` (allow the GitHub app to see only this repo).
+- Root Directory `apps/web`; tick **Include source files outside of the Root Directory in the Build Step**. Framework preset Vite. `apps/web/vercel.json` sets the install and build commands, the output (`dist`), the rewrite of page paths to the app, and the security headers.
+- Node.js version 22. Production branch: the branch you approve (`main` after the merge).
+- Environment variables: `VITE_RELEASE_URL=https://<fly app>.fly.dev/rs`, `VITE_NODE_URL=https://<fly app>.fly.dev/node`, `VITE_DEPLOY_RECORD=fly`.
+- Add your domain under Settings → Domains **before anyone creates a safe**: passkeys belong to the exact address they were created on.
+**Fly:** set `FRONTEND_ORIGIN=https://<your Vercel address or domain>` (Secrets), then **Deploy app** from the dashboard so the machine runs the current code. The machine then allows only that origin and serves only `/rs` and `/node`.
+**AI relay safeguards (Fly secrets or env):** `RS_RELAY_PER_DAY` (hard daily cap on calls reaching NEAR AI, default 1500), `RS_RELAY_PER_MIN` (default 90), `AI_RELAY_DISABLED=1` (kill switch: the relay answers 503, everything else keeps working), and the existing per-IP limit and sponsor caps (`RS_PER_IP_PER_MINUTE`, `RS_SPONSOR_MAX`). The NEAR AI key balance is the final spend cap.
 
 ## Fly.io: your own domain for the app
 The app is served at `https://<app>.fly.dev`. To use your own domain, e.g. `app.yourdomain.com`:

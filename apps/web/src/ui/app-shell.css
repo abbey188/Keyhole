@@ -17,7 +17,7 @@
 .app .tab { cursor: pointer; font-family: inherit; }
 .app .tab:not(.on):hover { background: var(--paper3); color: var(--ink); }
 .app input.input, .app textarea.input, .app select.input { width: 100%; font-family: inherit; color: var(--ink); outline: none; }
-.app input.input:focus, .app textarea.input:focus { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+.app input.input:focus, .app textarea.input:focus { border-color: var(--blue); outline: 1px solid var(--blue); outline-offset: -2px; }
 .app .seg button { font-family: 'Fragment Mono', monospace; font-size: 12px; padding: 9px 16px; border: 0; border-right: 1px solid var(--ink); background: transparent; color: var(--ink); }
 .app .seg button:last-child { border-right: none; }
 .app .seg button.on { background: var(--ink); color: #FFFFFF; }

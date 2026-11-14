@@ -34,7 +34,7 @@ const tg = (on: boolean) => (
 const cardLbl = { fontSize: 10, color: "#8F98BF", lineHeight: "18px" } as const;
 
 /** Claims instead of files: read facts on the device, check them, sign a statement, share that instead of the document. */
-export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest | null; box: BoxView; afterAdd: (t: Receipt[]) => Promise<void> }) {
+export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest | null; box: BoxView; afterAdd: (t: Receipt[], next?: Manifest) => Promise<void> }) {
   const [index, setIndex] = useState<PageText[] | null>(null);
   const [pick, setPick] = useState("");
   const [picking, setPicking] = useState(false);
@@ -105,7 +105,7 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
       const parts = claimParts(sc, draft.item.name);
       const name = `Claim: ${describePredicate(sc.claim.predicate)}`;
       const res = await addItem({ ...ctx, progress: setBusy }, man!, box, { name, mime: "application/json", kind: "claim", size: txt.length, parts });
-      await afterAdd(res.txs); setMadeName(name); setTarget(""); setShared(null);
+      await afterAdd(res.txs, res.manifest); setMadeName(name); setTarget(""); setShared(null);
       setMade(`Grade ${sc.claim.grade} claim saved: ${CLAIM_WORDING[sc.claim.grade]}.`);
     } catch (e) { setErr((e as Error).message); }
     setBusy("");

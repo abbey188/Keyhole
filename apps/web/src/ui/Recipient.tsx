@@ -332,7 +332,7 @@ function Page({ visit, item, seg, shown, onLoaded, onSigned, onError }: { visit:
         const bytes = await viewSegment(visit, item, seg, svc);
         if (dead || !ref.current) return;
         if (seg.m.startsWith("text/")) { const t = new TextDecoder().decode(bytes); if (/"claim"\s*:/.test(t) && /"signature"\s*:/.test(t)) onSigned(t); }
-        await draw(ref.current, bytes, seg.m, `${visit.payload.l || "visitor"} · ${new Date().toLocaleString()} · ${visit.tail}`);
+        await draw(ref.current, bytes, seg.m, `${visit.payload.l || "visitor"}  ${new Date().toLocaleString()}  ${visit.tail}`);
         setReady(true);
         onLoaded();
       } catch (e) { onError(e as Error); }

@@ -45,8 +45,8 @@ export function SafePage({ id, boxId, serial, info, rail, initial, onSafe, onBac
     setBox(b);
   };
   useEffect(() => { refresh().catch((e) => setErr((e as Error).message)); const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, [boxId]);
-  useEffect(() => { if (ctx && box) loadManifest(ctx, box).then(setMan).catch((e) => setErr(`Could not open the file list: ${(e as Error).message}`)); }, [ctx, box?.manifest_seq]);
-  const afterWrite = async (t: Receipt[]) => { setTxs(t); await refresh(); onChanged(); };
+  useEffect(() => { if (ctx && box) loadManifest(ctx, box).then((m) => setMan((cur) => (cur && cur.seq > m.seq ? cur : m))).catch((e) => setErr(`Could not open the file list: ${(e as Error).message}`)); }, [ctx, box?.manifest_seq]);
+  const afterWrite = async (t: Receipt[], next?: Manifest) => { if (next) setMan(next); setTxs(t); await refresh(); onChanged(); };
 
   const name = safeName(man ?? info?.manifest, serial);
   const colour = safeColour(man ?? info?.manifest);
@@ -57,7 +57,8 @@ export function SafePage({ id, boxId, serial, info, rail, initial, onSafe, onBac
     const next = renaming.trim(); setRenaming(null);
     if (!next || next === name) return;
     const cur = man ?? emptyManifest(ctx.boxId, ctx.epoch);
-    try { await afterWrite(await saveManifest(ctx, box, { ...cur, seq: cur.seq + 1, meta: { ...cur.meta, name: next } })); } catch (e) { setErr((e as Error).message); }
+    const m: Manifest = { ...cur, seq: cur.seq + 1, meta: { ...cur.meta, name: next } };
+    try { await afterWrite(await saveManifest(ctx, box, m), m); } catch (e) { setErr((e as Error).message); }
   };
 
   const handover = tab === "handover";
@@ -117,7 +118,7 @@ const added = (t: number) => { const d = new Date(t), n = new Date(); if (d.toDa
 const Folder = ({ on }: { on?: boolean }) => <svg width="18" height="18" viewBox="0 0 24 24" fill={on ? "#DFE7F6" : "none"} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" /></svg>;
 const DocIcon = ({ image }: { image?: boolean }) => <svg width="20" height="20" viewBox="0 0 24 24" fill="#DFE7F6" stroke="#2546C2" strokeWidth="1.6" strokeLinejoin="round"><path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" /><path d={image ? "M14 3v5h5M8.5 18l2.5-3 2 2 2-3 1.5 4" : "M14 3v5h5M8 13h8M8 17h6"} fill="none" /></svg>;
 
-function Files({ ctx, box, man, id, afterWrite }: { ctx: Ctx; box: BoxView; man: Manifest | null; id: Identity; afterWrite: (t: Receipt[]) => Promise<void> }) {
+function Files({ ctx, box, man, id, afterWrite }: { ctx: Ctx; box: BoxView; man: Manifest | null; id: Identity; afterWrite: (t: Receipt[], next?: Manifest) => Promise<void> }) {
   const [folder, setFolder] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [up, setUp] = useState<Upload | null>(null);
@@ -152,7 +153,7 @@ function Files({ ctx, box, man, id, afterWrite }: { ctx: Ctx; box: BoxView; man:
       });
       const res = await addItem({ ...ctx, progress }, man ?? emptyManifest(ctx.boxId, ctx.epoch), box, { name: f.name, mime: f.type || "application/octet-stream", kind: plan.kind, size: bytes.length, parts: plan.parts, ...(folder ? { folder } : {}) });
       setUp((u) => u && { ...u, pct: 100 });
-      await afterWrite(res.txs);
+      await afterWrite(res.txs, res.manifest);
       setUp(null);
     } catch (e) { setErr(e instanceof FileRefused ? e.message : `Could not add the file: ${(e as Error).message}`); setUp(null); }
   };
@@ -160,7 +161,8 @@ function Files({ ctx, box, man, id, afterWrite }: { ctx: Ctx; box: BoxView; man:
     const n = (newFolder ?? "").trim(); setNewFolder(null);
     if (!n || folders.includes(n)) return;
     const cur = man ?? emptyManifest(ctx.boxId, ctx.epoch);
-    try { await afterWrite(await saveManifest(ctx, box, { ...cur, seq: cur.seq + 1, meta: { ...cur.meta, folders: [...folders, n] } })); setFolder(n); } catch (e) { setErr((e as Error).message); }
+    const m: Manifest = { ...cur, seq: cur.seq + 1, meta: { ...cur.meta, folders: [...folders, n] } };
+    try { await afterWrite(await saveManifest(ctx, box, m), m); setFolder(n); } catch (e) { setErr((e as Error).message); }
   };
   const open = async (item: ItemRecord) => {
     setErr(""); setMenu(null);

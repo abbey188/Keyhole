@@ -11,7 +11,10 @@ const MAX_BODY = 512 * 1024;
 /** Requests allowed per minute across all callers (RS_RELAY_PER_MIN, default 90). Caps what a stranger can spend through the relay. */
 const hits: number[] = [];
 const perMin = () => Number(process.env.RS_RELAY_PER_MIN ?? 90);
-export const resetRelayLimit = () => { hits.length = 0; };
+/** Hard cap per UTC day (RS_RELAY_PER_DAY, default 1500) on calls that reach NEAR AI, so the AI balance cannot be drained in a day. */
+let day = { key: "", n: 0 };
+const perDay = () => Number(process.env.RS_RELAY_PER_DAY ?? 1500);
+export const resetRelayLimit = () => { hits.length = 0; day = { key: "", n: 0 }; };
 
 export interface RelayOptions {
   /** Called instead of fetch in tests. */
@@ -35,7 +38,20 @@ export async function relay(req: IncomingMessage, res: ServerResponse, body: Uin
     res.end(JSON.stringify({ error: "too_large" }));
     return true;
   }
+  // Kill switch: AI_RELAY_DISABLED=1 turns the relay off without a redeploy of the app.
+  if (process.env.AI_RELAY_DISABLED === "1") {
+    res.writeHead(503, { ...cors, "content-type": "application/json" });
+    res.end(JSON.stringify({ error: "ai_disabled" }));
+    return true;
+  }
   const now = Date.now();
+  const today = new Date(now).toISOString().slice(0, 10);
+  if (day.key !== today) day = { key: today, n: 0 };
+  if (day.n >= perDay()) {
+    res.writeHead(429, { ...cors, "content-type": "application/json", "retry-after": "3600" });
+    res.end(JSON.stringify({ error: "daily_limit" }));
+    return true;
+  }
   while (hits.length && (hits[0] as number) < now - 60_000) hits.shift();
   if (hits.length >= perMin()) {
     res.writeHead(429, { ...cors, "content-type": "application/json", "retry-after": "30" });
@@ -43,6 +59,7 @@ export async function relay(req: IncomingMessage, res: ServerResponse, body: Uin
     return true;
   }
   hits.push(now);
+  day.n += 1;
   const headers: Record<string, string> = {};
   for (const h of FORWARD_HEADERS) { const v = req.headers[h]; if (typeof v === "string") headers[h] = v; }
   if (host === "cloud-api.near.ai") headers.authorization = `Bearer ${(o.apiKey ?? (() => process.env.NEARAI_API_KEY))() ?? "placeholder"}`;

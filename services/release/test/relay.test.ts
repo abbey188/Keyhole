@@ -57,4 +57,18 @@ describe("AI relay", () => {
     for (let i = 0; i < 5; i++) codes.push((await fetch(`${base}/relay/cloud-api.near.ai/v1/models`)).status);
     expect(codes).toEqual([200, 200, 200, 429, 429]);
   });
+
+  it("has a hard daily cap and a kill switch", async () => {
+    const base = await start((async () => new Response("{}", { status: 200 })) as never);
+    process.env.RS_RELAY_PER_DAY = "2";
+    const codes: number[] = [];
+    for (let i = 0; i < 3; i++) codes.push((await fetch(`${base}/relay/cloud-api.near.ai/v1/models`)).status);
+    expect(codes).toEqual([200, 200, 429]);
+    delete process.env.RS_RELAY_PER_DAY; resetRelayLimit();
+    process.env.AI_RELAY_DISABLED = "1";
+    const r = await fetch(`${base}/relay/cloud-api.near.ai/v1/models`);
+    expect(r.status).toBe(503);
+    expect(await r.json()).toEqual({ error: "ai_disabled" });
+    delete process.env.AI_RELAY_DISABLED;
+  });
 });
