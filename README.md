@@ -2,9 +2,9 @@
 
 **A Keyhole safe is an NFT that holds your files.** They are encrypted on your device. You let someone in for a set time, every opening is written into a log nobody can edit, you can end access, and you can hand the whole safe to someone else, which kills every key you gave out. An AI that runs inside attested hardware can read the safe for you, and you can share a *claim* ("income is at least £3,000") instead of the document.
 
-> **Status: working on NEAR testnet, demo configuration, no external audit.** Everything below is backed by a test or a transaction (see [CLAIMS.md](CLAIMS.md), [docs/EVIDENCE.md](docs/EVIDENCE.md), and the Proof page). Things not finished are marked `[NOT FINISHED]`; things deliberately left for later are marked `[LATER]`. Do not put real sensitive files in it.
+> **Status: working on NEAR testnet, demo configuration, no external audit.** Everything below is backed by a test or a transaction (see [CLAIMS.md](CLAIMS.md), [docs/EVIDENCE.md](docs/EVIDENCE.md), and the Proof page). Things not finished are marked `[NOT FINISHED]`; things deliberately left for later are marked `[LATER]`. An external audit is the next step.
 
-**Live demo (free trial, may be offline):** https://keyhole.fly.dev/ . It runs the same code on NEAR testnet with its own keyless contract; it can stop at any time (see `docs/HOSTING.md`). The proof does not depend on it: see below.
+**Live:** https://keyhole.patchway.xyz (the site, the app at `/app` and the Proof page at `/proof`). The site is on Vercel; the storage node and release service run on Fly.io (a trial plan) against their own keyless testnet contract with the same code hash, and wake within seconds after an idle period. See `docs/HOSTING.md`. The proof does not depend on the hosting: see below.
 
 ## See the proof in 2 minutes (no keys, no accounts)
 1. `git clone … && cd Keyhole && pnpm install`

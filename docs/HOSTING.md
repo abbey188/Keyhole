@@ -21,23 +21,6 @@ The app is served at `https://<app>.fly.dev`. To use your own domain, e.g. `app.
 3. **Choose the address before anyone creates a safe.** Passkeys belong to the exact address they were created on: safes made on another address will not open on the new one.
 A landing page (for example from v0) can live on Vercel at the root domain or `www`, with an "Open app" button linking to the app address. Nothing from this repository needs to go to Vercel.
 
-## Free option, no card, no server: a static showcase
-Checked against the providers' documentation (2026-11-14): Cloudflare Pages accepts a drag-and-drop zip or folder (up to 1,000 files, 25 MiB each; the page does not say whether a payment method is needed) and Netlify Drop publishes a dropped folder with no Git repository (no account needed for an anonymous temporary deploy; free-plan limits not stated on that page).
-It serves the proof pages only: the live "0 access keys" check, every claim with its proof, the attack results, the Verify page (runs in the browser), and the recorded demo. The interactive product is **not** running there, and the home page says so. Build it with:
-```bash
-cd apps/web && VITE_SHOWCASE=1 VITE_VIDEO_URL=<link to the video> VITE_REPO_URL=<public repo link, only if the repo is public> npx vite build
-```
-then drop `apps/web/dist` into Cloudflare Pages (Workers & Pages → Create application → Drag and drop) or Netlify Drop. A static build was checked in a browser with no services running: the judge page showed "0 access keys" from public testnet RPC, the Verify page loaded, and no request failed.
-
-## Free option, no card: a GitHub Codespace (blocked for this account)
-Checked against GitHub's documentation (2026-11-14): a free personal account gets 120 compute hours and 15 GB-month of storage a month and needs **no payment method** (usage simply stops when the quota is used up). A Codespace's disk survives stops, a forwarded port can be made **public** at `https://<codespace>-<port>.app.github.dev`, the idle stop is 30 minutes by default and can be raised to 240, and every Codespace has a **12-hour maximum lifetime**. A 2-core Codespace therefore gives about 60 hours of running time a month.
-Use it for a live link during a window you control, not for unattended judging: it stops when idle or after 12 hours, and you restart it by reopening it and running `./deploy/hosting/codespace-start.sh`.
-1. Repository page → **Code → Codespaces → Create codespace on main** (2-core machine). In your GitHub settings → Codespaces, set the idle timeout to 240 minutes.
-2. In its terminal: `./deploy/hosting/codespace-setup.sh` (about 10 to 15 minutes; asks once, hidden, for your NEAR AI key).
-3. It prints the app, judge-page and health links. Keep that terminal open.
-Not verified: whether your GitHub account's billing lock also blocks creating a Codespace. Try step 1 first; if it is refused, use the recorded demo plus local run.
-Facts checked: Render's free web service has an ephemeral disk and sleeps after 15 minutes (docs.render.com free tier); Hugging Face Docker Spaces need a paid plan; Oracle Always Free needs a card and its current allowance could not be confirmed.
-
 ## Accounts to create for a paid server (you)
 1. **A server.** Hetzner Cloud (CX22, 4 GB) or DigitalOcean (4 GB droplet). Image: **Ubuntu 24.04**. Add your SSH public key when asked (or use the provider's console). Note the server's IP address.
 2. **A name for it.** Easiest: buy a cheap domain (Cloudflare Registrar, Namecheap, Porkbun) or take a free one at duckdns.org. Create one **A record** pointing at the server's IP, for example `keyhole.yourdomain.com`. Wait a few minutes.

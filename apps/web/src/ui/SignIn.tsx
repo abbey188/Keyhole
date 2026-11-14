@@ -49,7 +49,7 @@ export function SignIn({ onIdentity }: { onIdentity: (i: Identity) => void }) {
         <svg viewBox="0 0 440 440" width="440" height="440" role="img" aria-label="A vault door drawn in line, with a clear keyhole" style={{ alignSelf: "center", maxWidth: "100%", height: "auto" }}>
           <defs><pattern id="sd" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1" fill="#A9C2EC" /></pattern><mask id="sm"><circle cx="220" cy="220" r="150" fill="#FFFFFF" /><circle cx="207" cy="207" r="148" fill="#000000" /></mask></defs>
           <rect x="30" y="30" width="380" height="380" rx="30" fill="none" stroke="#FFFFFF" strokeWidth="1.5" /><rect x="46" y="46" width="348" height="348" rx="20" fill="none" stroke="#FFFFFF" strokeOpacity="0.45" />
-          <rect x="70" y="70" width="300" height="300" fill="url(#sd)" mask="url(#sm)" /><circle cx="220" cy="220" r="150" fill="none" stroke="#FFFFFF" strokeWidth="1.5" />
+          <circle cx="220" cy="220" r="150" fill="none" stroke="#FFFFFF" strokeWidth="1.5" />
           <circle cx="220" cy="220" r="132" fill="none" stroke="#FFFFFF" strokeOpacity="0.75" strokeWidth="5" strokeDasharray="1.2 9.2" /><circle cx="220" cy="220" r="78" fill="#FFFFFF" />
           <circle cx="220" cy="204" r="17" fill="#0E1435" /><path d="M213.4 213.5L203.6 257.5Q202.6 262.5 207.8 262.5H232.2Q237.4 262.5 236.4 257.5L226.6 213.5Z" fill="#0E1435" />
         </svg>
