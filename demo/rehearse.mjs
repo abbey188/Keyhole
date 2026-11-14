@@ -43,14 +43,14 @@ let link = "";
 
 await scene("1 create the safe with a passkey", async () => {
   await maria.goto(APP);
-  await maria.getByRole("button", { name: "Create with passkey" }).click();
+  await maria.getByRole("button", { name: "Create with a passkey" }).click();
   await maria.getByText("Your safes").waitFor({ timeout: 30000 });
-  await maria.getByRole("button", { name: "New safe" }).click();
-  await maria.getByText("Safe #1").waitFor({ timeout: 120000 });
+  await maria.getByRole("button", { name: "New safe" }).first().click(); await maria.getByRole("button", { name: "Create safe" }).click();
+  await maria.getByText("Safe 1", { exact: true }).first().waitFor({ timeout: 120000 });
   await shot(maria, "1-safe");
 });
 await scene("2 add the payslip and the lease", async () => {
-  await maria.getByText("Safe #1").click();
+  await maria.getByText("Safe 1", { exact: true }).first().click();
   await maria.getByText("This safe is empty").waitFor({ timeout: 30000 });
   for (const f of ["payslip-maria-santos.pdf", "lease-14-harbour-road.pdf"]) {
     await maria.locator('input[type=file]').setInputFiles({ name: f, mimeType: "application/pdf", buffer: readFileSync(FILES + f) });
@@ -71,10 +71,10 @@ await scene("3 claim instead of the payslip", async () => {
   await shot(maria, "3-claim");
 });
 await scene("4 give the landlord the claim, not the file", async () => {
-  await maria.getByRole("button", { name: "Access" }).click();
+  await maria.getByRole("button", { name: "Give access" }).first().click();
   await maria.getByLabel(/Claim: Monthly gross pay/).check();
   await maria.getByPlaceholder("Who is this for?").fill("Landlord");
-  await maria.getByRole("button", { name: "Give access" }).click();
+  await maria.getByRole("button", { name: "Create link" }).click();
   await maria.getByText("Link ready").waitFor({ timeout: 180000 });
   link = await maria.locator("input[readonly]").inputValue();
   await shot(maria, "4-link");
@@ -98,9 +98,9 @@ await scene("6 Maria asks her safe a question (private AI)", async () => {
   await shot(maria, "6-ask");
 });
 await scene("7 Maria ends access; the landlord's next open fails", async () => {
-  await maria.getByRole("button", { name: "Access" }).click();
-  await maria.getByRole("button", { name: "End access" }).click();
-  await maria.getByText("ended by you").waitFor({ timeout: 120000 });
+  await maria.getByRole("button", { name: "Give access" }).first().click();
+  await maria.getByRole("button", { name: "End access" }).first().click();
+  await maria.getByRole("button", { name: "Access ended" }).waitFor({ timeout: 120000 });
   const l2 = (await user("landlord2", false)).page;
   await l2.goto(link);
   await l2.getByRole("button", { name: "Open" }).click();

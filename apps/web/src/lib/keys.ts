@@ -81,22 +81,28 @@ export async function passkeyCreate(userLabel: string): Promise<{ credId: Uint8A
   return { credId, identity: identityFromSecrets(new Uint8Array(res.first), new Uint8Array(res.second), "passkey") };
 }
 
-async function assert(credId: Uint8Array): Promise<{ res: PrfResults }> {
+async function assert(credId?: Uint8Array): Promise<{ res: PrfResults; rawId: Uint8Array }> {
   const cred = (await navigator.credentials.get({
     publicKey: {
       challenge: randomBytes(32) as BufferSource,
       rpId: location.hostname,
-      allowCredentials: [{ type: "public-key", id: credId as BufferSource }],
+      // With no stored id the browser offers any Keyhole passkey saved for this site (a synced passkey on a new device).
+      allowCredentials: credId ? [{ type: "public-key", id: credId as BufferSource }] : [],
       userVerification: "required",
       extensions: prfInput() as AuthenticationExtensionsClientInputs,
     },
   })) as PublicKeyCredential | null;
   if (!cred) throw new Error("passkey sign-in was cancelled");
-  return { res: prfOf(cred) };
+  return { res: prfOf(cred), rawId: new Uint8Array(cred.rawId) };
 }
 
-export async function passkeyUnlock(credId: Uint8Array): Promise<Identity> {
-  const { res } = await assert(credId);
+export async function passkeyUnlock(credId?: Uint8Array): Promise<Identity> {
+  return (await passkeyUnlockWithId(credId)).identity;
+}
+
+/** Unlock, and also return the credential id the browser used (to remember it on this device). */
+export async function passkeyUnlockWithId(credId?: Uint8Array): Promise<{ identity: Identity; credId: Uint8Array }> {
+  const { res, rawId } = await assert(credId);
   if (!res?.first || !res?.second) throw new PrfUnsupported();
-  return identityFromSecrets(new Uint8Array(res.first), new Uint8Array(res.second), "passkey");
+  return { identity: identityFromSecrets(new Uint8Array(res.first), new Uint8Array(res.second), "passkey"), credId: rawId };
 }

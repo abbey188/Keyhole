@@ -4,7 +4,7 @@
 import { aead, bytesToHex, concatBytes, hexToBytes, sha256, tag, utf8 } from "@keyhole/crypto";
 import type { Identity } from "./keys";
 
-export interface SavedGrant { grantId: string; label: string; exp: number; files: string[]; link: string }
+export interface SavedGrant { grantId: string; label: string; exp: number; files: string[]; link: string; questions?: number }
 
 const storageKey = (boxId: string) => `keyhole.grants.${boxId}`;
 const localKey = (id: Identity) => sha256(concatBytes(tag("local-links"), id.dataRoot));

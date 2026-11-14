@@ -75,8 +75,10 @@ export function AppShell({ active, safes = [], currentBox, onSafe, onSafes, acco
 export function Check({ on, onChange, label, children }: { on: boolean; onChange: (v: boolean) => void; label: string; children?: ReactNode }) {
   return (
     <label style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
-      <input type="checkbox" aria-label={label} checked={on} onChange={(e) => onChange(e.target.checked)} style={{ position: "absolute", opacity: 0, width: 1, height: 1 }} />
-      <span className={`check ${on ? "on" : ""}`} aria-hidden="true">{on && <svg width="11" height="11" viewBox="0 0 12 12"><path d="M2 6.2L4.8 9 10 3" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}</span>
+      <span style={{ position: "relative", display: "inline-flex", flex: "none" }}>
+        <input type="checkbox" aria-label={label} checked={on} onChange={(e) => onChange(e.target.checked)} style={{ position: "absolute", inset: 0, margin: 0, opacity: 0, width: "100%", height: "100%", cursor: "pointer" }} />
+        <span className={`check ${on ? "on" : ""}`} aria-hidden="true">{on && <svg width="11" height="11" viewBox="0 0 12 12"><path d="M2 6.2L4.8 9 10 3" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}</span>
+      </span>
       {children}
     </label>
   );

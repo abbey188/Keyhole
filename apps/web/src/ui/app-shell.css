@@ -31,3 +31,12 @@
 .app .check { width: 18px; height: 18px; border: 1.5px solid var(--ink); border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; flex: none; background: #FFFFFF; }
 .app .check.on { background: var(--blue); border-color: var(--blue); }
 .app .muted-row { color: var(--faint); }
+.app .safe-card { transition: border-color .15s ease-out, background-color .15s ease-out; }
+.app .safe-card:hover { border-color: var(--blue); }
+.app .fd { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; font-size: 14px; border: 0; background: transparent; color: var(--ink); text-align: left; font-family: inherit; cursor: pointer; transition: background-color .14s ease-out; }
+.app .fd.on { background: var(--sky2); color: var(--blue-d); font-weight: 600; }
+.app .fd:not(.on):hover { background: var(--paper2); }
+.app .drop { border: 1px dashed var(--line2); border-radius: 14px; padding: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; color: var(--mute); cursor: pointer; transition: border-color .15s ease-out, background-color .15s ease-out; }
+.app .drop:hover, .app .drop.on { border-color: var(--blue); background: var(--sky2); }
+.app .file-name:hover span { text-decoration: underline; text-underline-offset: 3px; }
+.app .crumb a:hover { color: var(--ink); }

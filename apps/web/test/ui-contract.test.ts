@@ -11,7 +11,7 @@ const src = [...walk(join(root, "src")), ...walk(join(root, "../../packages/askc
 const scripts = [...walk(join(root, "e2e")).filter((f) => f.endsWith(".mjs")), join(root, "../../demo/rehearse.mjs")].map((f) => readFileSync(f, "utf8")).join("\n");
 
 // text that the app builds at run time, so the literal never appears whole in the source: checked by its fixed part instead
-const DYNAMIC: Record<string, string> = { "Safe #1": "Safe #", "lease.pdf": "", "payslip.pdf": "", "passport.pdf": "", "notes.txt": "", "passport (redacted).txt": "", "Questions asked about your files": "Questions asked", "Found on this device: payslip": "Found on this device", "0 access keys": "access keys" };
+const DYNAMIC: Record<string, string> = { "Safe #1": "Safe #", "Safe 1": "`Safe ${", "lease.pdf": "", "payslip.pdf": "", "passport.pdf": "", "notes.txt": "", "passport (redacted).txt": "", "Questions asked about your files": "Questions asked", "Found on this device: payslip": "Found on this device", "0 access keys": "access keys" };
 
 const wanted = new Set<string>();
 for (const m of scripts.matchAll(/(?:getByText|getByPlaceholder|getByLabel)\(\s*"([^"]+)"/g)) wanted.add(m[1]!);
