@@ -27,7 +27,7 @@ For the AI features the local service relays encrypted traffic to NEAR AI; set `
 | Give access to "Maria" for 2 hours | A link. Open it in another browser: "Opening securely", then watermarked pages with a countdown and no download button | `a3.mjs` |
 | Open the Visitors tab | The visit appears, **Verified** against the contract's chain. "Try a doctored copy" shows **Broken** | `a4.mjs` |
 | Press End access, then reload the link | "This access has ended" | `a3.mjs` |
-| Claims tab: pick the payslip | Facts read on your device, an optional private-model cross-check, your review, then a signed claim you can share *instead of* the payslip | `b4.mjs` |
+| Claims tab: pick any document with text | Facts read on your device (payslip, lease and passport readers, plus a generic reader for any PDF with text, text, Markdown, CSV, HTML or JSON file), an optional private-model cross-check, your review, then a signed claim on one fact (is / at least / at most / on or before / on or after) you can share *instead of* the document | `b4.mjs`, `b4-any.mjs` |
 | Ask tab: "How much is the monthly rent?" | An answer quoting your own page, with the model, the attestation evidence and what that does and does not prove | `b3.mjs` |
 | Give access with "Let them ask up to 5 questions"; the recipient asks | Answers only from the shared files; anything else: "This access does not cover that."; you see every question in Visitors | `b6.mjs` |
 | Verify page → paste an answer package | Signature, source roots and receipt checked in fixed order; unchecked steps say "not run" | `b6.mjs`, `verify-answer.test.ts` |

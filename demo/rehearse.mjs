@@ -74,7 +74,7 @@ await scene("3 claim instead of the payslip", async () => {
 });
 await scene("4 give the landlord the claim, not the file", async () => {
   await maria.getByRole("button", { name: "Give access" }).first().click();
-  await maria.getByLabel(/Claim: Monthly gross pay/).check();
+  await maria.getByLabel(/Claim: Gross monthly pay/).check();
   await maria.getByPlaceholder("Who is this for?").fill("Landlord");
   await maria.getByRole("button", { name: "Create link" }).click();
   await maria.getByText("Link ready").waitFor({ timeout: 180000 });

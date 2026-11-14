@@ -5,8 +5,8 @@ import { addItem, readSegment } from "../lib/upload";
 import type { Manifest } from "../lib/vault";
 import { buildIndex } from "../lib/index";
 import type { PageText } from "../lib/index";
-import { claimParts, crossCheck, describePredicate, draftFor, makeSignedClaim, statementText } from "../lib/claims";
-import type { CrossCheck, Draft, Predicate } from "../lib/claims";
+import { claimParts, crossCheckFacts, describePredicate, draftFor, makeSignedClaim, opWords, statementText } from "../lib/claims";
+import type { Draft, Fact, FactCrossCheck, FactOp, Predicate } from "../lib/claims";
 import { aiClient, ownerCredential, FALLBACK_MODEL } from "../lib/ai";
 import { giveAccess } from "../lib/access";
 import type { Services } from "../lib/access";
@@ -19,10 +19,11 @@ import { Check, Working } from "./kit";
 
 const svc: Services = { releaseUrl: config.releaseUrl, nodeUrls: config.nodeUrls, chainId: config.chainId, contractId: config.contractId };
 const SHARE_HOURS = 24;
-/** The extracted fact each document type's claim reads. */
-const USED: Record<Draft["docType"], string> = { payslip: "gross_monthly", lease: "monthly_rent", id: "date_of_birth" };
-const HEAD: Record<Draft["docType"], [string, string]> = { payslip: ["Gross pay is at least", "a month"], lease: ["Rent is at most", "a month"], id: ["Age is at least", "years"] };
-const label = (field: string) => { const s = field.replace(/_/g, " "); return s.charAt(0).toUpperCase() + s.slice(1); };
+/** The fact a recognised document's claim starts on. */
+const PREFERRED = ["gross_monthly", "monthly_rent", "date_of_birth", "expiry_date"];
+const SYMBOL: Record<string, string> = { GBP: "£", USD: "$", EUR: "€" };
+const defaultOp = (f: Fact): FactOp => f.kind === "text" ? "=" : f.field === "monthly_rent" ? "<=" : f.field === "date_of_birth" ? "<=" : ">=";
+const plain = (f: Fact) => typeof f.value === "number" ? String(f.value) : f.value;
 
 const tg = (on: boolean) => (
   <span role="img" aria-label={on ? "Used in the claim" : "Not used"} style={on
@@ -39,8 +40,10 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
   const [pick, setPick] = useState("");
   const [picking, setPicking] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
-  const [cross, setCross] = useState<CrossCheck | null>(null);
-  const [amount, setAmount] = useState("3000");
+  const [cross, setCross] = useState<FactCrossCheck | null>(null);
+  const [sel, setSel] = useState("");
+  const [op, setOp] = useState<FactOp>(">=");
+  const [amount, setAmount] = useState("");
   const [typed, setTyped] = useState("");
   const [reviewed, setReviewed] = useState(false);
   const [busy, setBusy] = useState("");
@@ -55,12 +58,19 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
   const [shared, setShared] = useState<{ link: string; sentence: string } | null>(null);
   useEffect(() => { if (man) buildIndex(ctx, man).then(setIndex).catch((e) => setErr((e as Error).message)); }, [man?.seq]);
 
-  const docs = (man?.items ?? []).filter((i) => i.kind === "pdf" && index?.some((p) => p.itemId === i.uid));
+  const docs = (man?.items ?? []).filter((i) => (i.kind === "pdf" || i.kind === "text") && index?.some((p) => p.itemId === i.uid));
+  const unread = (man?.items ?? []).filter((i) => i.kind === "image" || (i.kind === "pdf" && index && !index.some((p) => p.itemId === i.uid))).length;
+  const facts: Fact[] = draft ? [...draft.reading.facts, ...(cross?.extra ?? [])] : [];
+  const fact = facts.find((f) => f.field === sel);
+  const select = (f: Fact) => { setSel(f.field); setOp(defaultOp(f)); setAmount(plain(f)); setTyped(""); setMade(""); setErr(""); };
   const claims = (man?.items ?? []).filter((i) => i.kind === "claim");
   const choose = (uid: string) => {
     setPick(uid); setPicking(false); setCross(null); setReviewed(false); setMade(""); setErr(""); setTyped("");
     const item = docs.find((d) => d.uid === uid);
-    setDraft(item && index ? draftFor(item, index) : null);
+    const d = item && index ? draftFor(item, index) : null;
+    setDraft(d);
+    const first = d && (PREFERRED.map((k) => d.reading.facts.find((f) => f.field === k)).find(Boolean) ?? d.reading.facts.find((f) => f.kind === "amount") ?? d.reading.facts[0]);
+    if (first) select(first); else setSel("");
   };
   useEffect(() => { if (!pick && docs[0]) choose(docs[0].uid); }, [index, man?.seq]);
   // the grade of each saved claim, read from its own statement page (decrypted on this device)
@@ -79,28 +89,29 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
   }, [man?.seq]);
 
   const predicate = (): Predicate | null => {
-    if (!draft) return null;
-    const n = Number(amount);
-    switch (draft.docType) {
-      case "payslip": return { field: "monthly_gross", op: ">=", value: n, currency: "GBP" };
-      case "lease": return { field: "monthly_rent", op: "<=", value: n, currency: "GBP" };
-      case "id": return { field: "age", op: ">=", value: Number(amount) || 18 };
-    }
+    if (!fact) return null;
+    const base = { field: "fact" as const, key: fact.field, label: fact.label.slice(0, 60) };
+    if (fact.kind === "text") return { ...base, kind: "text", op: "=", value: String(fact.value) };
+    if (fact.kind === "date") return { ...base, kind: "date", op, value: amount };
+    const n = Number(amount.replace(/[,\s£$€]/g, ""));
+    if (!Number.isFinite(n) || amount.trim() === "") return null;
+    return fact.kind === "amount" ? { ...base, kind: "amount", op, value: n, currency: fact.currency ?? "" } : { ...base, kind: "number", op, value: n };
   };
   const runCross = async () => {
     if (!draft) return; setErr(""); setBusy("Checking with a private model (attested hardware)…");
     try {
-      let cc = await crossCheck(draft.docType, draft.pages as never, draft.rules, { client: aiClient(ownerCredential(ctx.id, ctx.reader)) as never });
-      if (!cc.model_ran) { setBusy("The first private model is busy; trying another…"); cc = await crossCheck(draft.docType, draft.pages as never, draft.rules, { client: aiClient(ownerCredential(ctx.id, ctx.reader)) as never, model: FALLBACK_MODEL }); }
+      let cc = await crossCheckFacts(draft.reading, draft.pages as never, { client: aiClient(ownerCredential(ctx.id, ctx.reader)) as never });
+      if (!cc.model_ran) { setBusy("The first private model is busy; trying another…"); cc = await crossCheckFacts(draft.reading, draft.pages as never, { client: aiClient(ownerCredential(ctx.id, ctx.reader)) as never, model: FALLBACK_MODEL }); }
       setCross(cc);
     } catch (e) { setErr((e as Error).message); }
     setBusy("");
   };
   const create = async () => {
-    const p = predicate(); if (!draft || !p) return;
+    const p = predicate(); if (!draft || !fact) return;
+    if (!p) { setErr("Enter a value for the claim."); return; }
     setErr(""); setBusy("Signing the claim…");
     try {
-      const sc = makeSignedClaim({ id: ctx.id, draft, predicate: p, ...(cross ? { cross } : {}), ...(typed ? { typed } : {}) });
+      const sc = makeSignedClaim({ id: ctx.id, draft, fact, predicate: p, ...(cross ? { cross } : {}), ...(typed ? { typed } : {}) });
       const txt = statementText(sc, draft.item.name);
       const parts = claimParts(sc, draft.item.name);
       const name = `Claim: ${describePredicate(sc.claim.predicate)}`;
@@ -126,20 +137,19 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
     setBusy("");
   };
 
-  const used = draft ? USED[draft.docType] : "";
-  const usedField = draft?.rules.fields[used];
-  const agreed = !!cross?.model_ran && cross.fields[used]?.status === "agree";
+  const agreed = !!cross?.model_ran && cross.fields[sel]?.status === "agree";
   const grade = made ? /Grade ([BC])/.exec(made)?.[1] : agreed && !typed ? "B" : !agreed && typed ? "C" : "";
-  const needTyped = !cross?.model_ran || Object.values(cross?.fields ?? {}).some((f) => f.status !== "agree");
+  const needTyped = !agreed;
   const withModel = !!cross?.model_ran;
   const cols = withModel ? "170px minmax(0,1fr) 56px 130px 52px" : "200px minmax(0,1fr) 120px 60px";
   const pickedName = docs.find((d) => d.uid === pick)?.name ?? "";
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: draft ? "minmax(0,1fr) 400px" : "minmax(0,1fr)", gap: 24, alignItems: "start" }}>
+    <div style={{ display: "grid", gridTemplateColumns: draft && fact ? "minmax(0,1fr) 400px" : "minmax(0,1fr)", gap: 24, alignItems: "start" }}>
       <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
         {index === null && <div className="mute" style={{ fontSize: 14 }}>Reading your files…</div>}
-        {index && docs.length === 0 && <div className="mute" style={{ fontSize: 14 }}>Add a payslip, a lease or a passport page (a PDF with a text layer) first.</div>}
+        {index && docs.length === 0 && <div className="mute" style={{ fontSize: 14 }}>Add a document with text first: a PDF, or a text, Markdown, CSV, HTML or JSON file.</div>}
+        {index && unread > 0 && <div className="faint" style={{ fontSize: 13 }}>Photos and scanned PDFs can't be read yet.</div>}
         {docs.length > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
             <span className="h2" style={{ minWidth: 0, overflowWrap: "anywhere" }}>Facts in {pickedName || "a file"}</span>
@@ -156,19 +166,19 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
             ))}
           </div>
         )}
-        {pick && !draft && <div className="mute" style={{ fontSize: 14 }}>This document type isn't recognised yet. Supported: payslip, lease, ID/passport page.</div>}
-        {draft && (
+        {draft && facts.length === 0 && <div className="mute" style={{ fontSize: 14 }}>No facts found on this device. Cross-check with a private model to look for more.</div>}
+        {draft && facts.length > 0 && (
           <div className="panel facts" style={{ overflow: "hidden" }}>
             <div className="th" style={{ gridTemplateColumns: cols }}><span>Fact</span><span>Value</span><span>Page</span>{withModel && <span>Private model</span>}<span>Use</span></div>
-            {Object.values(draft.rules.fields).map((f) => {
-              const st = cross?.fields[f.field]?.status;
+            {facts.map((f) => {
+              const st = cross?.fields[f.field]?.status ?? (f.source === "model" ? "model_only" : undefined);
               return (
-                <div key={f.field} className={`tr ${f.field === used ? "sel" : ""}`} style={{ gridTemplateColumns: cols }}>
-                  <span className="mute">{label(f.field)}</span>
+                <div key={f.field} className={`tr ${f.field === sel ? "sel" : ""}`} style={{ gridTemplateColumns: cols, cursor: "pointer" }} onClick={() => select(f)}>
+                  <span className="mute" style={{ overflowWrap: "anywhere" }}>{f.label}</span>
                   <span style={{ fontWeight: 600, overflowWrap: "anywhere" }}>{f.raw}</span>
                   <span className="m faint" style={{ fontSize: 12 }}>{f.page}</span>
                   {withModel && <span>{st && <span className={`xc chip ${st === "agree" ? "chip-s" : "chip-a"}`}>{st.replace(/_/g, " ")}</span>}</span>}
-                  {tg(f.field === used)}
+                  <button type="button" aria-label={`Use ${f.label}`} aria-pressed={f.field === sel} onClick={(e) => { e.stopPropagation(); select(f); }} style={{ border: 0, background: "transparent", padding: 0, cursor: "pointer" }}>{tg(f.field === sel)}</button>
                 </div>
               );
             })}
@@ -197,7 +207,7 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
         )}
       </div>
 
-      {draft && (
+      {draft && fact && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14, minWidth: 0 }}>
           <div className="fl" style={{ margin: 0 }}>New claim</div>
           <div style={{ background: "var(--ink)", color: "#FFFFFF", borderRadius: 14, padding: 22, display: "flex", flexDirection: "column", gap: 16 }}>
@@ -205,16 +215,24 @@ export function ClaimsTab({ ctx, man, box, afterAdd }: { ctx: Ctx; man: Manifest
               <span className="lbl" style={{ color: "#A9C2EC", fontSize: 10 }}>Claim</span>
               {grade && <span className="chip" style={{ borderColor: "#A9C2EC", color: "#A9C2EC" }}>Grade {grade}</span>}
             </div>
-            <div style={{ fontSize: 26, lineHeight: "32px", fontWeight: 700, letterSpacing: "-0.6px" }}>{HEAD[draft.docType][0]}</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <label className="n" style={{ background: "#FFFFFF", color: "var(--ink)", borderRadius: 8, padding: "8px 14px", fontSize: 26, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 2 }}>
-                {draft.docType !== "id" && <span aria-hidden="true">£</span>}
-                <input aria-label="Amount" inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ width: `${Math.max(2, amount.length) + 0.5}ch`, border: 0, outline: "none", background: "transparent", color: "inherit", font: "inherit", padding: 0 }} />
-              </label>
-              <span className="lbl" style={{ color: "#A9C2EC", fontSize: 10 }}>{HEAD[draft.docType][1]}</span>
+            <div style={{ fontSize: 26, lineHeight: "32px", fontWeight: 700, letterSpacing: "-0.6px", overflowWrap: "anywhere" }}>{fact.label}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              {fact.kind === "text"
+                ? <><span className="lbl" style={{ color: "#A9C2EC", fontSize: 10 }}>is</span><span className="n" style={{ background: "#FFFFFF", color: "var(--ink)", borderRadius: 8, padding: "8px 14px", fontSize: 20, fontWeight: 700, overflowWrap: "anywhere" }}>{String(fact.value)}</span></>
+                : <>
+                  <select aria-label="Condition" value={op} onChange={(e) => setOp(e.target.value as FactOp)} style={{ background: "transparent", color: "#FFFFFF", border: "1px solid #A9C2EC", borderRadius: 8, padding: "8px 10px", font: "inherit", fontSize: 14 }}>
+                    {(["=", ">=", "<="] as FactOp[]).map((o) => <option key={o} value={o} style={{ color: "#000" }}>{opWords(fact.kind, o)}</option>)}
+                  </select>
+                  <label className="n" style={{ background: "#FFFFFF", color: "var(--ink)", borderRadius: 8, padding: "8px 14px", fontSize: 26, fontWeight: 700, display: "inline-flex", alignItems: "center", gap: 2 }}>
+                    {fact.kind === "amount" && <span aria-hidden="true">{SYMBOL[fact.currency ?? ""] ?? `${fact.currency ?? ""} `}</span>}
+                    {fact.kind === "date"
+                      ? <input aria-label="Date" type="date" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ border: 0, outline: "none", background: "transparent", color: "inherit", font: "inherit", fontSize: 18, padding: 0 }} />
+                      : <input aria-label="Amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ width: `${Math.max(2, amount.length) + 0.5}ch`, border: 0, outline: "none", background: "transparent", color: "inherit", font: "inherit", padding: 0 }} />}
+                  </label>
+                </>}
             </div>
             <div style={{ borderTop: "1px solid #2A3260", paddingTop: 12, display: "grid", gridTemplateColumns: "110px minmax(0,1fr)", gap: "6px 10px", fontSize: 13, lineHeight: "18px" }}>
-              <span className="lbl" style={cardLbl}>Source</span><span style={{ overflowWrap: "anywhere" }}>{draft.item.name}{usedField ? `, page ${usedField.page}` : ""}</span>
+              <span className="lbl" style={cardLbl}>Source</span><span style={{ overflowWrap: "anywhere" }}>{draft.item.name}, page {fact.page}</span>
               <span className="lbl" style={cardLbl}>Read by</span><span>{withModel ? "This device and a private model" : "This device"}</span>
               <span className="lbl" style={cardLbl}>Reviewed</span><span>{reviewed ? "By you" : "Not yet"}</span>
             </div>

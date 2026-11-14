@@ -10,8 +10,9 @@
  */
 import { bytesToHex, concatBytes, hexToBytes, randomBytes, sha256, sig, utf8 } from "@keyhole/crypto";
 import { extractorDigest, type EvidenceRecord } from "@keyhole/ai";
-import { canonicalize, sha256Hex } from "./text.js";
+import { canonicalize, normText, sha256Hex } from "./text.js";
 import { type CrossCheck, type DocType, type ExtractedField, normalizeField, parseDate } from "./extract.js";
+import { type FactKind, typeValue } from "./facts.js";
 import type { AskEvidence } from "./ask.js";
 import { toExtractor } from "./ask.js";
 
@@ -27,10 +28,26 @@ export type Predicate =
   | { field: "monthly_gross"; op: ">="; value: number; currency: string }
   | { field: "monthly_rent"; op: "<="; value: number; currency: string }
   | { field: "age"; op: ">="; value: number }
-  | { field: "not_expired"; as_of: string };
+  | { field: "not_expired"; as_of: string }
+  /** any fact read from any document (facts.ts): "=" for all kinds; ">=" / "<=" for amounts, numbers and dates (on or after / on or before) */
+  | { field: "fact"; key: string; label: string; kind: FactKind; op: FactOp; value: string | number; currency?: string };
+
+export type FactOp = "=" | ">=" | "<=";
+
+/** Shape check for a fact predicate (the label is shown to recipients, so it is bounded). */
+export function isFactPredicate(p: unknown): p is Extract<Predicate, { field: "fact" }> {
+  const q = p as Record<string, unknown>;
+  if (!q || q.field !== "fact" || typeof q.key !== "string" || !/^[\p{L}\p{N}_]{1,48}$/u.test(q.key) || typeof q.label !== "string" || q.label.length < 1 || q.label.length > 60) return false;
+  if (!["amount", "date", "number", "text"].includes(q.kind as string) || !["=", ">=", "<="].includes(q.op as string)) return false;
+  if (q.kind === "text" && (q.op !== "=" || typeof q.value !== "string" || q.value.length > 120)) return false;
+  if ((q.kind === "amount" || q.kind === "number") && (typeof q.value !== "number" || !Number.isFinite(q.value))) return false;
+  if (q.kind === "date" && (typeof q.value !== "string" || !parseDate(q.value))) return false;
+  if (q.kind === "amount" ? typeof q.currency !== "string" || !/^[A-Z]{3}$/.test(q.currency) : q.currency !== undefined) return false;
+  return true;
+}
 
 /** Extracted field each predicate reads. */
-export const PREDICATE_INPUT: Record<Predicate["field"], { doc: DocType; field: string }> = {
+export const PREDICATE_INPUT: Record<Exclude<Predicate["field"], "fact">, { doc: DocType; field: string }> = {
   monthly_gross: { doc: "payslip", field: "gross_monthly" },
   monthly_rent: { doc: "lease", field: "monthly_rent" },
   age: { doc: "id", field: "date_of_birth" },
@@ -105,6 +122,18 @@ const ageOn = (dobIso: string, asOfIso: string): number => {
 export function evaluatePredicate(p: Predicate, input: { value: string | number; currency?: string }, issuedAt: string): boolean {
   const day = issuedAt.slice(0, 10);
   switch (p.field) {
+    case "fact": {
+      if (!isFactPredicate(p)) throw new Error("malformed fact predicate");
+      const v = input.value;
+      if (p.kind === "text") return typeof v === "string" && normText(v) === normText(p.value as string);
+      if (p.kind === "date") {
+        if (typeof v !== "string" || !parseDate(v)) throw new Error("date expected");
+        return p.op === "=" ? v === p.value : p.op === ">=" ? v >= (p.value as string) : v <= (p.value as string);
+      }
+      if (typeof v !== "number") throw new Error(`${p.kind} expected`);
+      if (p.kind === "amount" && (input.currency ?? "") !== p.currency) throw new Error(`currency differs: document ${input.currency ?? "?"}, claim ${p.currency}`);
+      return p.op === "=" ? v === p.value : p.op === ">=" ? v >= (p.value as number) : v <= (p.value as number);
+    }
     case "monthly_gross":
     case "monthly_rent": {
       if (typeof input.value !== "number") throw new Error("amount expected");
@@ -156,7 +185,9 @@ export interface BuildClaimInput {
  */
 export function buildClaim(i: BuildClaimInput): Claim {
   if (!i.review.reviewed) throw new Error("the owner must review before a claim is built");
-  const need = PREDICATE_INPUT[i.predicate.field];
+  const fp = i.predicate.field === "fact" ? i.predicate : null;
+  if (fp && !isFactPredicate(fp)) throw new Error("malformed fact predicate");
+  const need = fp ? { doc: i.docType, field: fp.key } : PREDICATE_INPUT[i.predicate.field as Exclude<Predicate["field"], "fact">];
   if (need.doc !== i.docType) throw new Error(`predicate ${i.predicate.field} needs a ${need.doc}, not a ${i.docType}`);
   const cc = i.crossCheck?.fields[need.field];
   const agreed: ExtractedField | undefined = cc?.status === "agree" ? cc.rules : undefined;
@@ -164,7 +195,8 @@ export function buildClaim(i: BuildClaimInput): Claim {
   let value: { value: string | number; currency?: string };
   let grade: ClaimGrade;
   if (i.review.typed !== undefined) {
-    const n = normalizeField(need.field, i.review.typed, cc?.rules?.currency ?? i.crossCheck?.fields[need.field]?.model?.currency ?? "");
+    const cur = cc?.rules?.currency ?? cc?.model?.currency ?? (fp?.currency ?? "");
+    const n = fp ? typeValue(fp.kind, i.review.typed, cur) : normalizeField(need.field, i.review.typed, cur);
     if (!n) throw new Error("the typed value does not parse as " + need.field);
     value = n;
     const same = agreed && agreed.value === n.value && (agreed.currency ?? "") === (n.currency ?? "");
@@ -257,7 +289,7 @@ export function verifyClaimOffline(sc: SignedClaim, ownerPublicKey: string | Uin
         if (sha256Hex(canonicalize(core)) !== ev.evidence_ref) fail.push("evidence_ref does not bind this source, extractor and grade");
       }
     }
-    if (!PREDICATE_INPUT[c.predicate?.field]) fail.push("unknown predicate");
+    if (c.predicate?.field === "fact" ? !isFactPredicate(c.predicate) : !PREDICATE_INPUT[c.predicate?.field as Exclude<Predicate["field"], "fact">]) fail.push("unknown predicate");
     const now = (opts.now ?? new Date().toISOString()).slice(0, 10);
     if (!parseDate(c.issued_at?.slice(0, 10) ?? "") || !parseDate(c.expires_at?.slice(0, 10) ?? "")) fail.push("issued_at / expires_at must start with an ISO date");
     else if (c.expires_at.slice(0, 10) < now) fail.push("claim has expired");
