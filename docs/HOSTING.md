@@ -4,6 +4,12 @@ One server runs everything: the web app (static files), the release service, the
 
 **Why its own deployment:** the service keys of the contract we developed against live only in the development sandbox's `.env`, which is temporary, and secrets must not be pasted anywhere. So the server creates its own keyless testnet contract (same code, same Wasm hash, new keys that never leave the server). The setup script does this.
 
+## Frontend on Vercel, services on Fly (recommended)
+Then the web app does not depend on Fly: if Fly stops, the app still loads and the proof pages (judge, Verify) still work; only the actions that need the services fail. In Vercel, import the repository as a project and set:
+- **Root Directory:** the repository root. **Install Command:** `pnpm install --frozen-lockfile`. **Build Command:** `pnpm --filter @keyhole/web build`. **Output Directory:** `apps/web/dist`. **Node.js version:** 22.
+- **Environment variables:** `VITE_RELEASE_URL=https://<fly app>.fly.dev/rs`, `VITE_NODE_URL=https://<fly app>.fly.dev/node`, `VITE_DEPLOY_RECORD=fly` (use the hosted contract's record). Optional: `VITE_REPO_URL`.
+In Fly set `FRONTEND_ORIGIN=https://<your Vercel address>` (Secrets or `[env]`), then redeploy or restart: the machine then allows only that origin in CORS and stops serving the web app. **Choose the frontend address first** (a custom domain added in Vercel before anyone creates a safe): passkeys belong to the exact address they were created on.
+
 ## Fly.io: your own domain for the app
 The app is served at `https://<app>.fly.dev`. To use your own domain, e.g. `app.yourdomain.com`:
 1. Fly dashboard → your app → **Certificates** → add `app.yourdomain.com`. Fly shows the DNS record to create (a CNAME to `<app>.fly.dev`; it may also show an `_acme-challenge` record). Add it at the registrar and wait until the certificate shows as issued.

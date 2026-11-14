@@ -1,7 +1,10 @@
-import record from "../../../../deploy/testnet.json";
+import original from "../../../../deploy/testnet.json";
+import hosted from "../../../../deploy/testnet-fly.json";
 
 /** Where the app talks to. Testnet only. Override with Vite env vars (VITE_RELEASE_URL, VITE_NODE_URL, VITE_RPC_URL). */
 const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
+/** Which deployment record the app talks to: the default one, or the hosted deployment (VITE_DEPLOY_RECORD=fly, used by the hosted frontend build). */
+const record = env.VITE_DEPLOY_RECORD === "fly" ? hosted : original;
 
 export const config = {
   /** Static showcase build (VITE_SHOWCASE=1): no services are reachable, so the home page explains that and points at the proof pages. */

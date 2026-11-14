@@ -9,7 +9,13 @@ ORIGIN="${PUBLIC_ORIGIN:-https://${FLY_APP_NAME:?FLY_APP_NAME is set by Fly}.fly
 ORIGIN="${ORIGIN%/}"
 mkdir -p /data/release /data/node /data/web
 touch /data/.env && chmod 600 /data/.env && ln -sf /data/.env /app/.env
-export APP_ORIGIN="$ORIGIN"
+# Frontend on another host (for example Vercel): set FRONTEND_ORIGIN to its https address. Then this machine serves only the services
+# (/rs and /node), allows that origin in CORS, and does not build the web app.
+if [ -n "${FRONTEND_ORIGIN:-}" ]; then
+  export APP_ORIGIN="${FRONTEND_ORIGIN%/}"; API_ONLY=1
+else
+  export APP_ORIGIN="$ORIGIN"; API_ONLY=0
+fi
 caddy run --config /app/deploy/fly/Caddyfile --adapter caddyfile &
 
 if ! grep -q '^KEYHOLE_CONTRACT=' /data/.env; then
@@ -23,7 +29,7 @@ fi
 
 # the built web app bakes in the address; rebuild if the address changed since it was built
 [ "$(cat /data/web/.origin 2>/dev/null || true)" = "$ORIGIN" ] || rm -rf /data/web/dist
-if [ ! -d /data/web/dist ]; then
+if [ "$API_ONLY" = 0 ] && [ ! -d /data/web/dist ]; then
   echo "[boot] building the web app for $ORIGIN"
   VITE_RELEASE_URL="$ORIGIN/rs" VITE_NODE_URL="$ORIGIN/node" pnpm --filter @keyhole/web build
   cp -r apps/web/dist /data/web/dist

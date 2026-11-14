@@ -1,0 +1,17 @@
+{
+  "contract": "keyhole-54bba2.testnet",
+  "wasm": {
+    "file": "deploy/keyhole_opt.wasm",
+    "bytes": 360776,
+    "sha256": "7a8abd8630a4fd9b44346bf0e5e94794017295f6631938859b73ea47101a3514",
+    "near_code_hash_base58": "9FMSd8zpPjV4uuDRDtUbtzeeB4TFkjGvAokob6fB3j23",
+    "sourceCommit": "5e92bac846a10c1a57db5562d24f32792f21e979"
+  },
+  "deploy": {
+    "txHash": "A1tCKZidmm87ik2qYxPt1SMUpyRD4CYr4VRsDL7AEvaL"
+  },
+  "launch": {
+    "txHash": "DjGXoimgbemxzj7dWsaxAGXahnmg91dGvdRzGxDZjwS5"
+  },
+  "note": "Record of the hosted deployment on Fly.io (created by its first boot from the prebuilt Wasm). Reconstructed from the public web bundle served by the hosted app and checked against the public testnet on 2026-11-14: 0 access keys, code sha256 identical to the original deployment, whose recorded source commit is shown (the Wasm file is byte-identical)."
+}

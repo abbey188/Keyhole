@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { config, txLink } from "../lib/config";
 import { rpcCall } from "../lib/clients";
 import { CLAIMS } from "./claims";
+import original from "../../../../deploy/testnet.json";
 import attack from "../../../../deploy/attack-lab-testnet.json";
 import smoke from "../../../../deploy/smoke-testnet.json";
 import smokeDeal from "../../../../deploy/smoke-deal-testnet.json";
 import smokeNamed from "../../../../deploy/smoke-named-testnet.json";
-import record from "../../../../deploy/testnet.json";
+
+const record = config.deploy;
 
 type Tx = { label: string; method: string; ok: boolean; txHash: string; gasTgas: number; submitToFinalMs: number };
 const ALL: Tx[] = [...(smoke as { transactions: Tx[] }).transactions, ...(smokeDeal as { transactions: Tx[] }).transactions, ...(smokeNamed as { transactions: Tx[] }).transactions];
@@ -37,6 +39,7 @@ export function Judge() {
       <h2>Judge page</h2>
       <p className="sub">Every statement on this page links to a test you can run or a transaction you can open. Run <code>./scripts/verify.sh</code> to reproduce the tests. Testnet only; a demo configuration; no external audit.</p>
 
+      {rec.contract !== (original as { contract: string }).contract && <p className="note">This site runs its own deployment of the same contract. The attack and smoke-test results below were run against the original deployment, <a href={`${config.explorer}/accounts/${(original as { contract: string }).contract}`} target="_blank" rel="noreferrer">{(original as { contract: string }).contract}</a>, which has the identical code hash.</p>}
       <div className="card"><h3 style={{ marginTop: 0 }}>The deployed contract</h3>
         <table><tbody>
           <tr><td>Account</td><td><a href={`${config.explorer}/accounts/${rec.contract}`} target="_blank" rel="noreferrer">{rec.contract}</a></td></tr>
