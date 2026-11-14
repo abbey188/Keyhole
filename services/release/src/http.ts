@@ -63,7 +63,9 @@ export function createReleaseServer(svc: ReleaseService, o: HttpOptions = {}): S
     }
     try {
       // Per-IP limit on the local wall clock only bounds request volume; it never decides access.
-      const ip = req.socket.remoteAddress ?? "?";
+      // Behind a reverse proxy (TRUST_PROXY=1) the client is the LAST hop the proxy appended to X-Forwarded-For; earlier entries are spoofable.
+      const fwd = process.env.TRUST_PROXY === "1" && typeof req.headers["x-forwarded-for"] === "string" ? (req.headers["x-forwarded-for"] as string).split(",").pop()!.trim() : "";
+      const ip = fwd || (req.socket.remoteAddress ?? "?");
       const nowMs = Date.now();
       const e = hits.get(ip);
       if (!e || nowMs - e.start > 60_000) hits.set(ip, { start: nowMs, n: 1 });

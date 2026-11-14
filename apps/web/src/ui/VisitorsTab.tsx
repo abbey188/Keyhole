@@ -4,18 +4,18 @@ import { fetchFeed, readAskLog, verifyLog } from "../lib/visitors";
 import type { FeedRecord, LogCheck } from "../lib/visitors";
 import { config, txLink } from "../lib/config";
 import type { Services } from "../lib/access";
+import { loadGrants } from "../lib/localvault";
+import type { Identity } from "../lib/keys";
 
 const svc: Services = { releaseUrl: config.releaseUrl, nodeUrls: config.nodeUrls, chainId: config.chainId, contractId: config.contractId };
-const labels = (boxId: string): Record<string, string> => {
-  try { const l = JSON.parse(localStorage.getItem(`keyhole.grants.${boxId}`) ?? "[]") as { grantId: string; label: string }[]; return Object.fromEntries(l.map((g) => [g.grantId, g.label])); } catch { return {}; }
-};
+const labels = (id: Identity, boxId: string): Record<string, string> => Object.fromEntries(loadGrants(id, boxId).map((g) => [g.grantId, g.label]));
 
 export function VisitorsTab({ ctx, refreshKey }: { ctx: Ctx; refreshKey: number }) {
   const [feed, setFeed] = useState<FeedRecord[] | null>(null);
   const [check, setCheck] = useState<LogCheck | null>(null);
   const [tampered, setTampered] = useState(false);
   const [err, setErr] = useState("");
-  const names = labels(ctx.boxId);
+  const names = labels(ctx.id, ctx.boxId);
   const asks = feed && !tampered ? readAskLog(ctx.id, feed) : [];
 
   const load = async () => {

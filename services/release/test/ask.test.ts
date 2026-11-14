@@ -51,4 +51,12 @@ describe("B6 ask budget (owner policy committed in the grant)", () => {
     expect(after[0]!.session_id).toBe(v.sessionId);
     expect(await code(again.askStart(v.token, { commitQ: hexN(2, 32), sealedQ: sealedHex(100) }))).toBe("403:denied");
   });
+
+  it("one box cannot have more relayed opens per hour than its budget (the relayer pays the gas)", async () => {
+    const r = await rig({ relayedOpensPerBoxHour: 2 });
+    const link = await giveAccess(r, 5, { maxSessions: 5 });
+    for (let i = 0; i < 2; i++) { const v = await visit(r, link); await r.svc.close(v.token); }
+    const { openRequest } = await import("./helpers.js");
+    expect(await code(r.svc.openSession(openRequest(r, link).req))).toBe("429:relay_budget");
+  });
 });

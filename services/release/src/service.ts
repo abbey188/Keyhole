@@ -44,6 +44,8 @@ export interface ReleaseOptions {
   /** Testnet sponsorship: yoctoNEAR sent once to each new implicit account (default 0.5 NEAR) and the overall cap. */
   sponsorYocto?: string;
   sponsorMax?: number;
+  /** Relayed opens allowed per box per hour (default 60). */
+  relayedOpensPerBoxHour?: number;
 }
 
 interface Session {
@@ -92,6 +94,8 @@ export class ReleaseService {
   private readonly archive = new Map<string, ReceiptRecord>();
   /** Short-lived AI relay credentials for box owners: token -> expiry and remaining calls. */
   private readonly relayTokens = new Map<string, { exp: number; left: number }>();
+  /** Relayed opens per box in the last hour (the relayer pays the gas). */
+  private readonly relayedOpens = new Map<string, number[]>();
   /** AI relay calls used per visit session. */
   private readonly relayUsed = new Map<string, number>();
   private readonly pending = new Set<string>(); // grant ids with an open in flight
@@ -135,6 +139,15 @@ export class ReleaseService {
     for (const [k, until] of this.usedSigs) if (until < now) this.usedSigs.delete(k);
     if (this.usedSigs.has(a.sig)) throw deny("replay");
     this.usedSigs.set(a.sig, a.ts + skew);
+  }
+
+  /** The relayer pays gas for opens, so one box can have only so many relayed per hour (default 60). A guard on spend, never on access rules. */
+  private chargeRelay(boxId: string): void {
+    const now = Date.now();
+    const recent = (this.relayedOpens.get(boxId) ?? []).filter((t) => t > now - 3_600_000);
+    if (recent.length >= (this.o.relayedOpensPerBoxHour ?? 60)) throw new ReleaseError(429, "relay_budget");
+    recent.push(now);
+    this.relayedOpens.set(boxId, recent);
   }
 
   // ------------------------------------------------------------------ AI relay credentials
@@ -242,6 +255,7 @@ export class ReleaseService {
     try {
       let tx;
       try {
+        this.chargeRelay(grant.box_id);
         tx = await this.o.relayer.openSession({ grantId: r.grantId, sessionId: r.sessionId, sessionPk: r.sessionPk, tsMs: r.ts, reqSig: r.sig });
       } catch (e) {
         if (e instanceof ChainUnavailable) throw new ReleaseError(503, "unavailable");

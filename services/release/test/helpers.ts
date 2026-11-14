@@ -29,7 +29,7 @@ export interface Rig {
   store: GrantStore;
 }
 
-export async function rig(opts: { relayer?: ChainWriter; store?: GrantStore; segmentsPerMinute?: number; sponsorMax?: number } = {}): Promise<Rig> {
+export async function rig(opts: { relayer?: ChainWriter; store?: GrantStore; segmentsPerMinute?: number; sponsorMax?: number; relayedOpensPerBoxHour?: number } = {}): Promise<Rig> {
   const chain = new FakeChain({ nodeKeys: [pkHex(1)], rsKeys: [pkHex(2)] });
   chain.addFullAccessKey(OWNER, pkHex(3));
   chain.addFullAccessKey("bob.testnet", pkHex(4));
@@ -39,7 +39,7 @@ export async function rig(opts: { relayer?: ChainWriter; store?: GrantStore; seg
   await owner.createBox({ boxId: BOX, kind: "Handover", wrappedBmk: new Uint8Array(8), maxGrantMs: 3_600_000 });
   const relayer = opts.relayer ?? chain.writer("relayer.testnet");
   const store = opts.store ?? new MemoryGrantStore();
-  const svc = new ReleaseService({ reader: chain, relayer, store, rsSeed: RS_SEED, rsIdx: 0, segmentsPerMinute: opts.segmentsPerMinute, sponsorMax: opts.sponsorMax });
+  const svc = new ReleaseService({ reader: chain, relayer, store, rsSeed: RS_SEED, rsIdx: 0, segmentsPerMinute: opts.segmentsPerMinute, sponsorMax: opts.sponsorMax, relayedOpensPerBoxHour: opts.relayedOpensPerBoxHour });
   return { chain, owner, relayer, svc, store };
 }
 

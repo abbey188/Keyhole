@@ -6,12 +6,11 @@ import { relock } from "../lib/relock";
 import type { Services } from "../lib/access";
 import { config, txLink } from "../lib/config";
 import type { GrantView } from "@keyhole/chain";
+import { loadGrants, saveGrants } from "../lib/localvault";
+import type { SavedGrant } from "../lib/localvault";
 
 const svc: Services = { releaseUrl: config.releaseUrl, nodeUrls: config.nodeUrls, chainId: config.chainId, contractId: config.contractId };
-interface Saved { grantId: string; label: string; exp: number; files: string[]; link: string }
-const key = (boxId: string) => `keyhole.grants.${boxId}`;
-const load = (boxId: string): Saved[] => { try { return JSON.parse(localStorage.getItem(key(boxId)) ?? "[]"); } catch { return []; } };
-const save = (boxId: string, v: Saved[]) => { try { localStorage.setItem(key(boxId), JSON.stringify(v)); } catch { /* private mode */ } };
+type Saved = SavedGrant;
 
 const DURATIONS: [string, number][] = [["1 hour", 1], ["2 hours", 2], ["24 hours", 24]];
 
@@ -24,7 +23,7 @@ export function AccessTab({ ctx, man, onChanged }: { ctx: Ctx; man: Manifest | n
   const [busy, setBusy] = useState("");
   const [err, setErr] = useState("");
   const [made, setMade] = useState<{ link: string; sentence: string; tx: string } | null>(null);
-  const [list, setList] = useState<Saved[]>(() => load(ctx.boxId));
+  const [list, setList] = useState<Saved[]>(() => loadGrants(ctx.id, ctx.boxId));
   const [status, setStatus] = useState<Record<string, GrantView | null>>({});
   const refresh = async () => { const s: Record<string, GrantView | null> = {}; for (const g of list) s[g.grantId] = await ctx.reader.grant(g.grantId).catch(() => null); setStatus(s); };
   useEffect(() => { void refresh(); }, [list.length]);
@@ -36,7 +35,7 @@ export function AccessTab({ ctx, man, onChanged }: { ctx: Ctx; man: Manifest | n
       const r = await giveAccess({ id: ctx.id, reader: ctx.reader, writer: ctx.writer, svc, boxId: ctx.boxId, bmk: ctx.bmk, epoch: ctx.epoch, label: label.trim(), items: chosen, durationMs: hours * 3_600_000, maxSessions: 3, ...(ask ? { askBudget: 5 } : {}), origin: `${location.origin}${location.pathname}` });
       const sentence = `${label.trim() || "They"} can view ${chosen.length} file${chosen.length === 1 ? "" : "s"} for ${hours} hour${hours === 1 ? "" : "s"}. They cannot download. You can end it any time. Every open is recorded.`;
       const next = [{ grantId: r.grantId, label: label.trim() || "Visitor", exp: r.payload.exp, files: chosen.map((c) => c.name), link: r.link }, ...list];
-      save(ctx.boxId, next); setList(next); setMade({ link: r.link, sentence, tx: r.txHash }); onChanged();
+      saveGrants(ctx.id, ctx.boxId, next); setList(next); setMade({ link: r.link, sentence, tx: r.txHash }); onChanged();
     } catch (e) { setErr((e as Error).message); }
     setBusy("");
   };
